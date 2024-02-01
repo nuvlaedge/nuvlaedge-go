@@ -3,10 +3,10 @@ package agent
 import (
 	"encoding/json"
 	"fmt"
-	"native-nuvlaedge/src/agent/telemetry"
-	"native-nuvlaedge/src/coe"
-	"native-nuvlaedge/src/common"
-	"native-nuvlaedge/src/nuvlaClient"
+	"nuvlaedge-go/src/agent/telemetry"
+	"nuvlaedge-go/src/coe"
+	"nuvlaedge-go/src/common"
+	"nuvlaedge-go/src/nuvlaClient"
 	"os"
 
 	"time"

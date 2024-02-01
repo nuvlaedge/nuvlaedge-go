@@ -7,7 +7,7 @@ import (
 	"github.com/shirou/gopsutil/v3/disk"
 	"github.com/shirou/gopsutil/v3/mem"
 	log "github.com/sirupsen/logrus"
-	"native-nuvlaedge/src/common"
+	"nuvlaedge-go/src/common"
 	"strings"
 	"sync"
 	"time"

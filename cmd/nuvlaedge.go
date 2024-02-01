@@ -2,11 +2,13 @@ package main
 
 import (
 	log "github.com/sirupsen/logrus"
-	"native-nuvlaedge/src/agent"
+	"nuvlaedge-go/src/agent"
+	"nuvlaedge-go/src/coe"
 )
 
 func testme() {
-	ne := agent.New(agent.Config{})
+	coeClient := coe.NewDockerCoe()
+	ne := agent.NewAgent(agent.Config{}, coeClient)
 	log.Infof("Starting NuvlaEdge agent")
 	ne.Start()
 

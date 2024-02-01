@@ -5,10 +5,10 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"io"
-	"native-nuvlaedge/src/agent/commissioner"
-	"native-nuvlaedge/src/common"
-	"native-nuvlaedge/src/common/resources"
 	"net/http"
+	"nuvlaedge-go/src/agent/commissioner"
+	"nuvlaedge-go/src/common"
+	"nuvlaedge-go/src/common/resources"
 )
 
 type ReportResponse struct {

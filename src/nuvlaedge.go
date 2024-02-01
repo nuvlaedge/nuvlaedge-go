@@ -1,8 +1,8 @@
 package src
 
 import (
-	"native-nuvlaedge/src/agent"
-	"native-nuvlaedge/src/coe"
+	"nuvlaedge-go/src/agent"
+	"nuvlaedge-go/src/coe"
 )
 
 type NuvlaEdge struct {

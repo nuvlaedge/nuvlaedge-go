@@ -6,7 +6,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	log "github.com/sirupsen/logrus"
-	"native-nuvlaedge/src/common"
+	"nuvlaedge-go/src/common"
 	"sync"
 	"time"
 )

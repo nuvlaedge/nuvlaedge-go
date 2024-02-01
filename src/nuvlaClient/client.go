@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"native-nuvlaedge/src/common/resources"
 	"net/http"
 	"net/http/cookiejar"
+	"nuvlaedge-go/src/common/resources"
 )
 
 type NuvlaClient struct {
