@@ -18,6 +18,14 @@ func FileExists(filePath string) bool {
 	return err == nil
 }
 
+func FileExistsAndNotEmpty(filePath string) bool {
+	fileInfo, err := os.Stat(filePath)
+	if err != nil {
+		return false
+	}
+	return fileInfo.Size() != 0
+}
+
 func ExecutionTime(start time.Time, name string) {
 	elapsed := time.Since(start)
 	fmt.Printf("%s took %s\n", name, elapsed)
