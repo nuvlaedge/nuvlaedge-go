@@ -3,8 +3,8 @@ package telemetry
 import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"nuvlaedge-go/src/coe"
-	"nuvlaedge-go/src/common"
+	"nuvlaedge-go/nuvlaedge/coe"
+	"nuvlaedge-go/nuvlaedge/common"
 	"os"
 	"runtime"
 	"time"

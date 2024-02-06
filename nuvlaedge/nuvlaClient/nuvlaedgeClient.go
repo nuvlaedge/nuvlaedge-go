@@ -6,9 +6,9 @@ import (
 	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
-	"nuvlaedge-go/src/agent/commissioner"
-	"nuvlaedge-go/src/common"
-	"nuvlaedge-go/src/common/resources"
+	"nuvlaedge-go/nuvlaedge/agent/commissioner"
+	"nuvlaedge-go/nuvlaedge/common"
+	"nuvlaedge-go/nuvlaedge/common/resources"
 )
 
 type ReportResponse struct {

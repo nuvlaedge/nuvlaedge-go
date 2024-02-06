@@ -1,10 +1,10 @@
-package src
+package nuvlaedge
 
 import (
 	"github.com/BurntSushi/toml"
 	"github.com/caarlos0/env/v10"
 	log "github.com/sirupsen/logrus"
-	"nuvlaedge-go/src/common"
+	"nuvlaedge-go/nuvlaedge/common"
 	"os"
 )
 

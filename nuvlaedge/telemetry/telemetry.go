@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"github.com/shirou/gopsutil/v3/host"
 	log "github.com/sirupsen/logrus"
-	"nuvlaedge-go/src/coe"
-	"nuvlaedge-go/src/common"
-	"nuvlaedge-go/src/common/resources"
+	"nuvlaedge-go/nuvlaedge/coe"
+	"nuvlaedge-go/nuvlaedge/common"
+	"nuvlaedge-go/nuvlaedge/common/resources"
 	"os"
 	"reflect"
 	"runtime"
@@ -35,7 +35,7 @@ type Telemetry struct {
 	networkMetricsUpdater   *NetworkMetricsUpdater
 
 	// Report and exit channels
-	reportChan chan map[string]interface{}
+	reportChan chan resources.NuvlaEdgeStatus
 	exitChan   chan bool
 
 	// Telemetry report update period
@@ -44,7 +44,7 @@ type Telemetry struct {
 
 func NewTelemetry(
 	coeClient coe.Coe,
-	reportChan chan map[string]interface{},
+	reportChan chan resources.NuvlaEdgeStatus,
 	exitChan chan bool,
 	updatePeriod int) *Telemetry {
 
@@ -86,7 +86,7 @@ func (t *Telemetry) update() error {
 	// Prepare the wait group
 	wg.Add(len(t.updateFuncs))
 
-	// Run all the update functions in parallel
+	// Run all the update functions concurrently
 	for _, updateFunc := range t.updateFuncs {
 		log.Debugf("Starting update function %s", updateFunc)
 		go func(updateFunc UpdaterFunction) {
@@ -121,9 +121,10 @@ func (t *Telemetry) Run() {
 			log.Errorf("error %s updating telemetry data", err)
 		} else {
 			log.Infof("Status: \n%s", t.GetStatus())
+			t.reportChan <- *t.nuvlaEdgeStatus
 			err = common.WaitPeriodicAction(startTime, t.updatePeriod, "Telemetry Update")
 			if err != nil {
-				panic(err)
+				log.Warnf("Error waiting for periodic action: %s", err)
 			}
 		}
 	}
