@@ -2,9 +2,9 @@ package commissioner
 
 import (
 	log "github.com/sirupsen/logrus"
-	"nuvlaedge-go/src/coe"
-	"nuvlaedge-go/src/common"
-	"nuvlaedge-go/src/nuvlaClient"
+	"nuvlaedge-go/nuvlaedge/coe"
+	"nuvlaedge-go/nuvlaedge/common"
+	"nuvlaedge-go/nuvlaedge/nuvlaClient"
 	"time"
 )
 

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/BurntSushi/toml"
 	log "github.com/sirupsen/logrus"
-	"nuvlaedge-go/src/common"
+	"nuvlaedge-go/nuvlaedge/common"
 	"os"
 )
 

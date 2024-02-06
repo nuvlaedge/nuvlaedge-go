@@ -4,6 +4,7 @@ go 1.21
 
 require (
 	github.com/BurntSushi/toml v1.3.2
+	github.com/caarlos0/env/v10 v10.0.0
 	github.com/docker/docker v25.0.2+incompatible
 	github.com/jackpal/gateway v1.0.13
 	github.com/shirou/gopsutil/v3 v3.24.1

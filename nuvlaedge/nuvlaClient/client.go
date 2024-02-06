@@ -7,7 +7,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"net/http/cookiejar"
-	"nuvlaedge-go/src/common/resources"
+	"nuvlaedge-go/nuvlaedge/common/resources"
 )
 
 type NuvlaClient struct {
