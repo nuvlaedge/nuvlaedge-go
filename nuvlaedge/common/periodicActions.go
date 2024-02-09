@@ -2,7 +2,6 @@ package common
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"time"
 )
 

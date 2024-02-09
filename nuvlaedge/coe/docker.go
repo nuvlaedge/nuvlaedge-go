@@ -5,7 +5,6 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
-	log "github.com/sirupsen/logrus"
 	"nuvlaedge-go/nuvlaedge/common"
 	"sync"
 	"time"
@@ -214,10 +213,9 @@ func (dc *DockerCoe) RemoveContainer(containerId string, containerName string) (
 
 /**************************************** NuvlaEdge Utils *****************************************/
 
-// TelemetryStart starts a prometheus node exporter container
-func (dc *DockerCoe) TelemetryStart() (bool, error) {
-	//promImage := ""
-	return false, nil
+// TelemetryStart Runs one iteration of the telemetry process related to the COE
+func (dc *DockerCoe) TelemetryStart() error {
+	return nil
 }
 
 func (dc *DockerCoe) TelemetryStatus() (int, error) {

@@ -1,10 +1,11 @@
-package commissioner
+package agent
 
 import (
 	log "github.com/sirupsen/logrus"
 	"nuvlaedge-go/nuvlaedge/coe"
 	"nuvlaedge-go/nuvlaedge/common"
 	"nuvlaedge-go/nuvlaedge/nuvlaClient"
+	"nuvlaedge-go/nuvlaedge/types"
 	"time"
 )
 
@@ -12,8 +13,8 @@ type Commissioner struct {
 	nuvlaClient *nuvlaClient.NuvlaEdgeClient
 	coeClient   coe.Coe
 
-	lastPayload *CommissioningAttributes
-	currentData *CommissioningAttributes
+	lastPayload *types.CommissioningAttributes
+	currentData *types.CommissioningAttributes
 }
 
 func NewCommissioner(nuvlaClient *nuvlaClient.NuvlaEdgeClient, coeClient coe.Coe) *Commissioner {

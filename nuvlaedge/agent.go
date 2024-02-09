@@ -1,17 +1,14 @@
 package nuvlaedge
 
 import (
-	"encoding/json"
-	"fmt"
+	"nuvlaedge-go/nuvlaedge/agent"
 	"nuvlaedge-go/nuvlaedge/coe"
 	"nuvlaedge-go/nuvlaedge/common"
 	"nuvlaedge-go/nuvlaedge/common/resources"
 	"nuvlaedge-go/nuvlaedge/nuvlaClient"
-	"os"
+	"reflect"
 
 	"time"
-
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -22,77 +19,71 @@ const (
 type Agent struct {
 	settings *AgentSettings
 
-	client    *nuvlaClient.NuvlaEdgeClient // client: Http client library to interact with Nuvla
-	coeClient coe.Coe
+	client       *nuvlaClient.NuvlaEdgeClient // client: Http client library to interact with Nuvla
+	coeClient    coe.Coe
+	telemetry    *Telemetry
+	commissioner *agent.Commissioner
 
 	// Features
-	heartBeatPeriod int
-	telemetryPeriod int
+	heartBeatPeriod     int
+	telemetryPeriod     int
+	sentNuvlaEdgeStatus *resources.NuvlaEdgeStatus
 
 	// Channels
-	exitChan       chan bool
-	telemetryChan  chan resources.NuvlaEdgeStatus
-	hostConfigChan chan map[string]interface{}
-	jobChan        chan []string
-}
-
-func findUUIDInFile() string {
-	file, err := os.Open("config/temp_uuid.json")
-	if err != nil {
-		fmt.Println("Error opening file:", err)
-		return ""
-	}
-	defer file.Close()
-
-	var data map[string]string
-	decoder := json.NewDecoder(file)
-	err = decoder.Decode(&data)
-	if err != nil {
-		fmt.Println("Error decoding JSON:", err)
-		return ""
-	}
-
-	uuid := data["uuid"]
-	log.Infof("Found UUID: %s", uuid)
-
-	return uuid
+	exitChan chan bool
+	jobChan  chan []string
 }
 
 func NewAgent(
 	settings *AgentSettings,
 	coeClient coe.Coe,
-	hostConfigChan chan map[string]interface{},
-	telemetryChan chan resources.NuvlaEdgeStatus,
-	jobChan chan []string,
-) *Agent {
+	telemetry *Telemetry,
+	jobChan chan []string) *Agent {
+
 	// Set default values
-	c := nuvlaClient.NewNuvlaEdgeClient(settings.NuvlaEdgeUUID, settings.NuvlaEndpoint, settings.NuvlaInsecure)
 	return &Agent{
-		settings:       settings,
-		client:         c,
-		coeClient:      coeClient,
-		telemetryChan:  telemetryChan,
-		hostConfigChan: hostConfigChan,
-		jobChan:        jobChan,
+		settings:  settings,
+		coeClient: coeClient,
+		jobChan:   jobChan,
+		telemetry: telemetry,
 	}
 }
 
-func (a *Agent) Start() {
+/* ------------------  NuvlaEdge worker Interface implementation ------------------------------- */
+
+// Start runs the initial setup of the agent.
+// Check if there is a nuvlaedge already installed in the system
+// Synchronizes resources from Nuvla: nuvlabox, nuvlabox-status, vpn-credential, etc
+// It also runs the commissioner start process which will retrieve the information of the local system beforehand
+func (a *Agent) Start() error {
 	log.Infof("Running Agent starting process")
-	// Assert local Agent state
-	log.Infof("Actiavting my self")
-	// Activate
-	err := a.client.Activate()
+
+	// 1. Check Previous installation
+	params, err := agent.FindPreviousInstallation(a.settings.ConfPath, a.settings.NuvlaEdgeUUID)
 	if err != nil {
-		panic("NuvlaEdge not activated properly, exiting")
+		log.Infof("Error finding previous installation: %s", err)
 	}
 
-	err = a.client.GetNuvlaEdgeInformation()
-	common.GenericErrorHandler("error retrieving nuvlaedge information", err)
+	if params == nil {
+		log.Infof("No previous installation found")
+	} else {
+		log.Infof("Found previous installation with uuid: %s", a.settings.NuvlaEdgeUUID)
+	}
+	a.client = nuvlaClient.NewNuvlaEdgeClient(a.settings.NuvlaEdgeUUID, a.settings.NuvlaEndpoint, a.settings.NuvlaInsecure)
+	// 2. Try retrieving NuvlaEdge status from Nuvla
+	// 3. Base on the state execute the activation or commission process
+	return nil
 }
 
-func (a *Agent) Stop() {
-	log.Infof("Running Agent stopping process")
+func (a *Agent) Stop() error {
+	return nil
+}
+
+func (a *Agent) Run() error {
+	log.Infof("Starting Agent main loop")
+	go a.runHeartBeat()
+	go a.runTelemetry()
+	return nil
 }
 
 func (a *Agent) activate() {
@@ -103,43 +94,78 @@ func (a *Agent) commission() {
 	log.Infof("Running Agent commission process")
 }
 
-func (a *Agent) Run() {
-	log.Infof("Running Nuvlaedge main loop")
-
-	log.Infof("Starting Agent main loop")
-	go a.runHeartBeat()
-	go a.runTelemetry()
-
-}
-
 func (a *Agent) runHeartBeat() {
 	for {
 		startTime := time.Now()
 
 		jobs, err := a.client.HeartBeat()
 		if err != nil {
+			log.Warnf("Error sending heartbeat: %s", err)
+			// Wait for the next heartbeat
+			err = common.WaitPeriodicAction(startTime, a.heartBeatPeriod, "Heartbeat Loop")
+			if err != nil {
+				log.Errorf("Error waiting for heartbeat: %s", err)
+			}
 			continue
 		}
 
 		if len(jobs) > 0 {
 			a.jobChan <- jobs
 		}
-
+		// Wait for the next heartbeat
 		err = common.WaitPeriodicAction(startTime, a.heartBeatPeriod, "Heartbeat Loop")
 		if err != nil {
-			panic(err)
+			log.Errorf("Error waiting for heartbeat: %s", err)
 		}
 	}
 }
 
+// Function that takes a pointer to NuvlaEdge status and compares it with the local NuvlaEdgeStatus.
+// It returns two slices, one contains the fields that have changes from the local status and the other and
+// the fields that are no longer present in the parsed status.
+func (a *Agent) compareNuvlaEdgeStatus(newNuvlaEdgeStatus *resources.NuvlaEdgeStatus) ([]string, []string) {
+	v1 := reflect.ValueOf(a.sentNuvlaEdgeStatus).Elem()
+	v2 := reflect.ValueOf(newNuvlaEdgeStatus).Elem()
+	changedFields := make([]string, 0)
+	removedFields := make([]string, 0)
+
+	for i := 0; i < v1.NumField(); i++ {
+		fieldName := v1.Type().Field(i).Name
+		value1 := v1.Field(i).Interface()
+		value2 := v2.FieldByName(fieldName).Interface()
+
+		if value2 != value1 {
+			changedFields = append(changedFields, fieldName)
+		}
+	}
+
+	for i := 0; i < v1.NumField(); i++ {
+		fieldName := v1.Type().Field(i).Name
+		_, ok := v2.Type().FieldByName(fieldName)
+
+		if !ok {
+			removedFields = append(removedFields, fieldName)
+		}
+	}
+	return changedFields, removedFields
+}
+
 func (a *Agent) runTelemetry() {
+	for {
+		startTime := time.Now()
 
-}
+		status, toDelete := a.telemetry.GetStatusToSend()
+		if status == nil {
+			return
+		}
+		jobs, err := a.client.Telemetry(status, toDelete)
+		if len(jobs) > 0 {
+			a.jobChan <- jobs
+		}
 
-func (a *Agent) Pause() {
-	log.Infof("Running Agent pause process")
-}
-
-func (a *Agent) Update() {
-	log.Infof("Running Agent updating process")
+		err = common.WaitPeriodicAction(startTime, a.telemetryPeriod, "MetricsMonitor Loop")
+		if err != nil {
+			panic(err)
+		}
+	}
 }

@@ -1,11 +1,10 @@
-package telemetry
+package monitoring
 
 import (
 	"encoding/json"
 	"fmt"
 	"github.com/jackpal/gateway"
 	psNet "github.com/shirou/gopsutil/v3/net"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"net"
 	"net/http"

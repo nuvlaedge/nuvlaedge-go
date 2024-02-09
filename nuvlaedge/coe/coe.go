@@ -2,8 +2,10 @@ package coe
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
+
+var log = logrus.New()
 
 type CoeType string
 
@@ -56,7 +58,7 @@ type Coe interface {
 	//) map[string]any
 	//getNuvlaEdgeComponents() []string
 	//getCoeVersion() string
-	TelemetryStart() (bool, error)
+	TelemetryStart() error
 	TelemetryStatus() (int, error)
 	TelemetryStop() (bool, error)
 }

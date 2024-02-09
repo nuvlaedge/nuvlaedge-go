@@ -18,14 +18,14 @@ const (
 // ConfPath
 // NuvlaEdgeLocalDB
 const (
-	BasePath         string = "/etc/agent/"
+	BasePath         string = "/etc/nuvlaedge/"
 	ConfPath                = BasePath + "config/"
 	NuvlaEdgeLocalDB        = BasePath + ".local/"
 )
 
 // NuvlaEdgeUserConfig
 const (
-	NuvlaEdgeConfigFileName string = "agent.toml"
+	NuvlaEdgeConfigFileName string = "settings.toml"
 	NuvlaEdgeUserConfig            = ConfPath + NuvlaEdgeConfigFileName
 )
 

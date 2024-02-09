@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 	"net/http/cookiejar"
 	"nuvlaedge-go/nuvlaedge/common/resources"
@@ -71,7 +70,7 @@ func (c *NuvlaClient) Post(data interface{}, endpointPath string) (*http.Respons
 	return response, nil
 }
 
-func (c *NuvlaClient) Put(data interface{}, endPointPath string) (*http.Response, error) {
+func (c *NuvlaClient) Put(data interface{}, endPointPath string, toDelete []string) (*http.Response, error) {
 	endPoint := c.EndPoint + endPointPath
 
 	payload, err := json.Marshal(data)
@@ -80,6 +79,7 @@ func (c *NuvlaClient) Put(data interface{}, endPointPath string) (*http.Response
 	}
 
 	req, _ := http.NewRequest("PUT", endPoint, bytes.NewBuffer(payload))
+
 	req.Header = map[string][]string{
 		"Content-Type": {"application/json"},
 		"Accept":       {"application/json"},

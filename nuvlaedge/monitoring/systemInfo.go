@@ -1,8 +1,7 @@
-package telemetry
+package monitoring
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"nuvlaedge-go/nuvlaedge/coe"
 	"nuvlaedge-go/nuvlaedge/common"
 	"os"
@@ -22,7 +21,7 @@ type SysInfoData struct {
 }
 
 type SystemInfo struct {
-	data       SysInfoData
+	data       *SysInfoData
 	coeClient  coe.Coe
 	period     int
 	reportChan chan SysInfoData
@@ -30,7 +29,7 @@ type SystemInfo struct {
 
 func NewSystemInfo(period int, reportChan chan SysInfoData, coeClient coe.Coe) SystemInfo {
 	sysInfo := SystemInfo{
-		data:       SysInfoData{},
+		data:       &SysInfoData{},
 		coeClient:  coeClient,
 		period:     period,
 		reportChan: reportChan,
@@ -133,7 +132,7 @@ func (s *SystemInfo) Run() {
 		if err != nil {
 			log.Errorf("error %s updating system information", err)
 		} else {
-			s.reportChan <- s.data
+			s.reportChan <- *s.data
 			err = common.WaitPeriodicAction(startTime, s.period, "SystemInfo Update")
 			if err != nil {
 				panic(err)

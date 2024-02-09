@@ -3,7 +3,6 @@ package nuvlaedge
 import (
 	"github.com/BurntSushi/toml"
 	"github.com/caarlos0/env/v10"
-	log "github.com/sirupsen/logrus"
 	"nuvlaedge-go/nuvlaedge/common"
 	"os"
 )
@@ -73,10 +72,10 @@ type SystemManagerSettings struct {
 // ApiKey: The API key for accessing the Nuvla service.
 // ApiSecret: The API secret for accessing the Nuvla service.
 // HeartbeatPeriod: The period for the heartbeat action of the NuvlaEdge agent.
-// TelemetryPeriod: The period for the telemetry action of the NuvlaEdge agent.
+// TelemetryPeriod: The period for the monitoring action of the NuvlaEdge agent.
 // Commissioner: Holds the settings for the NuvlaEdge commissioner.
 // SystemConfiguration: Holds the settings for the host system configuration.
-// Telemetry: Holds the settings for the NuvlaEdge telemetry.
+// Telemetry: Holds the settings for the NuvlaEdge monitoring.
 // Vpn: Holds the settings for the NuvlaEdge VPN.
 type AgentSettings struct {
 	// nuvla endpoint definition
@@ -88,7 +87,7 @@ type AgentSettings struct {
 	ApiSecret     string `toml:"api-secret" env:"API_SECRET"`
 	// NuvlaEdge main actions periods
 	HeartbeatPeriod int `toml:"heartbeat-period" env:"HEARTBEAT_PERIOD"`
-	TelemetryPeriod int `toml:"telemetry-period" env:"TELEMETRY_PERIOD"`
+	TelemetryPeriod int `toml:"monitoring-period" env:"TELEMETRY_PERIOD"`
 
 	// Commissioner settings
 	Commissioner struct {
@@ -98,7 +97,7 @@ type AgentSettings struct {
 	// NuvlaEdge Telemetry settings
 	Telemetry struct {
 		Period int `toml:"period" env:"TELEMETRY_PERIOD"`
-	} `toml:"telemetry"`
+	} `toml:"monitoring"`
 
 	// HostConfiguration settings
 	HostConfiguration struct {
@@ -152,6 +151,6 @@ func GetSettingsPath() string {
 	if envSettingsFile != "" {
 		return envSettingsFile
 	}
-	return "/etc/nuvlaedge/settings.toml"
+	return "/etc/nuvlaedge/nuvlaedge.toml"
 
 }

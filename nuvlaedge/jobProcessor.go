@@ -1,7 +1,5 @@
 package nuvlaedge
 
-import log "github.com/sirupsen/logrus"
-
 type Job struct {
 	ID          string
 	containerID string
@@ -10,6 +8,7 @@ type Job struct {
 type JobProcessor struct {
 	runningJobs []string
 	jobChan     chan []string // Job channel. Receives job IDs from the agent
+	exitChan    chan bool     // Exit channel. Receives exit signal from the agent
 }
 
 func NewJobProcessor(jobChan chan []string) *JobProcessor {
@@ -18,13 +17,23 @@ func NewJobProcessor(jobChan chan []string) *JobProcessor {
 	}
 }
 
-func (p *JobProcessor) Run() {
+func (p *JobProcessor) Start() error {
+	return nil
+}
+
+func (p *JobProcessor) Stop() error {
+	return nil
+}
+
+func (p *JobProcessor) Run() error {
 	for {
 		select {
 		case jobs := <-p.jobChan:
 			for _, j := range jobs {
 				go p.processJob(j)
 			}
+		case <-p.exitChan:
+			return nil
 		}
 	}
 }

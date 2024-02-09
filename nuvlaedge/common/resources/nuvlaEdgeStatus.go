@@ -3,9 +3,9 @@ package resources
 type NuvlaEdgeStatus struct {
 	// Nuvla resource data
 	//LastHeartbeat string `json:"last-heartbeat,omitempty"`
-	//LastTelemetry string `json:"last-telemetry,omitempty"`
+	//LastTelemetry string `json:"last-monitoring,omitempty"`
 	//NextHeartbeat string `json:"next-heartbeat,omitempty"`
-	//NextTelemetry string `json:"next-telemetry,omitempty"`
+	//NextTelemetry string `json:"next-monitoring,omitempty"`
 	//Online        bool   `json:"online,omitempty"`
 	//
 	//Updated      string `json:"updated,omitempty"`

@@ -3,12 +3,11 @@ package nuvlaClient
 import (
 	"encoding/json"
 	"fmt"
-	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
-	"nuvlaedge-go/nuvlaedge/agent/commissioner"
 	"nuvlaedge-go/nuvlaedge/common"
 	"nuvlaedge-go/nuvlaedge/common/resources"
+	"nuvlaedge-go/nuvlaedge/types"
 )
 
 type ReportResponse struct {
@@ -16,12 +15,15 @@ type ReportResponse struct {
 }
 
 type NuvlaEdgeClient struct {
-	Uuid                string
-	NuvlaEdgeStatusUuid string
-	StatusUuid          string
-	client              *NuvlaClient
-	Credentials         *resources.Credentials
-	NuvlaEdgeResource   *resources.NuvlaEdge
+	Uuid                string `json:"nuvlaedge-uuid"`
+	NuvlaEdgeStatusUuid string `json:"nuvlaedge-status-uuid"`
+	Endpoint            string `json:"endpoint"`
+	Insecure            bool   `json:"insecure"`
+
+	client                  *NuvlaClient
+	Credentials             *resources.Credentials
+	NuvlaEdgeResource       *resources.NuvlaEdge
+	NuvlaEdgeStatusResource *resources.NuvlaEdgeStatus
 }
 
 func NewNuvlaEdgeClient(uuid string, endpoint string, insecure bool) *NuvlaEdgeClient {
@@ -29,6 +31,10 @@ func NewNuvlaEdgeClient(uuid string, endpoint string, insecure bool) *NuvlaEdgeC
 		Uuid:   uuid,
 		client: NewNuvlaClient(endpoint, insecure),
 	}
+}
+
+func NewNuvlaEdgeClientFromSession(session *resources.Session) *NuvlaEdgeClient {
+	return NewNuvlaEdgeClient()
 }
 
 func (nec *NuvlaEdgeClient) Activate() error {
@@ -85,7 +91,7 @@ func (nec *NuvlaEdgeClient) GetNuvlaEdgeInformation() error {
 }
 
 // Commission executes the commissioning action of the given agent against Nuvla.
-func (nec *NuvlaEdgeClient) Commission(data *commissioner.CommissioningAttributes) (bool, error) {
+func (nec *NuvlaEdgeClient) Commission(data *types.CommissioningAttributes) (bool, error) {
 
 	if !nec.client.Authenticated() {
 		nec.client.LogIn(nec.Credentials)
@@ -134,11 +140,12 @@ func (nec *NuvlaEdgeClient) HeartBeat() ([]string, error) {
 	return jobs.Jobs, nil
 }
 
-func (nec *NuvlaEdgeClient) Telemetry(info *resources.NuvlaEdgeStatus) ([]string, error) {
+func (nec *NuvlaEdgeClient) Telemetry(data map[string]interface{}, toDelete []string) ([]string, error) {
 	log.Info("Sending Telemetry")
 	endPoint := "/api/" + nec.NuvlaEdgeStatusUuid
 
-	resp, err := nec.client.Put(info, endPoint)
+	log.Debugf("Sending telemetry %v to %s", data, endPoint)
+	resp, err := nec.client.Put(data, endPoint, toDelete)
 
 	defer resp.Body.Close()
 

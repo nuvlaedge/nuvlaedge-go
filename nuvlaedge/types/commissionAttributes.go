@@ -1,4 +1,4 @@
-package commissioner
+package types
 
 type CommissioningAttributes struct {
 	Tags         []string `json:"tags"`
