@@ -1,4 +1,4 @@
-package coe
+package orchestrator
 
 type KubernetesCoe struct {
 }

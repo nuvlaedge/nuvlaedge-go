@@ -1,11 +1,14 @@
-package coe
+package orchestrator
 
 import (
 	"context"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/system"
 	"github.com/docker/docker/client"
+	"github.com/sirupsen/logrus"
 	"nuvlaedge-go/nuvlaedge/common"
+	"reflect"
 	"sync"
 	"time"
 )
@@ -35,25 +38,78 @@ type SwarmData struct {
 	SwarmClientCa     string `json:"swarm-client-ca"`
 }
 
+func (sw *SwarmData) UpdateSwarmData() error {
+	swarmFields := reflect.ValueOf(*sw)
+
+	for i := 0; i < swarmFields.NumField(); i++ {
+		fieldName := swarmFields.Type().Field(i).Name
+		updaterName := "updateSwarm" + fieldName
+		updater := reflect.ValueOf(sw).MethodByName(updaterName)
+		if updater.IsValid() {
+			updater.Call(nil)
+		}
+	}
+	return nil
+}
+
+func (sw *SwarmData) UpdateSwarmDataIfNeeded(client *client.Client) error {
+	log.Infof("Updating swarm data")
+	return sw.UpdateSwarmData()
+}
+
+func (sw *SwarmData) updateSwarmEndPoint() error {
+	log.Infof("Updating swarm endpoint")
+	return nil
+}
+
+func (sw *SwarmData) updateSwarmTokenManager() error {
+	log.Infof("Updating swarm token manager")
+	return nil
+}
+
+func (sw *SwarmData) updateSwarmTokenWorker() error {
+	log.Infof("Updating swarm token worker")
+	return nil
+}
+
+func (sw *SwarmData) updateSwarmClientKey() error {
+	log.Infof("Updating swarm client key")
+	return nil
+}
+
+func (sw *SwarmData) updateSwarmClientCert() error {
+	log.Infof("Updating swarm client cert")
+	return nil
+}
+
+func (sw *SwarmData) updateSwarmClientCa() error {
+	log.Infof("Updating swarm client ca")
+	return nil
+}
+
 type DockerCoe struct {
 	coeType CoeType
 	client  *client.Client
 
 	clusterData     *ClusterData
-	clusterDataLock sync.Mutex
+	clusterDataLock *sync.Mutex
+	swarmData       *SwarmData
 }
 
 func NewDockerCoe() *DockerCoe {
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	common.GenericErrorHandler("Error instantiating client", err)
 	ping, _ := cli.Ping(context.Background())
-
+	log.SetLevel(logrus.DebugLevel)
 	log.Infof("Is docker Swarm available?: %s", ping.SwarmStatus.ControlAvailable)
 	return &DockerCoe{
-		coeType:         DockerType,
-		client:          cli,
-		clusterData:     &ClusterData{},
-		clusterDataLock: sync.Mutex{},
+		coeType: DockerType,
+		client:  cli,
+		clusterData: &ClusterData{
+			updated: time.Now().Add(-10 * time.Second),
+		},
+		clusterDataLock: &sync.Mutex{},
+		swarmData:       &SwarmData{},
 	}
 }
 
@@ -74,7 +130,7 @@ func (dc *DockerCoe) GetCoeVersion() (string, error) {
 	return version.Version, nil
 }
 
-func extractDockerPlugins(plugIns types.PluginsInfo) []string {
+func extractDockerPlugins(plugIns *system.PluginsInfo) []string {
 	var plugins []string
 	for _, plugin := range plugIns.Network {
 		plugins = append(plugins, plugin)
@@ -92,7 +148,7 @@ func extractDockerPlugins(plugIns types.PluginsInfo) []string {
 }
 
 func (dc *DockerCoe) updateClusterData() error {
-	log.Infof("Updating cluster data")
+	log.Debug("Updating cluster data")
 
 	ctx := context.Background()
 	info, err := dc.client.Info(ctx)
@@ -170,6 +226,7 @@ func (dc *DockerCoe) updateClusterDataIfNeeded() error {
 	dc.clusterDataLock.Lock()
 	defer dc.clusterDataLock.Unlock()
 	if time.Since(dc.clusterData.updated) > 10*time.Second {
+		log.Infof("Updating cluster data")
 		return dc.updateClusterData()
 	}
 	return nil
@@ -183,8 +240,14 @@ func (dc *DockerCoe) GetClusterData() (*ClusterData, error) {
 	return dc.clusterData, nil
 }
 
-func (dc *DockerCoe) GetOrchestratorCredentials() (map[string]string, error) {
+/**************************************** Swarm Data *****************************************/
 
+func (dc *DockerCoe) GetOrchestratorCredentials() (map[string]string, error) {
+	_ = dc.swarmData.UpdateSwarmDataIfNeeded(dc.client)
+	return nil, nil
+}
+
+func (dc *DockerCoe) GetSwarmData() (*SwarmData, error) {
 	return nil, nil
 }
 

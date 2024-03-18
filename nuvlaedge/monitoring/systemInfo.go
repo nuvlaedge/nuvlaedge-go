@@ -2,8 +2,8 @@ package monitoring
 
 import (
 	"fmt"
-	"nuvlaedge-go/nuvlaedge/coe"
 	"nuvlaedge-go/nuvlaedge/common"
+	"nuvlaedge-go/nuvlaedge/orchestrator"
 	"os"
 	"runtime"
 	"time"
@@ -22,12 +22,12 @@ type SysInfoData struct {
 
 type SystemInfo struct {
 	data       *SysInfoData
-	coeClient  coe.Coe
+	coeClient  orchestrator.Coe
 	period     int
 	reportChan chan SysInfoData
 }
 
-func NewSystemInfo(period int, reportChan chan SysInfoData, coeClient coe.Coe) SystemInfo {
+func NewSystemInfo(period int, reportChan chan SysInfoData, coeClient orchestrator.Coe) SystemInfo {
 	sysInfo := SystemInfo{
 		data:       &SysInfoData{},
 		coeClient:  coeClient,
@@ -94,9 +94,9 @@ func (s *SystemInfo) updateLastBoot() error {
 func (s *SystemInfo) updateCoeVersions() error {
 	v, _ := s.coeClient.GetCoeVersion()
 	switch s.coeClient.GetCoeType() {
-	case coe.DockerType:
+	case orchestrator.DockerType:
 		s.data.DockerVersion = v
-	case coe.KubernetesType:
+	case orchestrator.KubernetesType:
 		s.data.KubernetesVersion = v
 	}
 	return nil

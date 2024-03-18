@@ -1,16 +1,16 @@
 package nuvlaedge
 
-import "nuvlaedge-go/nuvlaedge/coe"
+import "nuvlaedge-go/nuvlaedge/orchestrator"
 
 type SystemManager struct {
 	settings *SystemManagerSettings
 
-	coeClient coe.Coe
+	coeClient orchestrator.Coe
 
 	nuvlaEdgeComponents []map[string]interface{}
 }
 
-func NewSystemManager(settings *SystemManagerSettings, coeClient coe.Coe) *SystemManager {
+func NewSystemManager(settings *SystemManagerSettings, coeClient orchestrator.Coe) *SystemManager {
 	return &SystemManager{
 		settings:  settings,
 		coeClient: coeClient,

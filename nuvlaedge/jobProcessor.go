@@ -7,17 +7,18 @@ type Job struct {
 
 type JobProcessor struct {
 	runningJobs []string
-	jobChan     chan []string // Job channel. Receives job IDs from the agent
-	exitChan    chan bool     // Exit channel. Receives exit signal from the agent
+	jobChan     chan string // Job channel. Receives job IDs from the agent
+	exitChan    chan bool   // Exit channel. Receives exit signal from the agent
 }
 
-func NewJobProcessor(jobChan chan []string) *JobProcessor {
+func NewJobProcessor(jobChan chan string) *JobProcessor {
 	return &JobProcessor{
 		jobChan: jobChan,
 	}
 }
 
 func (p *JobProcessor) Start() error {
+	log.Infof("Nothing to start in the job processor, passing...")
 	return nil
 }
 
@@ -26,20 +27,24 @@ func (p *JobProcessor) Stop() error {
 }
 
 func (p *JobProcessor) Run() error {
-	for {
-		select {
-		case jobs := <-p.jobChan:
-			for _, j := range jobs {
-				go p.processJob(j)
+	log.Infof("Running Job Engine")
+	go func() {
+		for {
+			select {
+			case job := <-p.jobChan:
+				go p.processJob(job)
+			case <-p.exitChan:
+				log.Warn("Job Processor received exit signal")
+				return
 			}
-		case <-p.exitChan:
-			return nil
 		}
-	}
+	}()
+	return nil
 }
 
 func (p *JobProcessor) processJob(j string) {
 	log.Infof("Job Processor starting new job with id %s", j)
+
 }
 
 func (p *JobProcessor) stopJob(j string) {

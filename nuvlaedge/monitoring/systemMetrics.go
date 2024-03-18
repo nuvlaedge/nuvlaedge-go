@@ -22,7 +22,6 @@ type CpuMetrics struct {
 	//Interrupts         int64   `json:"interrupts"`
 	Topic string `json:"topic"`
 	//SoftwareInterrupts int64   `json:"software-interrupts"`
-	RawSample string `json:"raw-sample"`
 	//ContextSwitches    int64   `json:"context-switches"`
 
 	cpuUsageAccumulator *common.CircularBuffer
@@ -113,10 +112,9 @@ func (c *CpuMetrics) Update() error {
 }
 
 type RamMetrics struct {
-	Used      uint64 `json:"used"`
-	Capacity  uint64 `json:"capacity"`
-	Topic     string `json:"topic"`
-	RawSample string `json:"raw-sample"`
+	Used     uint64 `json:"used"`
+	Capacity uint64 `json:"capacity"`
+	Topic    string `json:"topic"`
 }
 
 func NewRamMetrics() *RamMetrics {
@@ -137,11 +135,10 @@ func (r *RamMetrics) Update() error {
 }
 
 type DiskMetrics struct {
-	Topic     string `json:"topic"`
-	RawSample string `json:"raw-sample"`
-	Device    string `json:"device"`
-	Used      uint64 `json:"used"`
-	Capacity  uint64 `json:"capacity"`
+	Topic    string `json:"topic"`
+	Device   string `json:"device"`
+	Used     uint64 `json:"used"`
+	Capacity uint64 `json:"capacity"`
 }
 
 func gatherDiskMetrics() ([]DiskMetrics, error) {
@@ -153,7 +150,7 @@ func gatherDiskMetrics() ([]DiskMetrics, error) {
 	var diskArr []DiskMetrics
 	for _, partition := range partitions {
 		if !strings.HasPrefix(partition.Device, "/dev/") {
-			log.Infof("Skipping partition %s", partition.Device)
+			log.Debugf("Skipping partition %s", partition.Device)
 			continue
 		}
 		log.Debugf("Getting disk metrics for %s", partition.Device)
@@ -180,7 +177,7 @@ type ResourceMetrics struct {
 	Cpu            *CpuMetrics     `json:"cpu,omitempty"`
 	Ram            *RamMetrics     `json:"ram,omitempty"`
 	Disks          []DiskMetrics   `json:"disks,omitempty"`
-	NetStats       []IfaceNetStats `json:"netStats,omitempty"`
+	NetStats       []IfaceNetStats `json:"net-stats,omitempty"`
 
 	networkInfo *NetworkMetricsUpdater
 }

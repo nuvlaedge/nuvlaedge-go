@@ -1,10 +1,12 @@
 package nuvlaedge
 
 import (
+	"fmt"
 	"github.com/BurntSushi/toml"
 	"github.com/caarlos0/env/v10"
 	"nuvlaedge-go/nuvlaedge/common"
 	"os"
+	"reflect"
 )
 
 type NuvlaEdgeSettings struct {
@@ -16,6 +18,9 @@ type NuvlaEdgeSettings struct {
 
 	// Higher logging levels
 	Logging LoggingSettings `toml:"logging"`
+
+	// NuvlaEdge Database Location
+	DataLocation string `toml:"data-location" env:"DATA_LOCATION"`
 }
 
 type LoggingSettings struct {
@@ -81,13 +86,15 @@ type AgentSettings struct {
 	// nuvla endpoint definition
 	NuvlaEndpoint string `toml:"nuvla-endpoint" env:"NUVLA_ENDPOINT"`
 	NuvlaInsecure bool   `toml:"nuvla-insecure" env:"NUVLA_INSECURE"`
+
 	// nuvlaedge resource id and (optional) credentials
 	NuvlaEdgeUUID string `toml:"nuvlaedge-uuid" env:"NUVLAEDGE_UUID"`
 	ApiKey        string `toml:"api-key" env:"API_KEY"`
 	ApiSecret     string `toml:"api-secret" env:"API_SECRET"`
+
 	// NuvlaEdge main actions periods
 	HeartbeatPeriod int `toml:"heartbeat-period" env:"HEARTBEAT_PERIOD"`
-	TelemetryPeriod int `toml:"monitoring-period" env:"TELEMETRY_PERIOD"`
+	TelemetryPeriod int `toml:"telemetry-period" env:"TELEMETRY_PERIOD"`
 
 	// Commissioner settings
 	Commissioner struct {
@@ -97,7 +104,7 @@ type AgentSettings struct {
 	// NuvlaEdge Telemetry settings
 	Telemetry struct {
 		Period int `toml:"period" env:"TELEMETRY_PERIOD"`
-	} `toml:"monitoring"`
+	} `toml:"telemetry"`
 
 	// HostConfiguration settings
 	HostConfiguration struct {
@@ -109,6 +116,16 @@ type AgentSettings struct {
 		Enabled     bool   `toml:"enabled" env:"VPN_ENABLED"`
 		ExtraConfig string `toml:"extra-config" env:"VPN_EXTRA_CONFIG"`
 	} `toml:"vpn"`
+}
+
+func (a *AgentSettings) String() string {
+
+	s := "\n"
+	v := reflect.ValueOf(a).Elem()
+	for i := 0; i < v.NumField(); i++ {
+		s += fmt.Sprintf("%s: %v\n", v.Type().Field(i).Name, v.Field(i))
+	}
+	return s
 }
 
 func NewNuvlaEdgeSettings() *NuvlaEdgeSettings {

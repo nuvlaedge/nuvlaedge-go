@@ -1,9 +1,10 @@
 package nuvlaedge
 
 import (
-	"nuvlaedge-go/nuvlaedge/coe"
+	"encoding/json"
 	"nuvlaedge-go/nuvlaedge/common/resources"
 	"nuvlaedge-go/nuvlaedge/monitoring"
+	"nuvlaedge-go/nuvlaedge/orchestrator"
 )
 
 type Telemetry struct {
@@ -11,7 +12,7 @@ type Telemetry struct {
 	metricsMonitor      *monitoring.MetricsMonitor
 }
 
-func NewTelemetry(coeClient coe.Coe, updatePeriod int) *Telemetry {
+func NewTelemetry(coeClient orchestrator.Coe, updatePeriod int) *Telemetry {
 	metricsMonitor := monitoring.NewMetricsMonitor(coeClient, updatePeriod)
 
 	return &Telemetry{
@@ -20,7 +21,7 @@ func NewTelemetry(coeClient coe.Coe, updatePeriod int) *Telemetry {
 }
 
 func (t *Telemetry) Start() error {
-	t.metricsMonitor.Run()
+	go t.metricsMonitor.Run()
 	return nil
 }
 
@@ -33,13 +34,20 @@ func (t *Telemetry) GetMapFromFields(fields []string) map[string]interface{} {
 }
 
 // GetStatusToSend returns the status to send to Nuvla in the form of a map and a list of fields to delete
-func (t *Telemetry) GetStatusToSend() (map[string]interface{}, []string) {
+func (t *Telemetry) GetStatusToSend() (map[string]interface{}, error) {
 	newStatus := &resources.NuvlaEdgeStatus{}
 	err := t.metricsMonitor.GetNewFullStatus(newStatus)
 	if err != nil {
 		log.Warn("Error getting new full status from MetricsMonitor")
-		return nil, nil
+		return nil, err
+	}
+	b, err := json.Marshal(newStatus)
+	if err != nil {
+		log.Warn("Error marshaling new status")
+		return nil, err
 	}
 
-	return nil, nil
+	var ret map[string]interface{}
+	err = json.Unmarshal(b, &ret)
+	return ret, err
 }

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"github.com/shirou/gopsutil/v3/host"
 	"github.com/sirupsen/logrus"
-	"nuvlaedge-go/nuvlaedge/coe"
 	"nuvlaedge-go/nuvlaedge/common"
 	"nuvlaedge-go/nuvlaedge/common/resources"
+	"nuvlaedge-go/nuvlaedge/orchestrator"
 	"os"
 	"reflect"
 	"runtime"
@@ -33,7 +33,7 @@ type MetricsMonitor struct {
 	updateFuncs map[string]UpdaterFunction
 
 	// Metric reading updaters
-	coeClient               coe.Coe // Interfaces need no pointer
+	coeClient               orchestrator.Coe // Interfaces need no pointer
 	resourcesMetricsUpdater *ResourceMetricsUpdater
 	networkMetricsUpdater   *NetworkMetricsUpdater
 
@@ -46,7 +46,7 @@ type MetricsMonitor struct {
 }
 
 func NewMetricsMonitor(
-	coeClient coe.Coe,
+	coeClient orchestrator.Coe,
 	refreshRate int) *MetricsMonitor {
 
 	networkUpdater := NewNetworkMetricsUpdater()
@@ -57,6 +57,7 @@ func NewMetricsMonitor(
 		resourcesMetricsUpdater: NewResourceMetricsUpdater(networkUpdater),
 		networkMetricsUpdater:   networkUpdater,
 		refreshRate:             refreshRate,
+		updateMutex:             &sync.Mutex{},
 	}
 	val := reflect.ValueOf(*t.nuvlaEdgeStatus)
 	log.Infof("Number of fields: %d", val.NumField())
@@ -99,7 +100,7 @@ func (t *MetricsMonitor) GetNewFullStatus(status *resources.NuvlaEdgeStatus) err
 }
 
 func (t *MetricsMonitor) update() error {
-	log.Infof("Updating monitoring data")
+	log.Debug("Updating monitoring data")
 	defer common.ExecutionTime(time.Now(), "Updating monitoring data")
 	var wg sync.WaitGroup
 	errChan := make(chan error)
@@ -139,14 +140,15 @@ func (t *MetricsMonitor) Run() {
 		t.updateMutex.Lock()
 		t.nuvlaEdgeStatus = &resources.NuvlaEdgeStatus{}
 		// Try updating all the monitoring data
-		err := t.update()
-
-		if err != nil {
+		if err := t.update(); err != nil {
 			log.Errorf("error %s updating monitoring data", err)
 		}
+
 		// Release the mutex for the nuvlaEdgeStatus
 		t.updateMutex.Unlock()
-		err = common.WaitPeriodicAction(startTime, t.refreshRate, "MetricsMonitor Update")
+		if err := common.WaitPeriodicAction(startTime, t.refreshRate, "MetricsMonitor Update"); err != nil {
+			log.Errorf("Error waiting for periodic action: %s", err)
+		}
 	}
 }
 
@@ -159,7 +161,7 @@ func (t *MetricsMonitor) SetRefreshRate(newRate int) {
 }
 
 func (t *MetricsMonitor) UpdaterOrchestrator(errChan chan<- error) {
-	log.Infof("Updating orchestrator")
+	log.Debug("Updating orchestrator")
 	t.nuvlaEdgeStatus.Orchestrator = string(t.coeClient.GetCoeType())
 
 	errChan <- nil
@@ -167,7 +169,7 @@ func (t *MetricsMonitor) UpdaterOrchestrator(errChan chan<- error) {
 }
 
 func (t *MetricsMonitor) UpdaterNodeId(errChan chan<- error) {
-	log.Infof("Updating node id")
+	log.Debugln("Updating node id")
 	clusterData, err := t.coeClient.GetClusterData()
 	if err != nil {
 		errChan <- err
@@ -178,7 +180,7 @@ func (t *MetricsMonitor) UpdaterNodeId(errChan chan<- error) {
 }
 
 func (t *MetricsMonitor) UpdaterClusterId(errChan chan<- error) {
-	log.Infof("Updating cluster id")
+	log.Debugln("Updating cluster id")
 	clusterData, err := t.coeClient.GetClusterData()
 	if err != nil {
 		errChan <- err
@@ -189,7 +191,7 @@ func (t *MetricsMonitor) UpdaterClusterId(errChan chan<- error) {
 }
 
 func (t *MetricsMonitor) UpdaterClusterManagers(errChan chan<- error) {
-	log.Infof("Updating cluster managers")
+	log.Debugln("Updating cluster managers")
 	clusterData, err := t.coeClient.GetClusterData()
 	if err != nil {
 		errChan <- err
@@ -324,6 +326,7 @@ func (t *MetricsMonitor) UpdaterCurrentTime(errChan chan<- error) {
 }
 
 func (t *MetricsMonitor) UpdaterNuvlaEdgeEngineVersion(errChan chan<- error) {
+	t.nuvlaEdgeStatus.NuvlaEdgeEngineVersion = "3.0.0rc1"
 	errChan <- nil
 }
 
@@ -366,7 +369,8 @@ func (t *MetricsMonitor) UpdaterResources(errChan chan<- error) {
 		errChan <- err
 		return
 	}
-	log.Infof("Metrics: %s", metrics)
+	pMetrics, _ := json.MarshalIndent(metrics, "", "    ")
+	log.Debugf("Last metrics update: %s", string(pMetrics))
 	t.nuvlaEdgeStatus.Resources = metrics
 	errChan <- nil
 }

@@ -1,86 +1,56 @@
-# NuvlaEdge configuration file
-#
-#
-# This file contains the configuration options for NuvlaEdge. The configuration file is in TOML format.
-# The indentation in this file is for readability only. It is not required.
-#
-#
-# This file can be loaded into NuvlaEdge using the `--config` flag or by placing it in the default location
-# `/etc/nuvlaedge/config.toml`. The default location can be overridden by setting the `NUVLAEDGE_CONFIG` environment variable.
-#
-# The priority of the configuration options is as follows:
-# 1. Default values
-# 2. Configuration file
-# 3. Environment variables
-# 4. Command line flags
-# Meaning if an option is set in the configuration file, it will override the default value, but can be overridden by an environment variable or a command line flag.
-#
-# In the first run of the NuvlaEdge, there is a single compulsory field in the configuration pipeline, NuvlaEdge UUID.
-# This can be set in the configuration file, environment variable or command line flag.
-# In the subsequent runs, the NuvlaEdge UUID and the required configuration are stored in a freeze file which then can
-# be used to start NuvlaEdge without the need to provide the UUID and the configuration.
+data-location = "/var/lib/nuvlaedge"
+config-location = "/etc/nuvlaedge"
 
 [logging]
-    debug = false
-    level = "info"
-    log-path = "/var/log/nuvlaedge"
-    log-file = "nuvlaedge.log"
-    log-max-size = 100
-    log-max-backups = 3
-
+debug = true
+level = "debug"
+log-path = "/var/log/nuvlaedge"
+log-file = "nuvlaedge.log"
+log-max-size = 100
+log-max-backups = 3
 
 [agent]
-    nuvlaedge-uuid = ""
-    nuvla-endpoint = "nuvla.io"
-    nuvla-insecure = false
-    # NuvlaOpeartions periods
-    telemetry-period = 60
-    heartbeat-period = 20
-    api-key = ""
-    api-secret = ""
-    # Logging
-    log-level = "info"
-    log-to-file = true
+nuvlaedge-uuid = "nuvlabox/4519d5fa-c175-46f6-ae7b-c6551212a000"
+nuvla-endpoint = "https://nuvla.io"
+nuvla-insecure = false
+telemetry-period = 60
+heartbeat-period = 20
+api-key = ""
+api-secret = ""
+log-level = "debug"
+log-to-file = true
 
-    [agent.commissioner]
-        period = 60
-        # Logging
-        log-level = "info"
-        log-to-file = true
-
-    [agent.telemetry]
-        period = 60
-        # Logging
-        log-level = "info"
-        log-to-file = true
-
-    [agent.vpn]
-        period = 60
-        enabled = true
-        interface-name = "vpn0"
-        extra-config = ""
-        # Logging
-        log-level = "info"
-        log-to-file = true
-
-
-# System Manager configuration. Mainly used for creation/deletion of NuvlaEdge containers
 [system-manager]
-    vpn-enabled = true
-    mqtt-enabled = true
-    # Logging
-    log-level = "info"
-    log-to-file = true
+vpn-enabled = true
+mqtt-enabled = true
+log-level = "info"
+log-to-file = true
 
-    [system-manager.mqtt]
-        port = 1883
-        host = "localhost"
+[agent.commissioner]
+period = 60
+log-level = "info"
+log-to-file = true
 
-    [system-manager.system-requirements]
-        cpu = 0.5
-        memory = 512
-        disk = 5
-        docker-version = ">=1.13.1"
-        k8s-version = ">=1.10.0"
+[agent.telemetry]
+period = 60
+log-level = "info"
+log-to-file = true
 
+[agent.vpn]
+period = 60
+enabled = true
+interface-name = "vpn0"
+extra-config = ""
+log-level = "info"
+log-to-file = true
 
+[system-manager.mqtt]
+port = 1883
+host = "localhost"
+
+[system-manager.system-requirements]
+cpu = 0.5
+memory = 512
+disk = 5
+docker-version = ">=1.13.1"
+k8s-version = ">=1.10.0"

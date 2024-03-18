@@ -2,36 +2,40 @@ package nuvlaedge
 
 import (
 	"github.com/sirupsen/logrus"
-	"nuvlaedge-go/nuvlaedge/coe"
+	"nuvlaedge-go/nuvlaedge/orchestrator"
 	"os"
+	"time"
 )
 
 var log = logrus.New()
 
 type NuvlaEdge struct {
-	coe           coe.Coe            // coe: Orchestration engine to control deployments
+	coe           orchestrator.Coe   // coe: Orchestration engine to control deployments
 	settings      *NuvlaEdgeSettings // settings:
 	agent         *Agent             // Agent: Nuvla-NuvlaEdge interface manager
 	systemManager *SystemManager     // systemManager: Manages the local system
-	jobProcessor  *JobProcessor      // jobProcessor: Read and execute jobs coming from Nuvla
+	jobProcessor  *JobProcessor      // jobProcessor: Read and execute actions coming from Nuvla
 	telemetry     *Telemetry         // telemetry: Reads the local telemetry and exposes it. We provide two options, local NuvlaEdge telemetry or Prometheus exporter.
 }
 
 func NewNuvlaEdge(settings *NuvlaEdgeSettings) *NuvlaEdge {
-	coeClient, err := coe.NewCoe(coe.DockerType)
+	coeClient, err := orchestrator.NewCoe(orchestrator.DockerType)
 	if err != nil {
 		log.Errorf("Error creating COE client: %s", err)
 	}
 
 	// MetricsMonitor
+	log.Infof("Creating MetricsMonitor with period %d", settings.Agent.TelemetryPeriod)
+
 	telemetry := NewTelemetry(coeClient, settings.Agent.TelemetryPeriod)
 
 	// jobChan: Agent -> JobProcessor
-	jobChan := make(chan []string, 10)
+	jobChan := make(chan string, 10)
 
 	return &NuvlaEdge{
-		agent:         NewAgent(&settings.Agent, coeClient, telemetry, jobChan),
 		coe:           coeClient,
+		settings:      settings,
+		agent:         NewAgent(&settings.Agent, coeClient, telemetry, jobChan),
 		systemManager: NewSystemManager(&settings.SystemManager, coeClient),
 		jobProcessor:  NewJobProcessor(jobChan),
 		telemetry:     telemetry,
@@ -42,7 +46,7 @@ func NewNuvlaEdge(settings *NuvlaEdgeSettings) *NuvlaEdge {
 // Requirements check: Checks if the local system meets the requirements to run NuvlaEdge
 // Agent: Initialises the agent, reads the local storage for previous installations of NuvlaEdge and acts accordingly
 // SystemManager: Initialises the local system based on the settings
-// JobProcessor: Reads the local storage for dangling jobs/deployments
+// JobProcessor: Reads the local storage for dangling actions/deployments
 // Telemetry: Starts the telemetry collection right away
 func (ne *NuvlaEdge) Start() error {
 	// Run requirements check
@@ -87,7 +91,10 @@ func (ne *NuvlaEdge) Start() error {
 }
 
 func (ne *NuvlaEdge) Run() (os.Signal, error) {
+	log.Infof("Running NuvlaEdge...")
+	_ = ne.agent.Run()
+	_ = ne.jobProcessor.Run()
 	for {
-		select {}
+		time.Sleep(1 * time.Second)
 	}
 }

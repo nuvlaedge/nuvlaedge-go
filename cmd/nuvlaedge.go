@@ -2,21 +2,34 @@ package main
 
 import (
 	"fmt"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
+	"net/http"
+	_ "net/http/pprof"
 	"nuvlaedge-go/nuvlaedge"
 	"os"
 	"os/signal"
+	"runtime"
+	"strings"
 	"syscall"
 )
 
-func main() {
+var log *logrus.Logger
 
+func startProfieler() {
+	go func() {
+		http.ListenAndServe("localhost:8080", nil)
+	}()
+}
+
+func main() {
+	startProfieler()
 	// Initialise settings
 	nuvlaEdgeSettings := getNuvlaEdgeSettings()
 
 	// Initialise logging
 	initializeLogging(&nuvlaEdgeSettings.Logging)
 
+	log.Infof("Agent settings: %s", nuvlaEdgeSettings.Agent.String())
 	log.Debugf("Checking NuvlAedge minimum settings...")
 	missingSettings, err := areMinimumSettingsPresent(nuvlaEdgeSettings)
 	if err != nil {
@@ -30,21 +43,21 @@ func main() {
 	nuvlaEdge := nuvlaedge.NewNuvlaEdge(nuvlaEdgeSettings)
 
 	// Initialize NuvlaEdge
-	log.Debug("Initializing NuvlaEdge...")
+	log.Info("Initializing NuvlaEdge...")
 	err = nuvlaEdge.Start()
 	if err != nil {
 		log.Error("Initializing NuvlaEdge... Failed. Exiting.")
 		log.Panic(err)
 		return
 	}
-	log.Debug("Initializing NuvlaEdge... Success.")
+	log.Info("Initializing NuvlaEdge... Success.")
 
 	// Handle signaling to graciously exit NuvlaEdge
 	exitSignal := make(chan os.Signal, 1)
 	signal.Notify(exitSignal, syscall.SIGINT, syscall.SIGTERM)
 
 	// Run NuvlaEdge loop
-	log.Debug("Running NuvlaEdge...")
+	log.Info("Running NuvlaEdge...")
 	_, err = nuvlaEdge.Run()
 	// This point should only be reached if a signal is received
 	if err != nil {
@@ -57,10 +70,24 @@ func main() {
 
 func initializeLogging(loggingSettings *nuvlaedge.LoggingSettings) {
 	if loggingSettings.Debug {
-		log.SetLevel(log.DebugLevel)
+		logrus.SetLevel(logrus.DebugLevel)
 	}
-	log.SetFormatter(&log.TextFormatter{})
-	log.SetOutput(os.Stdout)
+	logrus.SetReportCaller(true)
+	logrus.SetFormatter(&logrus.TextFormatter{
+		FullTimestamp:          true,
+		TimestampFormat:        "02-01-2006 15:04:05",
+		DisableLevelTruncation: true,
+		CallerPrettyfier: func(f *runtime.Frame) (string, string) {
+			return "", fmt.Sprintf("%s:%d", formatFilePath(f.File), f.Line)
+		},
+	})
+	logrus.SetOutput(os.Stdout)
+	log = logrus.New()
+}
+
+func formatFilePath(filePath string) string {
+	arr := strings.Split(filePath, "/")
+	return arr[len(arr)-1]
 }
 
 // getNuvlaEdgeSettings returns new NuvlaEdgeSettings.

@@ -1,13 +1,16 @@
 package nuvlaedge
 
 import (
+	"encoding/json"
+	nuvla "github.com/nuvla/api-client-go"
+	"github.com/nuvla/api-client-go/clients"
+	"github.com/nuvla/api-client-go/types"
+	"io"
+	"net/http"
 	"nuvlaedge-go/nuvlaedge/agent"
-	"nuvlaedge-go/nuvlaedge/coe"
 	"nuvlaedge-go/nuvlaedge/common"
 	"nuvlaedge-go/nuvlaedge/common/resources"
-	"nuvlaedge-go/nuvlaedge/nuvlaClient"
-	"reflect"
-
+	"nuvlaedge-go/nuvlaedge/orchestrator"
 	"time"
 )
 
@@ -19,8 +22,8 @@ const (
 type Agent struct {
 	settings *AgentSettings
 
-	client       *nuvlaClient.NuvlaEdgeClient // client: Http client library to interact with Nuvla
-	coeClient    coe.Coe
+	client       *clients.NuvlaEdgeClient // client: Http client library to interact with Nuvla
+	coeClient    orchestrator.Coe
 	telemetry    *Telemetry
 	commissioner *agent.Commissioner
 
@@ -31,14 +34,29 @@ type Agent struct {
 
 	// Channels
 	exitChan chan bool
-	jobChan  chan []string
+	jobChan  chan string
+}
+
+func NewNuvlaEdgeClientFromSettings(settings *AgentSettings) *clients.NuvlaEdgeClient {
+	var credentials *types.ApiKeyLogInParams
+	if settings.ApiKey != "" && settings.ApiSecret != "" {
+		credentials = types.NewApiKeyLogInParams(settings.ApiKey, settings.ApiSecret)
+	}
+	log.Infof("Creating NuvlaEdge client with options: %v", settings)
+	client := clients.NewNuvlaEdgeClient(
+		types.NewNuvlaIDFromId(settings.NuvlaEdgeUUID),
+		credentials,
+		nuvla.WithEndpoint(settings.NuvlaEndpoint),
+		nuvla.WithInsecureSession(settings.NuvlaInsecure))
+
+	return client
 }
 
 func NewAgent(
 	settings *AgentSettings,
-	coeClient coe.Coe,
+	coeClient orchestrator.Coe,
 	telemetry *Telemetry,
-	jobChan chan []string) *Agent {
+	jobChan chan string) *Agent {
 
 	// Set default values
 	return &Agent{
@@ -51,121 +69,159 @@ func NewAgent(
 
 /* ------------------  NuvlaEdge worker Interface implementation ------------------------------- */
 
-// Start runs the initial setup of the agent.
-// Check if there is a nuvlaedge already installed in the system
-// Synchronizes resources from Nuvla: nuvlabox, nuvlabox-status, vpn-credential, etc
-// It also runs the commissioner start process which will retrieve the information of the local system beforehand
 func (a *Agent) Start() error {
-	log.Infof("Running Agent starting process")
+	// Start the Agent
+	// Find
+	// TODO: Write a default function to generate Client opts from NuvlaEdge settings
+	a.client = NewNuvlaEdgeClientFromSettings(a.settings)
 
-	// 1. Check Previous installation
-	params, err := agent.FindPreviousInstallation(a.settings.ConfPath, a.settings.NuvlaEdgeUUID)
+	err := a.client.Activate()
 	if err != nil {
-		log.Infof("Error finding previous installation: %s", err)
+		log.Errorf("Error activating client: %s", err)
+		return err
+	}
+	log.Debugf("Client activated... Success.")
+
+	// Log in with the activation credentials
+	err = a.client.LogIn()
+	if err != nil {
+		log.Panicf("Error logging in with activation credentials: %s", err)
 	}
 
-	if params == nil {
-		log.Infof("No previous installation found")
-	} else {
-		log.Infof("Found previous installation with uuid: %s", a.settings.NuvlaEdgeUUID)
+	err = a.client.GetResource(nil)
+	if err != nil {
+		log.Errorf("Error getting NuvlaEdge resource: %s", err)
+		return err
 	}
-	a.client = nuvlaClient.NewNuvlaEdgeClient(a.settings.NuvlaEdgeUUID, a.settings.NuvlaEndpoint, a.settings.NuvlaInsecure)
-	// 2. Try retrieving NuvlaEdge status from Nuvla
-	// 3. Base on the state execute the activation or commission process
+
+	// Create commissioner
+	log.Infof("Creating commissioner...")
+	a.commissioner = agent.NewCommissioner(a.client, a.coeClient)
+	log.Infof("Creating commissioner... Success.")
+	return nil
+}
+
+func (a *Agent) sendHeartBeat() error {
+	// Send heartbeat to Nuvla
+	log.Infof("Sending heartbeat...")
+	res, err := a.client.Heartbeat()
+	if err != nil {
+		log.Infof("Error sending heartbeat: %s", err)
+		return err
+	}
+
+	err = a.processResponseWithJobs(res, "heartbeat")
+	if err != nil {
+		log.Errorf("Error processing heartbeat response: %s", err)
+		return nil
+	}
+
+	return nil
+}
+
+func (a *Agent) sendTelemetry() error {
+	// Run the Agent
+	log.Infof("Preparing telemetry...")
+	status, err := a.telemetry.GetStatusToSend()
+	if err != nil {
+		log.Errorf("Error getting status to send: %s", err)
+		return err
+	}
+	log.Infof("Preparing telemetry... Success.")
+	log.Infof("Sending telemetry...")
+	common.CleanMap(status)
+	cleant, _ := json.MarshalIndent(status, "", "  ")
+	log.Infof("Telemetry data: %s", string(cleant))
+	res, err := a.client.Telemetry(status, nil)
+	if err != nil {
+		log.Errorf("Error sending telemetry: %s", err)
+		return err
+	}
+	log.Infof("Sending telemetry... Success.")
+	err = a.processResponseWithJobs(res, "telemetry")
+	if err != nil {
+		log.Errorf("Error processing telemetry response: %s", err)
+	}
+	return nil
+}
+
+func (a *Agent) processResponseWithJobs(res *http.Response, action string) error {
+	log.Infof("Processing response with jobs...")
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		log.Errorf("Error reading response body: %s", err)
+		return err
+	}
+
+	defer res.Body.Close()
+
+	var sample struct {
+		Message string   `json:"message"`
+		Jobs    []string `json:"jobs"`
+	}
+	err = json.Unmarshal(body, &sample)
+	if err != nil {
+		log.Errorf("Error unmarshaling response body: %s", err)
+		return err
+	}
+
+	bytes, _ := json.MarshalIndent(sample, "", "  ")
+	log.Infof("Processing response from %s: %s", action, string(bytes))
+
+	if sample.Jobs != nil && len(sample.Jobs) > 0 {
+		log.Infof("Jobs received: %v", sample.Jobs)
+		for _, job := range sample.Jobs {
+			log.Infof("Sending job %s to job channel", job)
+			a.jobChan <- job
+		}
+	}
+
+	if sample.Message != "" {
+		log.Infof("Message received: %s", sample.Message)
+	}
+
 	return nil
 }
 
 func (a *Agent) Stop() error {
+	// Stop the Agent
 	return nil
 }
 
 func (a *Agent) Run() error {
-	log.Infof("Starting Agent main loop")
-	go a.runHeartBeat()
-	go a.runTelemetry()
-	return nil
-}
+	// Start workers
+	go a.commissioner.Run()
 
-func (a *Agent) activate() {
-	log.Infof("Running Agent activation process")
-}
+	// Create ticker for sendHeartBeat function
+	heartbeatTicker := time.NewTicker(time.Second * DefaultHeartbeatPeriod)
+	defer heartbeatTicker.Stop()
 
-func (a *Agent) commission() {
-	log.Infof("Running Agent commission process")
-}
+	// Create ticker for sendTelemetry function
+	telemetryTicker := time.NewTicker(time.Second * DefaultTelemetryPeriod)
+	defer telemetryTicker.Stop()
 
-func (a *Agent) runHeartBeat() {
+	// Updater ticker
+	updaterTicker := time.NewTicker(time.Second * 60)
+	defer updaterTicker.Stop()
 	for {
-		startTime := time.Now()
-
-		jobs, err := a.client.HeartBeat()
-		if err != nil {
-			log.Warnf("Error sending heartbeat: %s", err)
-			// Wait for the next heartbeat
-			err = common.WaitPeriodicAction(startTime, a.heartBeatPeriod, "Heartbeat Loop")
+		select {
+		case <-heartbeatTicker.C:
+			err := a.sendHeartBeat()
 			if err != nil {
-				log.Errorf("Error waiting for heartbeat: %s", err)
+				log.Errorf("Error sending heartbeat: %s", err)
 			}
-			continue
-		}
-
-		if len(jobs) > 0 {
-			a.jobChan <- jobs
-		}
-		// Wait for the next heartbeat
-		err = common.WaitPeriodicAction(startTime, a.heartBeatPeriod, "Heartbeat Loop")
-		if err != nil {
-			log.Errorf("Error waiting for heartbeat: %s", err)
+		case <-telemetryTicker.C:
+			err := a.sendTelemetry()
+			if err != nil {
+				log.Errorf("Error sending telemetry: %s", err)
+			}
+		case <-a.exitChan:
+			log.Infof("Exiting agent...")
 		}
 	}
 }
 
-// Function that takes a pointer to NuvlaEdge status and compares it with the local NuvlaEdgeStatus.
-// It returns two slices, one contains the fields that have changes from the local status and the other and
-// the fields that are no longer present in the parsed status.
-func (a *Agent) compareNuvlaEdgeStatus(newNuvlaEdgeStatus *resources.NuvlaEdgeStatus) ([]string, []string) {
-	v1 := reflect.ValueOf(a.sentNuvlaEdgeStatus).Elem()
-	v2 := reflect.ValueOf(newNuvlaEdgeStatus).Elem()
-	changedFields := make([]string, 0)
-	removedFields := make([]string, 0)
-
-	for i := 0; i < v1.NumField(); i++ {
-		fieldName := v1.Type().Field(i).Name
-		value1 := v1.Field(i).Interface()
-		value2 := v2.FieldByName(fieldName).Interface()
-
-		if value2 != value1 {
-			changedFields = append(changedFields, fieldName)
-		}
-	}
-
-	for i := 0; i < v1.NumField(); i++ {
-		fieldName := v1.Type().Field(i).Name
-		_, ok := v2.Type().FieldByName(fieldName)
-
-		if !ok {
-			removedFields = append(removedFields, fieldName)
-		}
-	}
-	return changedFields, removedFields
-}
-
-func (a *Agent) runTelemetry() {
-	for {
-		startTime := time.Now()
-
-		status, toDelete := a.telemetry.GetStatusToSend()
-		if status == nil {
-			return
-		}
-		jobs, err := a.client.Telemetry(status, toDelete)
-		if len(jobs) > 0 {
-			a.jobChan <- jobs
-		}
-
-		err = common.WaitPeriodicAction(startTime, a.telemetryPeriod, "MetricsMonitor Loop")
-		if err != nil {
-			panic(err)
-		}
-	}
+func (a *Agent) IsRunning() bool {
+	// Check if the Agent is running
+	return true
 }
