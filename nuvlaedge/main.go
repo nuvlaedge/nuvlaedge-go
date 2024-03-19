@@ -1,5 +1,0 @@
-package nuvlaedge
-
-func main() {
-
-}

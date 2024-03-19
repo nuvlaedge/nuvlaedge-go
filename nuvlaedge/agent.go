@@ -5,6 +5,7 @@ import (
 	nuvla "github.com/nuvla/api-client-go"
 	"github.com/nuvla/api-client-go/clients"
 	"github.com/nuvla/api-client-go/types"
+	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
 	"nuvlaedge-go/nuvlaedge/agent"
@@ -88,7 +89,7 @@ func (a *Agent) Start() error {
 		log.Panicf("Error logging in with activation credentials: %s", err)
 	}
 
-	err = a.client.GetResource(nil)
+	err = a.client.UpdateResource()
 	if err != nil {
 		log.Errorf("Error getting NuvlaEdge resource: %s", err)
 		return err

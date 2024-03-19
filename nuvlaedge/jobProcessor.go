@@ -1,5 +1,10 @@
 package nuvlaedge
 
+import (
+	nuvla "github.com/nuvla/api-client-go"
+	log "github.com/sirupsen/logrus"
+)
+
 type Job struct {
 	ID          string
 	containerID string
@@ -7,8 +12,9 @@ type Job struct {
 
 type JobProcessor struct {
 	runningJobs []string
-	jobChan     chan string // Job channel. Receives job IDs from the agent
-	exitChan    chan bool   // Exit channel. Receives exit signal from the agent
+	jobChan     chan string         // Job channel. Receives job IDs from the agent
+	exitChan    chan bool           // Exit channel. Receives exit signal from the agent
+	session     *nuvla.NuvlaSession // Nuvla session required in the jobs and deployment clients
 }
 
 func NewJobProcessor(jobChan chan string) *JobProcessor {
@@ -28,6 +34,7 @@ func (p *JobProcessor) Stop() error {
 
 func (p *JobProcessor) Run() error {
 	log.Infof("Running Job Engine")
+
 	go func() {
 		for {
 			select {
@@ -44,7 +51,9 @@ func (p *JobProcessor) Run() error {
 
 func (p *JobProcessor) processJob(j string) {
 	log.Infof("Job Processor starting new job with id %s", j)
+	// 1. Create new job struct with the id received.
 
+	// 2. If the job is correct, add it to the running jobs and start it
 }
 
 func (p *JobProcessor) stopJob(j string) {

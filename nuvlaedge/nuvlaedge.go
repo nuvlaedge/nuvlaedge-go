@@ -1,13 +1,11 @@
 package nuvlaedge
 
 import (
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"nuvlaedge-go/nuvlaedge/orchestrator"
 	"os"
 	"time"
 )
-
-var log = logrus.New()
 
 type NuvlaEdge struct {
 	coe           orchestrator.Coe   // coe: Orchestration engine to control deployments

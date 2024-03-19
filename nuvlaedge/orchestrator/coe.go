@@ -1,11 +1,9 @@
 package orchestrator
 
 import (
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"os"
 )
-
-var log = logrus.New()
 
 type CoeType string
 

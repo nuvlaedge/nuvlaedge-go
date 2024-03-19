@@ -2,6 +2,7 @@ package monitoring
 
 import (
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"nuvlaedge-go/nuvlaedge/common"
 	"nuvlaedge-go/nuvlaedge/orchestrator"
 	"os"

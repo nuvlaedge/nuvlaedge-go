@@ -6,7 +6,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/system"
 	"github.com/docker/docker/client"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"nuvlaedge-go/nuvlaedge/common"
 	"reflect"
 	"sync"
@@ -100,7 +100,7 @@ func NewDockerCoe() *DockerCoe {
 	cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	common.GenericErrorHandler("Error instantiating client", err)
 	ping, _ := cli.Ping(context.Background())
-	log.SetLevel(logrus.DebugLevel)
+
 	log.Infof("Is docker Swarm available?: %s", ping.SwarmStatus.ControlAvailable)
 	return &DockerCoe{
 		coeType: DockerType,

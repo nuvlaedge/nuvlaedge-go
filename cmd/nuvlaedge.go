@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 	_ "net/http/pprof"
 	"nuvlaedge-go/nuvlaedge"
@@ -12,8 +12,6 @@ import (
 	"strings"
 	"syscall"
 )
-
-var log *logrus.Logger
 
 func startProfieler() {
 	go func() {
@@ -70,10 +68,10 @@ func main() {
 
 func initializeLogging(loggingSettings *nuvlaedge.LoggingSettings) {
 	if loggingSettings.Debug {
-		logrus.SetLevel(logrus.DebugLevel)
+		log.SetLevel(log.DebugLevel)
 	}
-	logrus.SetReportCaller(true)
-	logrus.SetFormatter(&logrus.TextFormatter{
+	log.SetReportCaller(true)
+	log.SetFormatter(&log.TextFormatter{
 		FullTimestamp:          true,
 		TimestampFormat:        "02-01-2006 15:04:05",
 		DisableLevelTruncation: true,
@@ -81,8 +79,7 @@ func initializeLogging(loggingSettings *nuvlaedge.LoggingSettings) {
 			return "", fmt.Sprintf("%s:%d", formatFilePath(f.File), f.Line)
 		},
 	})
-	logrus.SetOutput(os.Stdout)
-	log = logrus.New()
+	log.SetOutput(os.Stdout)
 }
 
 func formatFilePath(filePath string) string {

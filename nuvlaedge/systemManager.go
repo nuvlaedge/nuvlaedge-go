@@ -1,6 +1,9 @@
 package nuvlaedge
 
-import "nuvlaedge-go/nuvlaedge/orchestrator"
+import (
+	log "github.com/sirupsen/logrus"
+	"nuvlaedge-go/nuvlaedge/orchestrator"
+)
 
 type SystemManager struct {
 	settings *SystemManagerSettings

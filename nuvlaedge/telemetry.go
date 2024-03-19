@@ -2,6 +2,7 @@ package nuvlaedge
 
 import (
 	"encoding/json"
+	log "github.com/sirupsen/logrus"
 	"nuvlaedge-go/nuvlaedge/common/resources"
 	"nuvlaedge-go/nuvlaedge/monitoring"
 	"nuvlaedge-go/nuvlaedge/orchestrator"

@@ -3,12 +3,10 @@ package common
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"os"
 	"time"
 )
-
-var log = logrus.New()
 
 func GenericErrorHandler(message string, err error) {
 	if err != nil {

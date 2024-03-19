@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/shirou/gopsutil/v3/host"
-	"github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"nuvlaedge-go/nuvlaedge/common"
 	"nuvlaedge-go/nuvlaedge/common/resources"
 	"nuvlaedge-go/nuvlaedge/orchestrator"
@@ -14,8 +14,6 @@ import (
 	"sync"
 	"time"
 )
-
-var log = logrus.New()
 
 type UpdaterFunction func(chan<- error)
 
