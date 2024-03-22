@@ -12,7 +12,7 @@ type NuvlaEdge struct {
 	settings      *NuvlaEdgeSettings // settings:
 	agent         *Agent             // Agent: Nuvla-NuvlaEdge interface manager
 	systemManager *SystemManager     // systemManager: Manages the local system
-	jobProcessor  *JobProcessor      // jobProcessor: Read and execute actions coming from Nuvla
+	jobProcessor  *JobProcessor      // jobProcessor: Read and execute jobEngine coming from Nuvla
 	telemetry     *Telemetry         // telemetry: Reads the local telemetry and exposes it. We provide two options, local NuvlaEdge telemetry or Prometheus exporter.
 }
 
@@ -35,8 +35,9 @@ func NewNuvlaEdge(settings *NuvlaEdgeSettings) *NuvlaEdge {
 		settings:      settings,
 		agent:         NewAgent(&settings.Agent, coeClient, telemetry, jobChan),
 		systemManager: NewSystemManager(&settings.SystemManager, coeClient),
-		jobProcessor:  NewJobProcessor(jobChan),
-		telemetry:     telemetry,
+		// Job engine needs a pointer to Nuvla Client which is created by the agent depending on input settings
+		// and previous installations so we defer the creation of the jobProcessor to the start method
+		telemetry: telemetry,
 	}
 }
 
@@ -44,7 +45,7 @@ func NewNuvlaEdge(settings *NuvlaEdgeSettings) *NuvlaEdge {
 // Requirements check: Checks if the local system meets the requirements to run NuvlaEdge
 // Agent: Initialises the agent, reads the local storage for previous installations of NuvlaEdge and acts accordingly
 // SystemManager: Initialises the local system based on the settings
-// JobProcessor: Reads the local storage for dangling actions/deployments
+// JobProcessor: Reads the local storage for dangling jobEngine/deployments
 // Telemetry: Starts the telemetry collection right away
 func (ne *NuvlaEdge) Start() error {
 	// Run requirements check
@@ -72,6 +73,7 @@ func (ne *NuvlaEdge) Start() error {
 	}
 
 	// Start JobProcessor
+	ne.jobProcessor = NewJobProcessor(ne.agent.jobChan, ne.agent.client.GetNuvlaClient(), ne.coe)
 	err = ne.jobProcessor.Start()
 	if err != nil {
 		log.Errorf("Error starting JobProcessor: %s, cannot continue", err)
@@ -90,7 +92,7 @@ func (ne *NuvlaEdge) Start() error {
 
 func (ne *NuvlaEdge) Run() (os.Signal, error) {
 	log.Infof("Running NuvlaEdge...")
-	_ = ne.agent.Run()
+	go ne.agent.Run()
 	_ = ne.jobProcessor.Run()
 	for {
 		time.Sleep(1 * time.Second)

@@ -1,24 +1,22 @@
-package actions
+package jobEngine
 
 import (
-	"github.com/nuvla/api-client-go/clients"
-	nuvlaTypes "github.com/nuvla/api-client-go/types"
+	nuvla "github.com/nuvla/api-client-go"
 	"nuvlaedge-go/nuvlaedge/orchestrator"
 )
 
 type ActionBaseOptsFunc func(*ActionBaseOpts)
 
 type ActionBaseOpts struct {
-	NuvlaClient *clients.NuvlaEdgeClient
+	NuvlaClient *nuvla.NuvlaClient
 	CoeClient   orchestrator.Coe
-	credentials nuvlaTypes.LogInParams
 }
 
 func DefaultActionBaseOpts() *ActionBaseOpts {
 	return &ActionBaseOpts{}
 }
 
-func WithNuvlaClient(nuvlaClient *clients.NuvlaEdgeClient) ActionBaseOptsFunc {
+func WithNuvlaClient(nuvlaClient *nuvla.NuvlaClient) ActionBaseOptsFunc {
 	return func(opts *ActionBaseOpts) {
 		opts.NuvlaClient = nuvlaClient
 	}
@@ -27,11 +25,5 @@ func WithNuvlaClient(nuvlaClient *clients.NuvlaEdgeClient) ActionBaseOptsFunc {
 func WithCoeClient(coeClient orchestrator.Coe) ActionBaseOptsFunc {
 	return func(opts *ActionBaseOpts) {
 		opts.CoeClient = coeClient
-	}
-}
-
-func WithCredentials(creds nuvlaTypes.LogInParams) ActionBaseOptsFunc {
-	return func(opts *ActionBaseOpts) {
-		opts.credentials = creds
 	}
 }
