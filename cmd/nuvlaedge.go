@@ -7,10 +7,8 @@ import (
 	_ "net/http/pprof"
 	"nuvlaedge-go/nuvlaedge"
 	"os"
-	"os/signal"
 	"runtime"
 	"strings"
-	"syscall"
 )
 
 func startProfieler() {
@@ -51,8 +49,8 @@ func main() {
 	log.Info("Initializing NuvlaEdge... Success.")
 
 	// Handle signaling to graciously exit NuvlaEdge
-	exitSignal := make(chan os.Signal, 1)
-	signal.Notify(exitSignal, syscall.SIGINT, syscall.SIGTERM)
+	//exitSignal := make(chan os.Signal, 1)
+	//signal.Notify(exitSignal, syscall.SIGINT, syscall.SIGTERM)
 
 	// Run NuvlaEdge loop
 	log.Info("Running NuvlaEdge...")

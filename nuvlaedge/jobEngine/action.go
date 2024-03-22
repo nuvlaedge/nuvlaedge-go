@@ -1,14 +1,15 @@
-package actions
+package jobEngine
 
 import (
-	nuvla "github.com/nuvla/api-client-go/clients"
+	nuvla "github.com/nuvla/api-client-go"
+	log "github.com/sirupsen/logrus"
 	"nuvlaedge-go/nuvlaedge/orchestrator"
 )
 
 type ActionType string
 
 const (
-	RebootActionType          ActionType = "reboot"
+	RebootActionType          ActionType = "reboot_nuvlabox"
 	DeploymentStopActionType  ActionType = "deployment-stop"
 	DeploymentStartActionType ActionType = "deployment-start"
 )
@@ -16,15 +17,16 @@ const (
 type Action interface {
 	Execute() error
 	GetActionType() ActionType
-	Init(ActionBaseOpts) error
+	Init(*ActionBaseOpts) error
+	//GetExecutor() ExecutorType
 }
 
 type ActionBase struct {
-	nuvlaClient *nuvla.NuvlaEdgeClient
+	nuvlaClient *nuvla.NuvlaClient
 	coeClient   orchestrator.Coe
 }
 
-func NewActionBase(opts ActionBaseOpts) *ActionBase {
+func NewActionBase(opts *ActionBaseOpts) *ActionBase {
 	return &ActionBase{
 		nuvlaClient: opts.NuvlaClient,
 		coeClient:   opts.CoeClient,
@@ -36,18 +38,28 @@ func NewAction(actionName string, opts ...ActionBaseOptsFunc) Action {
 	for _, fn := range opts {
 		fn(defaultOpts)
 	}
+	var a Action
 
 	switch ActionType(actionName) {
 	case RebootActionType:
-		return &RebootAction{}
+		a = &RebootAction{}
 
 	case DeploymentStopActionType:
-		return &DeploymentStopAction{}
+		a = &DeploymentStopAction{}
 
 	case DeploymentStartActionType:
-		return &DeploymentStartActions{}
+		a = &DeploymentStartActions{}
 
 	default:
 		return nil
 	}
+
+	log.Infof("Initialising action: %s...", actionName)
+	if err := a.Init(defaultOpts); err != nil {
+		log.Errorf("Error creating the new action")
+		return nil
+		// TODO: Maybe here handle an error or customise errors...
+	}
+	log.Infof("Initialising action: %s... Success", actionName)
+	return a
 }

@@ -2,7 +2,11 @@ package nuvlaedge
 
 import (
 	nuvla "github.com/nuvla/api-client-go"
+	"github.com/nuvla/api-client-go/clients"
 	log "github.com/sirupsen/logrus"
+	"nuvlaedge-go/nuvlaedge/jobEngine"
+	"nuvlaedge-go/nuvlaedge/orchestrator"
+	"sync"
 )
 
 type Job struct {
@@ -11,15 +15,18 @@ type Job struct {
 }
 
 type JobProcessor struct {
-	runningJobs []string
-	jobChan     chan string         // Job channel. Receives job IDs from the agent
-	exitChan    chan bool           // Exit channel. Receives exit signal from the agent
-	session     *nuvla.NuvlaSession // Nuvla session required in the jobs and deployment clients
+	runningJobs sync.Map
+	jobChan     chan string        // Job channel. Receives job IDs from the agent
+	exitChan    chan bool          // Exit channel. Receives exit signal from the agent
+	client      *nuvla.NuvlaClient // Nuvla session required in the jobs and deployment clients
+	coe         orchestrator.Coe   // COE client required in the jobs and deployment clients
 }
 
-func NewJobProcessor(jobChan chan string) *JobProcessor {
+func NewJobProcessor(jobChan chan string, client *nuvla.NuvlaClient, coe orchestrator.Coe) *JobProcessor {
 	return &JobProcessor{
 		jobChan: jobChan,
+		client:  client,
+		coe:     coe,
 	}
 }
 
@@ -33,8 +40,7 @@ func (p *JobProcessor) Stop() error {
 }
 
 func (p *JobProcessor) Run() error {
-	log.Infof("Running Job Engine")
-
+	log.Info("Running Job Engine")
 	go func() {
 		for {
 			select {
@@ -51,9 +57,41 @@ func (p *JobProcessor) Run() error {
 
 func (p *JobProcessor) processJob(j string) {
 	log.Infof("Job Processor starting new job with id %s", j)
-	// 1. Create new job struct with the id received.
+
+	// 1. Create JobClient struct
+	jobClient := clients.NewJobClient(j, p.client)
+	log.Warnf("JobClient: %v", jobClient)
+	err := jobClient.UpdateResource()
+
+	jobClient.PrintResource()
+
+	if err != nil {
+		log.Errorf("Error updating job %s: %s", j, err)
+		log.Errorf("Job %s will not be processed", j)
+		return
+	}
+	p.runningJobs.Store(j, jobClient.GetResource())
+	defer p.runningJobs.Delete(j)
+
+	requestedAction := jobClient.GetActionName()
+	if requestedAction == "" {
+		log.Errorf("Job %s has no action, thus cannot be started", j)
+		// TODO: Should we here update the job status to failed/finished/...?
+		return
+	}
+	log.Debugf("Job %s has requested action %s", j, requestedAction)
+	action := jobEngine.NewAction(requestedAction, jobEngine.WithNuvlaClient(p.client), jobEngine.WithCoeClient(p.coe))
+
+	log.Infof("Starting action %s for job %s", requestedAction, j)
+	err = action.Execute()
+	if err != nil {
+		log.Errorf("Error executing action %s for job %s: %s", requestedAction, j, err)
+		// TODO: Report job as failed
+		return
+	}
 
 	// 2. If the job is correct, add it to the running jobs and start it
+	// Remove the job from the running jobs
 }
 
 func (p *JobProcessor) stopJob(j string) {
