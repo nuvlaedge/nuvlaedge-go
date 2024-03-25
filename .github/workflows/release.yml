@@ -27,7 +27,7 @@ jobs:
           manifest-file: .github/.release-please-manifest.json
 
   publish-release:
-    name: "Build and Publish all nuvlaedge binaries"
+    name: "Build and Publish NuvlaEdge"
     needs: trigger-release
     if: needs.trigger-release.outputs.release_created
     runs-on: ubuntu-latest
