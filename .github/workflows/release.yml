@@ -44,7 +44,7 @@ jobs:
         uses: actions/setup-go@v4
         with:
           go-version: 1.22.0
-          cache: "go-build-${{ matrix.os }}-${{ matrix.arch }}"
+          cache: true
 
       - name: "Build and Publish"
         id: build
