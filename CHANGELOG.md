@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.0.1](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.0.1...v0.0.1) (2024-03-25)
+
+
+### Features
+
+* add release action ([#4](https://github.com/nuvlaedge/nuvlaedge-go/issues/4)) ([68a67e3](https://github.com/nuvlaedge/nuvlaedge-go/commit/68a67e3752eaaeb7f2f625dd8f7b37f05855688e))
+* add-deployment actions skeletons ([2922de5](https://github.com/nuvlaedge/nuvlaedge-go/commit/2922de5e328fc163f009b0aaa674c192b7b1986b))
+* add-reboot-action ([#2](https://github.com/nuvlaedge/nuvlaedge-go/issues/2)) ([ad2bf02](https://github.com/nuvlaedge/nuvlaedge-go/commit/ad2bf022370c54ef1d898cd9ae8bd3e72b036213))
+* Added client library support ([653d426](https://github.com/nuvlaedge/nuvlaedge-go/commit/653d426cf95a76132d6150fbce95b77e79cfc542))
+
+
+### Bug Fixes
+
+* Simplify logging using base logger everywhere and clean of sourcecode ([f872a9e](https://github.com/nuvlaedge/nuvlaedge-go/commit/f872a9e23bf42bf9be5cd6403b84e9b710b7eac8))
+
 ## [0.1.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.0.1...v0.1.0) (2024-03-25)
 
 
