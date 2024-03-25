@@ -18,7 +18,6 @@ jobs:
   publish-release:
     name: "Build and Publish all nuvlaedge binaries"
     needs: trigger-release
-    if: needs.trigger-release.outputs.release_created
     runs-on: ubuntu-latest
 
     strategy:
