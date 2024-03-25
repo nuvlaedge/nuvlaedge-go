@@ -7,7 +7,7 @@ require (
 	github.com/caarlos0/env/v10 v10.0.0
 	github.com/docker/docker v25.0.2+incompatible
 	github.com/jackpal/gateway v1.0.13
-	github.com/nuvla/api-client-go v0.1.0
+	github.com/nuvla/api-client-go v0.2.0
 	github.com/shirou/gopsutil/v3 v3.24.1
 	github.com/sirupsen/logrus v1.9.3
 )
@@ -50,5 +50,3 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gotest.tools/v3 v3.5.1 // indirect
 )
-
-replace github.com/nuvla/api-client-go => /Users/nacho/go/src/api-client-go

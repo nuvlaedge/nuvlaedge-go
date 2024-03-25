@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"net/http"
 	_ "net/http/pprof"
 	"nuvlaedge-go/nuvlaedge"
 	"os"
@@ -11,14 +10,11 @@ import (
 	"strings"
 )
 
-func startProfieler() {
-	go func() {
-		http.ListenAndServe("localhost:8080", nil)
-	}()
-}
+var version = "development"
 
 func main() {
-	startProfieler()
+	log.Infof("Starting NuvlaEdge version %s", version)
+
 	// Initialise settings
 	nuvlaEdgeSettings := getNuvlaEdgeSettings()
 

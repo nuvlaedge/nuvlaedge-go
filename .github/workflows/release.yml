@@ -1,0 +1,67 @@
+name: "Release"
+
+on:
+  push:
+    branches:
+      - master
+      - release/*
+
+jobs:
+  trigger-release:
+    runs-on: ubuntu-latest
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      major: ${{ steps.release.outputs.major }}
+      minor: ${{ steps.release.outputs.minor }}
+      patch: ${{ steps.release.outputs.patch }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+
+    steps:
+      - id: release
+        uses: google-github-actions/release-please-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          target-branch: ${{ github.ref_name }}
+          config-file: .github/release-please-config.json
+          manifest-file: .github/.release-please-manifest.json
+
+  publish-release:
+    name: "Build and Publish NuvlaEdge"
+    needs: trigger-release
+    if: needs.trigger-release.outputs.release_created
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        os: [linux, darwin]
+        arch: [amd64, arm64]
+        # Darwin does not support arm(32) architecture. We need to build it to support small arm devices.
+        include:
+          - os: linux
+            arch: arm
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Set up Go"
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.22.0
+          cache: true
+
+      - name: "Build and Publish"
+        id: build
+        run: |
+          go mod tidy
+          export FILE_NAME="nuvlaedge-${{ matrix.os }}-${{ matrix.arch }}-${{ needs.trigger-release.outputs.tag_name }}"
+          export GOOS=${{ matrix.os }}
+          export GOARCH=${{ matrix.arch }}
+          go build -o $FILE_NAME -ldflags="-X 'main.version=${{ steps.trigger-release.outputs.tag_name }}'" ./cmd/nuvlaedge.go
+          echo "file_name=$FILE_NAME" >> $GITHUB_OUTPUT
+
+      - name: Add artifacts to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Uploading artifacts to release ${{ needs.trigger-release.outputs.tag_name }}"
+          gh release upload ${{ needs.trigger-release.outputs.tag_name }} ${{ steps.build.outputs.file_name }}
