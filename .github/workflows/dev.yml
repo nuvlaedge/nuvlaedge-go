@@ -1,1 +1,46 @@
+name: Test build
 
+on:
+  push:
+
+
+jobs:
+  trigger-release:
+    runs-on: ubuntu-latest
+    outputs:
+      tag_name: ${{ steps.release.outputs.tag_name }}
+
+    steps:
+      - id: release
+        run: |
+          echo "tag_name=v0.0.1" >> $GITHUB_OUTPUT
+
+  publish-release:
+    name: "Build and Publish all nuvlaedge binaries"
+    needs: trigger-release
+    if: needs.trigger-release.outputs.release_created
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        os: [ linux, darwin ]
+        arch: [ amd64, arm, arm64 ]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Set up Go"
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.22.0
+          cache: true
+
+      - name: "Build and Publish"
+        id: build
+        run: |
+          go mod tidy
+          export FILE_NAME="nuvlaedge-${{ matrix.os }}-${{ matrix.arch }}-${{ needs.trigger-release.outputs.tag_name }}"
+          export GOOS=${{ matrix.os }}
+          export GOARCH=${{ matrix.arch }}
+          go build -o $FILE_NAME -ldflags="-X 'main.version=${{ steps.trigger-release.outputs.tag_name }}'" ./cmd/nuvlaedge.go
+          echo "file_name=$FILE_NAME"
