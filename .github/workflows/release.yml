@@ -35,7 +35,11 @@ jobs:
     strategy:
       matrix:
         os: [linux, darwin]
-        arch: [amd64, arm, arm64]
+        arch: [amd64, arm64]
+        # Darwin does not support arm(32) architecture. We need to build it to support small arm devices.
+        include:
+          - os: linux
+            arch: arm
 
     steps:
       - uses: actions/checkout@v4
