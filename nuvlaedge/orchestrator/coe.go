@@ -2,6 +2,7 @@ package orchestrator
 
 import (
 	log "github.com/sirupsen/logrus"
+	"nuvlaedge-go/nuvlaedge/types"
 	"os"
 )
 
@@ -22,7 +23,7 @@ type Coe interface {
 	RemoveContainer(containerId string, containerName string) (bool, error)
 
 	GetClusterData() (*ClusterData, error)
-	GetOrchestratorCredentials() (map[string]string, error)
+	GetOrchestratorCredentials(*types.CommissioningAttributes) error
 
 	TelemetryStart() error
 	TelemetryStatus() (int, error)

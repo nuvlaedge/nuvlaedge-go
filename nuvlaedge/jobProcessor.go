@@ -56,14 +56,26 @@ func (p *JobProcessor) Run() error {
 }
 
 func (p *JobProcessor) processJob(j string) {
+	if _, ok := p.runningJobs.Load(j); ok {
+		log.Infof("Job %s is already running", j)
+		return
+	}
+
 	log.Infof("Job Processor starting new job with id %s", j)
 
 	// 1. Create JobClient struct
 	jobClient := clients.NewJobClient(j, p.client)
 	log.Warnf("JobClient: %v", jobClient)
 	err := jobClient.UpdateResource()
+	if err != nil {
+		log.Errorf("Error retrieving Job %s: %s", j, err)
+		log.Errorf("Job %s will not be processed", j)
+		return
+	}
 
 	jobClient.PrintResource()
+	log.Infof("")
+	jobClient.SetInitialState()
 
 	if err != nil {
 		log.Errorf("Error updating job %s: %s", j, err)
@@ -80,18 +92,25 @@ func (p *JobProcessor) processJob(j string) {
 		return
 	}
 	log.Debugf("Job %s has requested action %s", j, requestedAction)
-	action := jobEngine.NewAction(requestedAction, jobEngine.WithNuvlaClient(p.client), jobEngine.WithCoeClient(p.coe))
+	action := jobEngine.NewAction(
+		requestedAction,
+		jobEngine.WithNuvlaClient(p.client),
+		jobEngine.WithCoeClient(p.coe),
+		jobEngine.WithJobResource(jobClient.GetResource()))
 
 	log.Infof("Starting action %s for job %s", requestedAction, j)
 	err = action.Execute()
 	if err != nil {
 		log.Errorf("Error executing action %s for job %s: %s", requestedAction, j, err)
 		// TODO: Report job as failed
+		jobClient.SetState(clients.StateFailed)
 		return
 	}
 
 	// 2. If the job is correct, add it to the running jobs and start it
 	// Remove the job from the running jobs
+	jobClient.SetSuccessState()
+	log.Infof("Job %s finished successfully", j)
 }
 
 func (p *JobProcessor) stopJob(j string) {

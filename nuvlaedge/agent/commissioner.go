@@ -82,7 +82,9 @@ func (c *Commissioner) updateData() {
 	}
 
 	// Update Orchestrator data
-	_, err = c.coeClient.GetOrchestratorCredentials()
+	if err := c.coeClient.GetOrchestratorCredentials(c.currentData); err != nil {
+		log.Errorf("Error retrieving orchestrator credentials: %s", err)
+	}
 
 	c.currentData.Tags = []string{"test", "go", "nuvlaedge"}
 	c.currentData.Capabilities = []string{"NUVLA_JOB_PULL", "NUVLA_HEARTBEAT"}
