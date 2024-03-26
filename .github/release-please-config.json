@@ -1,6 +1,5 @@
 {
   "release-type": "go",
-  "release-as": "0.0.1a1",
   "changelog-types": [
     { "type": "feat", "section": "Features" },
     { "type": "feature", "section": "Features" },
@@ -17,8 +16,6 @@
   ],
   "packages": {
     ".": {
-      "prerelease": true,
-      "release-as": "0.0.1a1",
       "release-type": "go",
       "changelog-types": [
         { "type": "feat", "section": "Features" },
