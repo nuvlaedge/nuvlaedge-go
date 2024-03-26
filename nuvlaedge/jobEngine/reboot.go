@@ -15,15 +15,15 @@ func (sre SudoRequiredError) Error() string {
 
 type RebootAction struct {
 	ActionBase
-
-	executor Executor
 }
 
 func NewRebootAction(opts *ActionBaseOpts) *RebootAction {
-	return &RebootAction{
+	// Reboot is only executed using shell command executor
+	r := &RebootAction{
 		ActionBase: *NewActionBase(opts),
-		executor:   &ShellCommandExecutor{},
 	}
+	r.executor = NewShellCommandExecutor(r, "reboot", nil)
+	return r
 }
 
 func isSuperUser() (bool, error) {

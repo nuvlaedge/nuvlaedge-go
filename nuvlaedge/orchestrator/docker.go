@@ -2,12 +2,14 @@ package orchestrator
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/system"
 	"github.com/docker/docker/client"
 	log "github.com/sirupsen/logrus"
 	"nuvlaedge-go/nuvlaedge/common"
+	nuvlaTypes "nuvlaedge-go/nuvlaedge/types"
 	"reflect"
 	"sync"
 	"time"
@@ -36,54 +38,96 @@ type SwarmData struct {
 	SwarmClientKey    string `json:"swarm-client-key"`
 	SwarmClientCert   string `json:"swarm-client-cert"`
 	SwarmClientCa     string `json:"swarm-client-ca"`
+
+	updaters map[string]func() error
+	client   *client.Client
 }
 
-func (sw *SwarmData) UpdateSwarmData() error {
+func NewSwarmData(client *client.Client) *SwarmData {
+	sw := &SwarmData{
+		client:   client,
+		updaters: make(map[string]func() error),
+	}
+
+	// Scan all fields of the struct and register the updaters
 	swarmFields := reflect.ValueOf(*sw)
 
 	for i := 0; i < swarmFields.NumField(); i++ {
 		fieldName := swarmFields.Type().Field(i).Name
-		updaterName := "updateSwarm" + fieldName
+		updaterName := "Update" + fieldName
+		log.Debugf("Updating swarm sw field: %s", updaterName)
 		updater := reflect.ValueOf(sw).MethodByName(updaterName)
+		log.Infof("Updater %s", updater.String())
 		if updater.IsValid() {
-			updater.Call(nil)
+			log.Debugf("Calling updater: %s", updaterName)
+			sw.updaters[fieldName] = updater.Interface().(func() error)
 		}
 	}
-	return nil
+	return sw
 }
 
-func (sw *SwarmData) UpdateSwarmDataIfNeeded(client *client.Client) error {
+func (sw *SwarmData) UpdateSwarmData() {
+	var wg sync.WaitGroup
+
+	wg.Add(len(sw.updaters))
+
+	for _, updater := range sw.updaters {
+		go func(updater func() error) {
+			defer wg.Done()
+			if err := updater(); err != nil {
+				log.Errorf("Error updating swarm data: %s", err)
+			}
+		}(updater)
+	}
+
+	wg.Wait()
+}
+
+func (sw *SwarmData) UpdateSwarmDataIfNeeded() error {
 	log.Infof("Updating swarm data")
-	return sw.UpdateSwarmData()
+	return nil
 }
 
-func (sw *SwarmData) updateSwarmEndPoint() error {
+func (sw *SwarmData) UpdateSwarmEndPoint() error {
 	log.Infof("Updating swarm endpoint")
+	sw.SwarmEndPoint = "local"
 	return nil
 }
 
-func (sw *SwarmData) updateSwarmTokenManager() error {
+func (sw *SwarmData) UpdateSwarmTokenManager() error {
 	log.Infof("Updating swarm token manager")
+	ctx := context.Background()
+	swarm, err := sw.client.SwarmInspect(ctx)
+	if err != nil {
+		return err
+	}
+	sw.SwarmTokenManager = swarm.JoinTokens.Manager
 	return nil
 }
 
-func (sw *SwarmData) updateSwarmTokenWorker() error {
+func (sw *SwarmData) UpdateSwarmTokenWorker() error {
 	log.Infof("Updating swarm token worker")
+	ctx := context.Background()
+	swarm, err := sw.client.SwarmInspect(ctx)
+	if err != nil {
+		return err
+	}
+	sw.SwarmTokenWorker = swarm.JoinTokens.Worker
 	return nil
 }
 
-func (sw *SwarmData) updateSwarmClientKey() error {
-	log.Infof("Updating swarm client key")
+func (sw *SwarmData) UpdateSwarmClientKey() error {
+	sw.SwarmClientKey = "null"
 	return nil
 }
 
-func (sw *SwarmData) updateSwarmClientCert() error {
-	log.Infof("Updating swarm client cert")
+func (sw *SwarmData) UpdateSwarmClientCert() error {
+	sw.SwarmClientCert = "null"
 	return nil
 }
 
-func (sw *SwarmData) updateSwarmClientCa() error {
-	log.Infof("Updating swarm client ca")
+func (sw *SwarmData) UpdateSwarmClientCa() error {
+	sw.SwarmClientCa = "null"
 	return nil
 }
 
@@ -109,7 +153,7 @@ func NewDockerCoe() *DockerCoe {
 			updated: time.Now().Add(-10 * time.Second),
 		},
 		clusterDataLock: &sync.Mutex{},
-		swarmData:       &SwarmData{},
+		swarmData:       NewSwarmData(cli),
 	}
 }
 
@@ -242,9 +286,20 @@ func (dc *DockerCoe) GetClusterData() (*ClusterData, error) {
 
 /**************************************** Swarm Data *****************************************/
 
-func (dc *DockerCoe) GetOrchestratorCredentials() (map[string]string, error) {
-	_ = dc.swarmData.UpdateSwarmDataIfNeeded(dc.client)
-	return nil, nil
+func (dc *DockerCoe) GetOrchestratorCredentials(attrs *nuvlaTypes.CommissioningAttributes) error {
+	log.Debugf("Retrieving orchestrator credentials...")
+	dc.swarmData.UpdateSwarmData()
+
+	b, _ := json.MarshalIndent(dc.swarmData, "", "  ")
+	log.Infof("Swarm data: %s", string(b))
+	attrs.SwarmEndPoint = "local"
+	attrs.SwarmTokenManager = dc.swarmData.SwarmTokenManager
+	attrs.SwarmTokenWorker = dc.swarmData.SwarmTokenWorker
+	attrs.SwarmClientKey = dc.swarmData.SwarmClientKey
+	attrs.SwarmClientCert = dc.swarmData.SwarmClientCert
+	attrs.SwarmClientCa = dc.swarmData.SwarmClientCa
+	log.Debugf("Retrieving orchestrator credentials... Success.")
+	return nil
 }
 
 func (dc *DockerCoe) GetSwarmData() (*SwarmData, error) {

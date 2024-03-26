@@ -10,8 +10,8 @@ type ActionType string
 
 const (
 	RebootActionType          ActionType = "reboot_nuvlabox"
-	DeploymentStopActionType  ActionType = "deployment-stop"
-	DeploymentStartActionType ActionType = "deployment-start"
+	DeploymentStopActionType  ActionType = "stop_deployment"
+	DeploymentStartActionType ActionType = "start_deployment"
 )
 
 type Action interface {
@@ -24,9 +24,11 @@ type Action interface {
 type ActionBase struct {
 	nuvlaClient *nuvla.NuvlaClient
 	coeClient   orchestrator.Coe
+	executor    Executor
 }
 
 func NewActionBase(opts *ActionBaseOpts) *ActionBase {
+
 	return &ActionBase{
 		nuvlaClient: opts.NuvlaClient,
 		coeClient:   opts.CoeClient,
@@ -42,18 +44,21 @@ func NewAction(actionName string, opts ...ActionBaseOptsFunc) Action {
 
 	switch ActionType(actionName) {
 	case RebootActionType:
-		a = &RebootAction{}
+		a = NewRebootAction(defaultOpts)
 
 	case DeploymentStopActionType:
 		a = &DeploymentStopAction{}
 
 	case DeploymentStartActionType:
-		a = &DeploymentStartActions{}
+		a = NewDeploymentStartAction(defaultOpts)
 
 	default:
 		return nil
 	}
-
+	if a == nil {
+		log.Errorf("Error creating the new action, %s", actionName)
+		return nil
+	}
 	log.Infof("Initialising action: %s...", actionName)
 	if err := a.Init(defaultOpts); err != nil {
 		log.Errorf("Error creating the new action")
