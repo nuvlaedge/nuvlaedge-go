@@ -53,7 +53,7 @@ func NewAction(actionName string, opts ...ActionBaseOptsFunc) Action {
 		a = NewDeploymentStartAction(defaultOpts)
 
 	default:
-		return nil
+		a = nil
 	}
 	if a == nil {
 		log.Errorf("Error creating the new action, %s", actionName)
