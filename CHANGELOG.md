@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.1.1...v0.2.0) (2024-03-26)
+
+
+### Features
+
+* Add deployment set state capabilities ([#11](https://github.com/nuvlaedge/nuvlaedge-go/issues/11)) ([10e97ff](https://github.com/nuvlaedge/nuvlaedge-go/commit/10e97ff1d85083235c0709a4773908cef015bc98))
+
+
+### Dependencies
+
+* Update client to 0.4.0 ([a54c4b2](https://github.com/nuvlaedge/nuvlaedge-go/commit/a54c4b2058e4add88cfeed59da60f552122cba70))
+
 ## [0.1.1](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.1.0...v0.1.1) (2024-03-26)
 
 
