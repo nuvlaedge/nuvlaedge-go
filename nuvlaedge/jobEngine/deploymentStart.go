@@ -67,6 +67,7 @@ func (ds *DeploymentStartAction) Execute() error {
 	compose, ok := content["docker-compose"]
 	if !ok {
 		log.Errorf("Error getting docker-compose file from deployment")
+		_ = ds.client.SetState(clients.StateError)
 		return nil
 	}
 	log.Infof("Starting deployment using: %s", compose.(string))
@@ -74,6 +75,7 @@ func (ds *DeploymentStartAction) Execute() error {
 	err := saveFileToJobDir(ds.DeploymentId.Uuid, "docker-compose.yml", compose.(string))
 	if err != nil {
 		log.Errorf("Error writing docker-compose file: %s", err)
+		_ = ds.client.SetState(clients.StateError)
 		return err
 	}
 
@@ -88,9 +90,11 @@ func (ds *DeploymentStartAction) Execute() error {
 	log.Infof("Executing command: %s", cmd.String())
 	log.Infof("Output: %s", string(output))
 	if err != nil {
+		_ = ds.client.SetState(clients.StateError)
 		return err
 	}
 	log.Infof("Command %s executed successfully. Output: %s", command, output)
+	_ = ds.client.SetStateStarted()
 	return nil
 
 }
