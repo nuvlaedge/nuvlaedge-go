@@ -98,6 +98,14 @@ func (p *JobProcessor) processJob(j string) {
 		jobEngine.WithCoeClient(p.coe),
 		jobEngine.WithJobResource(jobClient.GetResource()))
 
+	if action == nil {
+		log.Warnf("Error creating action %s for job %s", requestedAction, j)
+		// Set success state to close job
+		jobClient.SetSuccessState()
+		log.Warnf("Action %s not supported (yet), passing... ", requestedAction)
+		return
+	}
+
 	log.Infof("Starting action %s for job %s", requestedAction, j)
 	err = action.Execute()
 	if err != nil {
