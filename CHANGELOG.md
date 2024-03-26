@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.1.1](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.1.0...v0.1.1) (2024-03-26)
+
+
+### Bug Fixes
+
+* Deployment client no working ([3014a2d](https://github.com/nuvlaedge/nuvlaedge-go/commit/3014a2d99b8702a7505a5bbb357e33a0b5bcef8e))
+
+
+### Dependencies
+
+* Updated api-client-go to 0.3.1 ([3014a2d](https://github.com/nuvlaedge/nuvlaedge-go/commit/3014a2d99b8702a7505a5bbb357e33a0b5bcef8e))
+
 ## [0.1.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.0.1...v0.1.0) (2024-03-26)
 
 
