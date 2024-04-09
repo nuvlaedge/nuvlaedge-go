@@ -66,3 +66,19 @@ jobs:
         run: |
           echo "Uploading artifacts to release ${{ needs.trigger-release.outputs.tag_name }}"
           gh release upload ${{ needs.trigger-release.outputs.tag_name }} ${{ steps.build.outputs.file_name }}
+
+  publish-config-template:
+    name: "Publish NuvlaEdge Config Template"
+    needs: trigger-release
+    if: needs.trigger-release.outputs.release_created
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Add artifacts to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Uploading artifacts to release ${{ needs.trigger-release.outputs.tag_name }}"
+          gh release upload ${{ needs.trigger-release.outputs.tag_name }} config/template.toml

@@ -324,7 +324,7 @@ func (t *MetricsMonitor) UpdaterCurrentTime(errChan chan<- error) {
 }
 
 func (t *MetricsMonitor) UpdaterNuvlaEdgeEngineVersion(errChan chan<- error) {
-	t.nuvlaEdgeStatus.NuvlaEdgeEngineVersion = "3.0.0rc1"
+	t.nuvlaEdgeStatus.NuvlaEdgeEngineVersion = "0.2.0"
 	errChan <- nil
 }
 
