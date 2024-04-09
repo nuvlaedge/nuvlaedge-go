@@ -82,3 +82,5 @@ jobs:
         run: |
           echo "Uploading artifacts to release ${{ needs.trigger-release.outputs.tag_name }}"
           gh release upload ${{ needs.trigger-release.outputs.tag_name }} config/template.toml
+          gh release upload ${{ needs.trigger-release.outputs.tag_name }} installer/get-ne.sh
+          gh release upload ${{ needs.trigger-release.outputs.tag_name }} installer/nuvlaedge.service
