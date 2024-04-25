@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.3.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.2.0...v0.3.0) (2024-04-25)
+
+
+### Features
+
+* add installer files to release ([29aad62](https://github.com/nuvlaedge/nuvlaedge-go/commit/29aad62491ad8bf3d327e5e7ca992caf26feff69))
+* add script installer ([5c83cc0](https://github.com/nuvlaedge/nuvlaedge-go/commit/5c83cc0dc6bca44125558a86013d9061206b145d))
+* add stop and improve deployment handling ([#15](https://github.com/nuvlaedge/nuvlaedge-go/issues/15)) ([4717dd4](https://github.com/nuvlaedge/nuvlaedge-go/commit/4717dd4a0bd9f59f7097837aa8595ff1b4371b2d))
+
+
+### Bug Fixes
+
+* error on exporting Settings path on installer ([3ea5c2f](https://github.com/nuvlaedge/nuvlaedge-go/commit/3ea5c2f4167945dee4f260d12e36d48e8685b7bc))
+* fix default path for NuvlaEdge configuration in sudo mode ([e79a800](https://github.com/nuvlaedge/nuvlaedge-go/commit/e79a80069e9dd21f7e3ac16c37b7165171c03475))
+* improve detached run mode on installer script ([5043c51](https://github.com/nuvlaedge/nuvlaedge-go/commit/5043c51913d49b3b538262c59909ca4595cc92ca))
+
+
+### Dependencies
+
+* updated api-client-go to 0.4.1 ([d99d22c](https://github.com/nuvlaedge/nuvlaedge-go/commit/d99d22ca5406458d528e59091ec2ab5203d22b23))
+
 ## [0.2.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.1.1...v0.2.0) (2024-03-26)
 
 
