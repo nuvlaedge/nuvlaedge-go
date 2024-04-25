@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.3.0...v0.3.1) (2024-04-25)
+
+
+### Bug Fixes
+
+* remove replace dev statement from go.mod ([eaee032](https://github.com/nuvlaedge/nuvlaedge-go/commit/eaee032a7cbfca0a44c1b13e1fd8f42949d86e4d))
+
 ## [0.3.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.2.0...v0.3.0) (2024-04-25)
 
 
