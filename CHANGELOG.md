@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.3.1...v0.4.0) (2024-04-25)
+
+
+### Features
+
+* add version management ([1a33237](https://github.com/nuvlaedge/nuvlaedge-go/commit/1a33237bed6b9f1517aaaf9456857ce15e3898a1))
+
 ## [0.3.1](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.3.0...v0.3.1) (2024-04-25)
 
 
