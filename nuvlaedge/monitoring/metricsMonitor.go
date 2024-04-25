@@ -8,6 +8,7 @@ import (
 	"nuvlaedge-go/nuvlaedge/common"
 	"nuvlaedge-go/nuvlaedge/common/resources"
 	"nuvlaedge-go/nuvlaedge/orchestrator"
+	"nuvlaedge-go/nuvlaedge/version"
 	"os"
 	"reflect"
 	"runtime"
@@ -324,7 +325,7 @@ func (t *MetricsMonitor) UpdaterCurrentTime(errChan chan<- error) {
 }
 
 func (t *MetricsMonitor) UpdaterNuvlaEdgeEngineVersion(errChan chan<- error) {
-	t.nuvlaEdgeStatus.NuvlaEdgeEngineVersion = "0.2.0"
+	t.nuvlaEdgeStatus.NuvlaEdgeEngineVersion = version.GetVersion()
 	errChan <- nil
 }
 

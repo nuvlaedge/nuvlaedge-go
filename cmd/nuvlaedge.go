@@ -5,15 +5,15 @@ import (
 	log "github.com/sirupsen/logrus"
 	_ "net/http/pprof"
 	"nuvlaedge-go/nuvlaedge"
+	"nuvlaedge-go/nuvlaedge/version"
 	"os"
 	"runtime"
 	"strings"
 )
 
-var version = "development"
-
+// New comment
 func main() {
-	log.Infof("Starting NuvlaEdge version %s", version)
+	log.Infof("Starting NuvlaEdge version %s", version.GetVersion())
 
 	// Initialise settings
 	nuvlaEdgeSettings := getNuvlaEdgeSettings()
