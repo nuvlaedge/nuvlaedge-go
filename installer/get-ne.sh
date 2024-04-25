@@ -96,7 +96,7 @@ chmod +x "$DEST_DIR/nuvlaedge"
 # Download the template.toml file from the main branch
 curl -L -o "$CONF_DIR/template.toml" "https://raw.githubusercontent.com/nuvlaedge/nuvlaedge-go/main/config/template.toml"
 
-export NUVLAEDGE_SETTINGS="$DEST_DIR/template.toml"
+export NUVLAEDGE_SETTINGS="$CONF_DIR/template.toml"
 
 
 if [ -n "$UUID" ]
