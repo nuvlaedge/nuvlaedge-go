@@ -81,6 +81,8 @@ then
     if [ "$(id -u)" -eq 0 ]
     then
         DEST_DIR="/usr/local/bin"
+        CONF_DIR="/etc/nuvlaedge"
+        mkdir -p "$CONF_DIR"
     else
         DEST_DIR="$HOME/.nuvlaedge/bin"
         mkdir -p "$DEST_DIR"
@@ -92,14 +94,14 @@ mv "nuvlaedge-$OS-$ARCH-$VERSION" "$DEST_DIR/nuvlaedge"
 chmod +x "$DEST_DIR/nuvlaedge"
 
 # Download the template.toml file from the main branch
-curl -L -o "$DEST_DIR/template.toml" "https://raw.githubusercontent.com/nuvlaedge/nuvlaedge-go/main/config/template.toml"
+curl -L -o "$CONF_DIR/template.toml" "https://raw.githubusercontent.com/nuvlaedge/nuvlaedge-go/main/config/template.toml"
 
 export NUVLAEDGE_SETTINGS="$DEST_DIR/template.toml"
 
-echo "Starting NuvlaEdge with UUID $UUID..."
 
 if [ -n "$UUID" ]
 then
+    echo "Starting NuvlaEdge with UUID $UUID..."
 
     export NUVLAEDGE_UUID="$UUID"
     export NUVLAEDGE_SETTINGS="$DEST_DIR/template.toml"
