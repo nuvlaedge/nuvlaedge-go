@@ -82,7 +82,9 @@ then
     then
         DEST_DIR="/usr/local/bin"
         CONF_DIR="/etc/nuvlaedge"
+        LOG_DIR="/var/log/nuvlaedge"
         mkdir -p "$CONF_DIR"
+        mkdir -p "$LOG_DIR"
     else
         DEST_DIR="$HOME/.nuvlaedge/bin"
         mkdir -p "$DEST_DIR"
@@ -104,11 +106,11 @@ then
     echo "Starting NuvlaEdge with UUID $UUID..."
 
     export NUVLAEDGE_UUID="$UUID"
-    export NUVLAEDGE_SETTINGS="$DEST_DIR/template.toml"
+    export NUVLAEDGE_SETTINGS="$CONF_DIR/template.toml"
     echo $NUVLAEDGE_UUID
     echo $NUVLAEDGE_SETTINGS
     cd $DEST_DIR
-    ./nuvlaedge
+    nohup ./nuvlaedge > "$LOG_DIR/nuvlaedge.log" 2>&1 &
 fi
 
 echo "NuvlaEdge has been installed to $DEST_DIR"
