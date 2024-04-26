@@ -1,5 +1,7 @@
 package agent
 
+import "github.com/nuvla/api-client-go/clients"
+
 const (
 	DefaultConfigPath = "/var/lib/nuvlaedge/"
 	HomeConfigPath    = "~/.nuvlaedge/"
@@ -14,7 +16,7 @@ const (
 type InstallationParameters struct {
 	commissioningData map[string]interface{}
 	vpnData           map[string]interface{}
-	nuvlaSessionData  map[string]interface{}
+	NuvlaSessionData  *clients.NuvlaEdgeSessionFreeze `json:"nuvla-session"`
 }
 
 func getInstallationParameters(configPath string) (*InstallationParameters, error) {

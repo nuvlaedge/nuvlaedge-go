@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+var DataLocation string = "/var/lib/nuvlaedge/"
+
 type NuvlaEdge struct {
 	coe           orchestrator.Coe   // coe: Orchestration engine to control deployments
 	settings      *NuvlaEdgeSettings // settings:
@@ -17,6 +19,10 @@ type NuvlaEdge struct {
 }
 
 func NewNuvlaEdge(settings *NuvlaEdgeSettings) *NuvlaEdge {
+	// Set global data location
+	DataLocation = settings.DataLocation
+	log.Infof("Setting global data location to: %s", DataLocation)
+
 	coeClient, err := orchestrator.NewCoe(orchestrator.DockerType)
 	if err != nil {
 		log.Errorf("Error creating COE client: %s", err)

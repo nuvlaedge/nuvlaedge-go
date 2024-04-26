@@ -43,9 +43,22 @@ func NewNuvlaEdgeClientFromSettings(settings *AgentSettings) *clients.NuvlaEdgeC
 	if settings.ApiKey != "" && settings.ApiSecret != "" {
 		credentials = types.NewApiKeyLogInParams(settings.ApiKey, settings.ApiSecret)
 	}
+
+	freezeFile := DataLocation + agent.NuvlaSessionDataFile
+	log.Infof("Checking if freeze file exists: %s", freezeFile)
+	if common.FileExists(agent.DefaultConfigPath + agent.NuvlaSessionDataFile) {
+		log.Debugf("Freeze file exists: %s", freezeFile)
+		f := &clients.NuvlaEdgeSessionFreeze{}
+		err := f.Load(freezeFile)
+		if err != nil {
+			log.Warnf("Error loading NuvlaEdge session freeze file: %s", err)
+		}
+		return clients.NewNuvlaEdgeClientFromSessionFreeze(f)
+	}
+
 	log.Infof("Creating NuvlaEdge client with options: %v", settings)
 	client := clients.NewNuvlaEdgeClient(
-		types.NewNuvlaIDFromId(settings.NuvlaEdgeUUID),
+		*types.NewNuvlaIDFromId(settings.NuvlaEdgeUUID),
 		credentials,
 		nuvla.WithEndpoint(settings.NuvlaEndpoint),
 		nuvla.WithInsecureSession(settings.NuvlaInsecure))
@@ -94,6 +107,10 @@ func (a *Agent) Start() error {
 		log.Errorf("Error getting NuvlaEdge resource: %s", err)
 		return err
 	}
+
+	// Freeze the client here
+	freezeFile := DataLocation + agent.NuvlaSessionDataFile
+	err = a.client.Freeze(freezeFile)
 
 	// Create commissioner
 	log.Infof("Creating commissioner...")
