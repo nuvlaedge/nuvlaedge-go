@@ -49,6 +49,10 @@ func (c *Commissioner) commission() error {
 }
 
 func (c *Commissioner) getClusterIdFromStatus() string {
+	if c.nuvlaClient.NuvlaEdgeStatusId == nil {
+		log.Infof("NuvlaEdge status not available, cannot get cluster id")
+		return ""
+	}
 	resource, err := c.nuvlaClient.Get(c.nuvlaClient.NuvlaEdgeStatusId.String(), nil)
 	if err != nil {
 		log.Errorf("Error getting NuvlaEdge status: %s", err)
@@ -105,7 +109,6 @@ func (c *Commissioner) Run() {
 	log.Infof("Commissioner running...")
 	for {
 		startTime := time.Now()
-		log.Infof("Commissioner started at %s", startTime)
 		c.updateData()
 
 		if c.needsCommission() {
@@ -117,7 +120,7 @@ func (c *Commissioner) Run() {
 				c.lastPayload = &copied
 			}
 		}
-		log.Infof("Commissioner finished at %s", time.Now())
+
 		err := common.WaitPeriodicAction(startTime, 60, "Commissioner")
 		if err != nil {
 			log.Errorf("Error waiting for commissioner: %s", err)

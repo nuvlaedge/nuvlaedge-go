@@ -7,7 +7,7 @@ require (
 	github.com/caarlos0/env/v10 v10.0.0
 	github.com/docker/docker v26.0.0+incompatible
 	github.com/jackpal/gateway v1.0.14
-	github.com/nuvla/api-client-go v0.5.0
+	github.com/nuvla/api-client-go v0.5.2
 	github.com/shirou/gopsutil/v3 v3.24.3
 	github.com/sirupsen/logrus v1.9.3
 )

@@ -1,23 +1,23 @@
-data-location = "/var/lib/nuvlaedge"
+data-location = "/Users/nacho/.nuvlaedge/data/"
 config-location = "/etc/nuvlaedge"
 
 [logging]
-debug = true
-level = "debug"
+debug = false
+level = "info"
 log-path = "/var/log/nuvlaedge"
 log-file = "nuvlaedge.log"
 log-max-size = 100
 log-max-backups = 3
 
 [agent]
-nuvlaedge-uuid = "nuvlabox/7dc61348-fab2-4c0b-9b72-96f59959b710"
+nuvlaedge-uuid = "nuvlabox/38165210-2c36-4fbe-9fa7-d2d5731faedd"
 nuvla-endpoint = "https://nuvla.io"
 nuvla-insecure = false
 telemetry-period = 60
 heartbeat-period = 20
 api-key = ""
 api-secret = ""
-log-level = "debug"
+log-level = "info"
 log-to-file = true
 
 [system-manager]
