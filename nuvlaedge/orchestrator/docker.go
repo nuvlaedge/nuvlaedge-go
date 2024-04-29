@@ -291,7 +291,7 @@ func (dc *DockerCoe) GetOrchestratorCredentials(attrs *nuvlaTypes.CommissioningA
 	dc.swarmData.UpdateSwarmData()
 
 	b, _ := json.MarshalIndent(dc.swarmData, "", "  ")
-	log.Infof("Swarm data: %s", string(b))
+	log.Debugf("Swarm data: %s", string(b))
 	attrs.SwarmEndPoint = "local"
 	attrs.SwarmTokenManager = dc.swarmData.SwarmTokenManager
 	attrs.SwarmTokenWorker = dc.swarmData.SwarmTokenWorker

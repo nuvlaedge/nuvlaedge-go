@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.4.0...v0.5.0) (2024-04-26)
+
+
+### Features
+
+* add session persistence ([#18](https://github.com/nuvlaedge/nuvlaedge-go/issues/18)) ([971094a](https://github.com/nuvlaedge/nuvlaedge-go/commit/971094acfb786ce2dc203925e79de2b11672760e))
+
 ## [0.4.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.3.1...v0.4.0) (2024-04-25)
 
 

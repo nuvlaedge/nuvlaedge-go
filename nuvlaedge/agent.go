@@ -38,27 +38,51 @@ type Agent struct {
 	jobChan  chan string
 }
 
+// NewNuvlaEdgeClient tries to create a new Nuvla client first from the local files if available, else from the settings
+func NewNuvlaEdgeClient(settings *AgentSettings) *clients.NuvlaEdgeClient {
+
+	clientFile := DataLocation + agent.NuvlaSessionDataFile
+	log.Infof("Checking if freeze file exists: %s", clientFile)
+	var client *clients.NuvlaEdgeClient
+
+	client = NewNuvlaEdgeClientFromSessionFile(clientFile, settings)
+
+	if client != nil {
+		log.Infof("Successfully created NuvlaEdge client from freeze file")
+		return client
+	}
+
+	return NewNuvlaEdgeClientFromSettings(settings)
+}
+
+// NewNuvlaEdgeClientFromSessionFile creates a new Nuvla client from a freeze file.
+func NewNuvlaEdgeClientFromSessionFile(file string, settings *AgentSettings) *clients.NuvlaEdgeClient {
+	log.Infof("Creating NuvlaEdge client from freeze file: %s", file)
+	// Check if the file exists
+	if !common.FileExists(file) {
+		log.Infof("Freeze file does not exist: %s", file)
+		return nil
+	}
+
+	log.Debugf("Freeze file exists: %s", file)
+	f := &clients.NuvlaEdgeSessionFreeze{}
+	err := f.Load(file)
+	if err != nil {
+		log.Warnf("Error loading NuvlaEdge session freeze file: %s", err)
+		return nil
+	}
+	return clients.NewNuvlaEdgeClientFromSessionFreeze(f)
+}
+
 func NewNuvlaEdgeClientFromSettings(settings *AgentSettings) *clients.NuvlaEdgeClient {
 	var credentials *types.ApiKeyLogInParams
 	if settings.ApiKey != "" && settings.ApiSecret != "" {
 		credentials = types.NewApiKeyLogInParams(settings.ApiKey, settings.ApiSecret)
 	}
 
-	freezeFile := DataLocation + agent.NuvlaSessionDataFile
-	log.Infof("Checking if freeze file exists: %s", freezeFile)
-	if common.FileExists(agent.DefaultConfigPath + agent.NuvlaSessionDataFile) {
-		log.Debugf("Freeze file exists: %s", freezeFile)
-		f := &clients.NuvlaEdgeSessionFreeze{}
-		err := f.Load(freezeFile)
-		if err != nil {
-			log.Warnf("Error loading NuvlaEdge session freeze file: %s", err)
-		}
-		return clients.NewNuvlaEdgeClientFromSessionFreeze(f)
-	}
-
 	log.Infof("Creating NuvlaEdge client with options: %v", settings)
 	client := clients.NewNuvlaEdgeClient(
-		*types.NewNuvlaIDFromId(settings.NuvlaEdgeUUID),
+		settings.NuvlaEdgeUUID,
 		credentials,
 		nuvla.WithEndpoint(settings.NuvlaEndpoint),
 		nuvla.WithInsecureSession(settings.NuvlaInsecure))
@@ -87,17 +111,20 @@ func (a *Agent) Start() error {
 	// Start the Agent
 	// Find
 	// TODO: Write a default function to generate Client opts from NuvlaEdge settings
-	a.client = NewNuvlaEdgeClientFromSettings(a.settings)
+	a.client = NewNuvlaEdgeClient(a.settings)
 
-	err := a.client.Activate()
-	if err != nil {
-		log.Errorf("Error activating client: %s", err)
-		return err
+	// We assume the client is not activated if credentials are not set in the client
+	if a.client.Credentials == nil {
+		err := a.client.Activate()
+		if err != nil {
+			log.Errorf("Error activating client: %s", err)
+			return err
+		}
+		log.Debugf("Client activated... Success.")
 	}
-	log.Debugf("Client activated... Success.")
 
 	// Log in with the activation credentials
-	err = a.client.LogIn()
+	err := a.client.LogIn()
 	if err != nil {
 		log.Panicf("Error logging in with activation credentials: %s", err)
 	}
@@ -149,7 +176,7 @@ func (a *Agent) sendTelemetry() error {
 	log.Infof("Sending telemetry...")
 	common.CleanMap(status)
 	cleant, _ := json.MarshalIndent(status, "", "  ")
-	log.Infof("Telemetry data: %s", string(cleant))
+	log.Debugf("Telemetry data: %s", string(cleant))
 	res, err := a.client.Telemetry(status, nil)
 	if err != nil {
 		log.Errorf("Error sending telemetry: %s", err)
