@@ -57,7 +57,7 @@ jobs:
           export FILE_NAME="nuvlaedge-${{ matrix.os }}-${{ matrix.arch }}-${{ needs.trigger-release.outputs.tag_name }}"
           export GOOS=${{ matrix.os }}
           export GOARCH=${{ matrix.arch }}
-          go build -o $FILE_NAME -ldflags="-X 'nuvlaedge-go/nuvlaedge/version.Version=${{ steps.trigger-release.outputs.tag_name }}'" ./cmd/nuvlaedge.go
+          go build -o $FILE_NAME -ldflags="-X 'nuvlaedge-go/nuvlaedge/version.Version=${{ needs.trigger-release.outputs.tag_name }}'" ./cmd/nuvlaedge.go
           echo "file_name=$FILE_NAME" >> $GITHUB_OUTPUT
 
       - name: Add artifacts to release
