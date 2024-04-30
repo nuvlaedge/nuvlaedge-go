@@ -1,12 +1,5 @@
 # Changelog
 
-## [0.7.3](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.7.2...v0.7.3) (2024-04-30)
-
-
-### Bug Fixes
-
-* bug on compressing binaries for macos ([121b3f5](https://github.com/nuvlaedge/nuvlaedge-go/commit/121b3f51831092a5f91d0d8a29e208d871483616))
-
 ## [0.7.2](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.7.1...v0.7.2) (2024-04-30)
 
 
