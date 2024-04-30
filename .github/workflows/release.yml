@@ -114,11 +114,13 @@ jobs:
           echo "file_name=$FILE_NAME" >> $GITHUB_OUTPUT
 
       - name: Install UPX
+        if: matrix.os == 'linux'
         uses: crazy-max/ghaction-upx@v3
         with:
           install-only: true
 
       - name: Compress binaries
+        if: matrix.os == 'linux'
         run: |
           upx --lzma ./installer/nuvlaedge-cli/bin/${{ steps.build.outputs.file_name }}
 
