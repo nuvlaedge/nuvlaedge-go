@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.7.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.6.0...v0.7.0) (2024-04-30)
+
+
+### Features
+
+* add cli installer ([#22](https://github.com/nuvlaedge/nuvlaedge-go/issues/22)) ([a1475a5](https://github.com/nuvlaedge/nuvlaedge-go/commit/a1475a53153827a17190d440db0807e3d8adf264))
+
+
+### Bug Fixes
+
+* bug on path composition for session freeze ([c97e980](https://github.com/nuvlaedge/nuvlaedge-go/commit/c97e98088bbfa4a464221856d393d3252bb0c2d5))
+* release process version parsing bug ([1abb39e](https://github.com/nuvlaedge/nuvlaedge-go/commit/1abb39e2bfe7b27efaa46ad34c65cf541ba79d50))
+
 ## [0.6.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.5.0...v0.6.0) (2024-04-29)
 
 
