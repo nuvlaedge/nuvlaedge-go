@@ -81,10 +81,15 @@ func (p InstallPaths) String() string {
 const (
 	// NuvlaEdgeBinaryURL NuvlaEdge binary url
 	NuvlaEdgeBinaryURL = "https://github.com/nuvlaedge/nuvlaedge-go/releases/download/%s/nuvlaedge-%s-%s-%s"
-	// NuvlaEdgeLatestReleaseURL NuvlaEdge latest release url
-	NuvlaEdgeLatestReleaseURL = "https://api.github.com/repos/nuvlaedge/nuvlaedge-go/releases/latest"
+
 	// NuvlaEdgeLatestConfTemplateURL NuvlaEdge latest configuration template url
 	NuvlaEdgeLatestConfTemplateURL = "https://raw.githubusercontent.com/nuvlaedge/nuvlaedge-go/main/config/template.toml"
+	NuvlaEdgeConfigTemplateURL     = "https://github.com/nuvlaedge/nuvlaedge-go/releases/download/%s/template.toml"
+
+	// NuvlaEdgeServiceURL NuvlaEdge service url
+	NuvlaEdgeServiceURL           = "https://github.com/nuvlaedge/nuvlaedge-go/releases/download/%s/nuvlaedge.service"
+	NuvlaEdgeLatestServiceFileURL = "https://raw.githubusercontent.com/nuvlaedge/nuvlaedge-go/main/installer/nuvlaedge.service"
+
 	// ReleasesURL NuvlaEdge releases url
 	ReleasesURL = "https://api.github.com/repos/{owner}/{repo}/releases"
 )
@@ -110,11 +115,25 @@ const (
 	LogsPath = ".nuvlaedge/logs/"
 
 	// TempDir temporal directory for downloads
-	TempDir = "/tmp/nuvlaedge"
+	TempDir = "/tmp/nuvlaedge/"
+
+	// DefaultServicePath default path for the service file
+	DefaultServicePath = "/etc/systemd/system/"
 )
 
 func hasSudoPermissions() bool {
+	fmt.Printf("Checking sudo permissions... %d\n", os.Geteuid())
 	return os.Geteuid() == 0
+}
+
+func isDockerRunning() bool {
+	_, err := os.Stat("/.dockerenv")
+	return !os.IsNotExist(err)
+}
+
+func isKubernetesRunning() bool {
+	_, err := os.Stat("/var/run/secrets/kubernetes.io")
+	return !os.IsNotExist(err)
 }
 
 func downloadFile(url string, path string) error {
@@ -132,4 +151,23 @@ func downloadFile(url string, path string) error {
 
 	_, err = io.Copy(out, resp.Body)
 	return err
+}
+
+func InstallFileWithTmpDir(url string, filename string, targetDir string) error {
+	// Expects the temporal directory to be already created
+	tmpFile := filepath.Join(TempDir, filename)
+	err := downloadFile(url, tmpFile)
+	if err != nil {
+		fmt.Printf("Error downloading file %s from %s: %v\n", filename, url, err)
+		return err
+	}
+
+	targetFile := filepath.Join(targetDir, filename)
+	err = os.Rename(tmpFile, targetFile)
+	if err != nil {
+		fmt.Printf("Error moving file %s to %s: %v\n", tmpFile, targetFile, err)
+		return err
+	}
+
+	return nil
 }

@@ -19,29 +19,27 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/pelletier/go-toml/v2"
 	"github.com/spf13/cobra"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 )
 
-type RunMode string
-
-const (
-	ProcessMode RunMode = "process"
-	ServiceMode RunMode = "service"
-)
-
 type InstallFlags struct {
-	Version     string
-	InstallDir  string
-	ConfigFile  string
-	InstallMode *strEnum
+	Version    string
+	InstallDir string
+	ConfigFile string
+
+	Service    bool
+	Process    bool
+	Docker     bool
+	Kubernetes bool
+
 	// Run flags
-	Run      bool
-	Uuid     string
-	Detached bool
+	Uuid string
 }
 
 func (f *InstallFlags) String() string {
@@ -50,6 +48,23 @@ func (f *InstallFlags) String() string {
 }
 
 var installFlags InstallFlags
+
+func ValidateInstallFlags() error {
+	fmt.Println("Service mode: ", installFlags.Service)
+	if installFlags.Service && !hasSudoPermissions() {
+		return fmt.Errorf("service mode requires sudo permissions")
+	}
+
+	if installFlags.Docker && !isDockerRunning() {
+		return fmt.Errorf("docker mode requires Docker running")
+	}
+
+	if installFlags.Kubernetes && !isKubernetesRunning() {
+		return fmt.Errorf("kubernetes mode requires Kubernetes running")
+	}
+
+	return nil
+}
 
 // installCmd represents the install command
 var installCmd = &cobra.Command{
@@ -66,40 +81,63 @@ modes:
  - Run as a foreground process`,
 
 	Run: func(cmd *cobra.Command, args []string) {
+		// Validate the flags
+		err := ValidateInstallFlags()
+		if err != nil {
+			cmd.Printf("Error validating flags: %v\n", err)
+			os.Exit(1)
+		}
+
 		cmd.Println("Running install with configuration: %s", installFlags.String())
-		paths, err := installNuvlaEdge(installFlags)
+
+		installer := GetInstaller(&installFlags)
+		if installer == nil {
+			fmt.Println("Error getting installer")
+			os.Exit(1)
+		}
+
+		fmt.Println("Installing NuvlaEdge...")
+		err = installer.Install()
 		if err != nil {
 			cmd.Printf("Error installing NuvlaEdge: %v\n", err)
 			os.Exit(1)
 		}
+		fmt.Println("Installing NuvlaEdge... Done")
 
-		if installFlags.Run {
-			err = startNuvlaEdge(installFlags, paths)
-			if err != nil {
-				cmd.Printf("Error starting NuvlaEdge: %v\n", err)
-				os.Exit(1)
-			}
+		fmt.Println("Starting NuvlaEdge...")
+		err = installer.Start()
+		if err != nil {
+			cmd.Printf("Error starting NuvlaEdge: %v\n", err)
+			os.Exit(1)
 		}
+		fmt.Println("Starting NuvlaEdge... Done")
 	},
 }
 
 func init() {
-	installFlags = InstallFlags{}
-
 	rootCmd.AddCommand(installCmd)
-	installFlags.InstallMode = newStrEnum(string(ProcessMode), string(ProcessMode), string(ServiceMode))
+
+	installFlags = InstallFlags{}
 
 	installCmd.Flags().StringVarP(&installFlags.Version, "version", "v", "latest", "Version of the NuvlaEdge to install")
 	installCmd.Flags().StringVarP(&installFlags.InstallDir, "dir", "d", "", "Directory where to install NuvlaEdge")
 	installCmd.Flags().StringVarP(&installFlags.ConfigFile, "config-file", "c", "", "File to use as configuration for NuvlaEdge")
-	installCmd.Flags().VarP(installFlags.InstallMode, "mode", "m", fmt.Sprintf("Run mode for NuvlaEdge. Allowed values are: %v", installFlags.InstallMode.Allowed))
+
+	installCmd.Flags().BoolVar(&installFlags.Service, "service", false, "Run NuvlaEdge as a service")
+	installCmd.Flags().BoolVar(&installFlags.Process, "process", false, "Run NuvlaEdge as a process")
+	installCmd.Flags().BoolVar(&installFlags.Docker, "docker", false, "Run NuvlaEdge as a Docker container")
+	installCmd.Flags().BoolVar(&installFlags.Kubernetes, "kubernetes", false, "Run NuvlaEdge as a Kubernetes pod")
+
+	// Mutually exclusive flags
+	installCmd.MarkFlagsMutuallyExclusive("service", "process", "docker", "kubernetes")
+	installCmd.MarkFlagsOneRequired("service", "process", "docker", "kubernetes")
 
 	// To run the NuvlaEdge after installing, we need the UUID of the NuvlaEdge
-	installCmd.Flags().BoolVarP(&installFlags.Run, "start", "s", false, "Run NuvlaEdge after installation")
-	installCmd.Flags().StringVar(&installFlags.Uuid, "uuid", "", "Run NuvlaEdge after installation")
-	installCmd.MarkFlagsRequiredTogether("start", "uuid")
-
-	installCmd.Flags().BoolVar(&installFlags.Detached, "detached", false, "Run NuvlaEdge in detached mode if the installation mode is process")
+	installCmd.Flags().StringVar(&installFlags.Uuid, "uuid", "", "UUID to assign to the NuvlaEdge instance")
+	err := installCmd.MarkFlagRequired("uuid")
+	if err != nil {
+		fmt.Println("Error marking uuid as required")
+	}
 }
 
 func getVersion(v string) string {
@@ -128,103 +166,300 @@ func getVersion(v string) string {
 	return releases[0].TagName
 }
 
-func installNuvlaEdge(flags InstallFlags) (*InstallPaths, error) {
+type Installer interface {
+	Install() error
+	Start() error
+	Stop() error
+	Remove() error
+	Status() string
+	String() string
+}
+
+func GetInstaller(flags *InstallFlags) Installer {
+	if flags.Process {
+		return NewProcessInstaller(flags.Uuid, flags.Version, flags)
+	}
+	if flags.Service {
+		return NewServiceInstaller(flags.Uuid, flags.Version, flags)
+	}
+	rootCmd.Println("Invalid run mode, select proper mode...")
+	return nil
+}
+
+type BaseBinaryInstaller struct {
+	Uuid    string
+	Version string
+	Paths   InstallPaths
+	Flags   InstallFlags
+
+	// Host Configuration
+	Os   string
+	Arch string
+}
+
+func (bi *BaseBinaryInstaller) GetHostConfig() {
 	// 1. Get OS
-	localOS := runtime.GOOS
-	fmt.Println("Installing NuvlaEdge on OS: ", localOS)
+	bi.Os = runtime.GOOS
+	fmt.Println("Installing NuvlaEdge on OS: ", bi.Os)
 
 	// 2. Get ARCH
-	localArch := runtime.GOARCH
-	fmt.Println("Installing NuvlaEdge on ARCH: ", localArch)
+	bi.Arch = runtime.GOARCH
+	fmt.Println("Installing NuvlaEdge on ARCH: ", bi.Arch)
+}
 
-	// 3. Assert version to install
-	version := getVersion(flags.Version)
-	fmt.Println("Installing NuvlaEdge version: ", version)
+func (bi *BaseBinaryInstaller) CleanVersion(v string) {
+	fmt.Println("Requested NuvlaEdge version: ", v)
+	bi.Version = getVersion(v)
+	fmt.Println("Installing NuvlaEdge version: ", bi.Version)
+}
 
-	// 4. Build folder structure
-	// If directory is provided, override default path and construct under the directory two folders:
-	// - bin: for the binary
-	// - config: for the configuration file
-	// If directory is not provided, use default paths depending on the user permissions
-	var paths InstallPaths
-	if flags.InstallDir == "" {
-		paths = NewDefaultInstallPaths(hasSudoPermissions())
+func (bi *BaseBinaryInstaller) AssertInstallationPaths() {
+	if bi.Flags.InstallDir == "" {
+		bi.Paths = NewDefaultInstallPaths(hasSudoPermissions())
 	} else {
-		// Here we assume that the user has permissions to write in the provided directory
-		paths = NewFromBasePath(flags.InstallDir)
+		bi.Paths = NewFromBasePath(bi.Flags.InstallDir)
 	}
-	fmt.Println("Installing NuvlaEdge in: ", paths)
-	paths.MakePaths()
-
-	// 5. Compose download URLS both for the config file and the binary
-	bUrl := fmt.Sprintf(NuvlaEdgeBinaryURL, version, localOS, localArch, version)
-	fmt.Println("Downloading NuvlaEdge binary from: ", bUrl)
-	// TODO: Need to be downloaded from the same tag version as the binary
-	cUrl := NuvlaEdgeLatestConfTemplateURL
-	fmt.Println("Downloading NuvlaEdge configuration template from: ", cUrl)
-
-	// 6. Download files to temporal directory
-	tempDir := "/tmp/nuvlaedge"
-	_ = os.Mkdir(tempDir, os.ModePerm)
-	err := downloadFile(bUrl, tempDir+"/nuvlaedge")
-	if err != nil {
-		fmt.Println("Error downloading binary")
-		panic(err)
-	}
-
-	err = downloadFile(cUrl, tempDir+"/template.toml")
-	if err != nil {
-		fmt.Println("Error downloading configuration template")
-		panic(err)
-	}
-
-	// 7. Move files to the installation directory
-	err = os.Rename(tempDir+"/nuvlaedge", paths.BinaryPath+"/nuvlaedge")
-	if err != nil {
-		fmt.Println("Error moving binary")
-		panic(err)
-	}
-
-	err = os.Rename(tempDir+"/template.toml", paths.ConfigPath+"/template.toml")
-	if err != nil {
-		fmt.Println("Error moving configuration template")
-		panic(err)
-	}
-
-	return &paths, nil
+	//
+	b, _ := json.MarshalIndent(&bi.Paths, "", "  ")
+	fmt.Printf("Installing NuvlaEdge in:\n%s\n ", string(b))
+	bi.Paths.MakePaths()
 }
 
-func startNuvlaEdge(flags InstallFlags, paths *InstallPaths) error {
-	// 1. Get the run mode
-	mode := flags.InstallMode.Value
-	fmt.Println("Starting NuvlaEdge as", mode)
-
-	switch mode {
-	case string(ProcessMode):
-		return startNuvlaEdgeProcess(flags, paths)
-	case string(ServiceMode):
-		return startNuvlaEdgeService(flags, paths)
-	default:
-		return fmt.Errorf("invalid run mode: %s", mode)
+func (bi *BaseBinaryInstaller) FillConfigFile() error {
+	// 1. Read the configuration file
+	file, err := os.OpenFile(filepath.Join(bi.Paths.ConfigPath, "template.toml"), os.O_RDWR, 0644)
+	if err != nil {
+		fmt.Printf("Error opening configuration file: %s\n", bi.Paths.ConfigPath)
+		return err
 	}
-}
+	defer file.Close()
 
-func startNuvlaEdgeProcess(flags InstallFlags, paths *InstallPaths) error {
-	cmdPath := paths.BinaryPath + "/nuvlaedge"
-	attr := []string{"-c", paths.ConfigPath + "/template.toml"}
-	fmt.Println("Starting NuvlaEdge process with command: ", cmdPath, attr)
-
-	cmd := exec.Command(cmdPath, attr...)
-	var err error
-	if flags.Detached {
-		err = cmd.Run()
-	} else {
-		err = cmd.Start()
+	var conf map[string]interface{}
+	if err = toml.NewDecoder(file).Decode(&conf); err != nil {
+		fmt.Println("Error decoding configuration file")
+		return err
 	}
 
-	return err
-}
+	conf["data-location"] = bi.Paths.DatabasePath
+	conf["config-location"] = bi.Paths.ConfigPath
 
-func startNuvlaEdgeService(flags InstallFlags, paths *InstallPaths) error {
+	var logConf map[string]interface{}
+	logConf = conf["logging"].(map[string]interface{})
+	logConf["log-file"] = filepath.Join(bi.Paths.LogsPath, "nuvlaedge.log")
+	conf["logging"] = logConf
+
+	var agentConf map[string]interface{}
+	agentConf = conf["agent"].(map[string]interface{})
+	agentConf["nuvlaedge-uuid"] = bi.Uuid
+	conf["agent"] = agentConf
+
+	// Write the modified configuration back to the file
+	_, _ = file.Seek(0, 0) // Reset the file pointer to the beginning
+	_ = file.Truncate(0)   // Clear the file content
+
+	if err := toml.NewEncoder(file).Encode(conf); err != nil {
+		fmt.Println("Error writing TOML file:", err)
+		return err
+	}
+
 	return nil
+}
+
+func (bi *BaseBinaryInstaller) PrepareCommonFiles() error {
+	bi.GetHostConfig()
+	bi.CleanVersion(bi.Flags.Version)
+	bi.AssertInstallationPaths()
+	// Common installation section
+	// 1. Create temporal directory
+	if _, err := os.Stat(TempDir); os.IsNotExist(err) {
+		err = os.Mkdir(TempDir, os.ModePerm)
+		if err != nil {
+			fmt.Printf("Error creating temporal directory: %s\n", TempDir)
+			os.Exit(1)
+		}
+	}
+
+	// 2. Compose download URLS both for the config file and the binary
+	bUrl := fmt.Sprintf(NuvlaEdgeBinaryURL, bi.Version, bi.Os, bi.Arch, bi.Version)
+	fmt.Println("Downloading NuvlaEdge binary from: ", bUrl)
+	err := InstallFileWithTmpDir(bUrl, "nuvlaedge", bi.Paths.BinaryPath)
+	if err != nil {
+		fmt.Printf("Error installing NuvlaEdge binary to %s\n", bi.Paths.BinaryPath)
+		return err
+	}
+	// Make binary file executable
+	err = os.Chmod(filepath.Join(bi.Paths.BinaryPath, "nuvlaedge"), 0755)
+	if err != nil {
+		fmt.Printf("Error making binary executable: %s\n", err)
+		return err
+	}
+
+	confUrl := fmt.Sprintf(NuvlaEdgeConfigTemplateURL, bi.Version)
+	fmt.Println("Downloading NuvlaEdge configuration template from: ", confUrl)
+	err = InstallFileWithTmpDir(confUrl, "template.toml", bi.Paths.ConfigPath)
+	if err != nil {
+		fmt.Printf("Error installing NuvlaEdge configuration to %s\n", bi.Paths.ConfigPath)
+	}
+	// We need to edit the config file to include, the uuid, the version and the paths
+	err = bi.FillConfigFile()
+	if err != nil {
+		fmt.Println("Error filling configuration file")
+		return err
+	}
+	return nil
+}
+
+func NewBaseInstaller(uuid, version string, installFlags *InstallFlags) BaseBinaryInstaller {
+	return BaseBinaryInstaller{
+		Uuid:    uuid,
+		Version: version,
+		// Remove the pointer so the initial configuration persists in the original struct
+		Flags: *installFlags,
+	}
+}
+
+type ServiceInstaller struct {
+	BaseBinaryInstaller
+}
+
+func NewServiceInstaller(uuid string, version string, installFlags *InstallFlags) *ServiceInstaller {
+	return &ServiceInstaller{
+		BaseBinaryInstaller: NewBaseInstaller(uuid, version, installFlags),
+	}
+}
+
+func (si *ServiceInstaller) FillServiceFile() error {
+	serviceFile := filepath.Join(TempDir, "nuvlaedge.service") // filepath.Join(DefaultServicePath, "nuvlaedge.service")
+	fmt.Println("Filling service file: ", serviceFile)
+
+	file, err := os.ReadFile(serviceFile)
+	if err != nil {
+		fmt.Printf("Error opening configuration file: %s\n", si.Paths.ConfigPath)
+		return err
+	}
+
+	// Replace the placeholders
+	content := string(file)
+	content = strings.ReplaceAll(content, "EXEC_PATH_PLACEHOLDER", filepath.Join(si.Paths.BinaryPath, "nuvlaedge"))
+	content = strings.ReplaceAll(content, "SETTINGS_PATH_PLACEHOLDER", filepath.Join(si.Paths.ConfigPath, "template.toml"))
+	content = strings.ReplaceAll(content, "USER_PLACEHOLDER", os.Getenv("USER"))
+	content = strings.ReplaceAll(content, "GROUP_PLACEHOLDER", os.Getenv("USER"))
+	content = strings.ReplaceAll(content, "WORKING_DIR_PLACEHOLDER", si.Paths.DatabasePath)
+
+	err = os.WriteFile(filepath.Join(DefaultServicePath, "nuvlaedge.service"), []byte(content), 0644)
+	if err != nil {
+		fmt.Printf("Error writing service file: %s\n", err)
+		return err
+	}
+
+	return nil
+}
+
+func (si *ServiceInstaller) Install() error {
+	fmt.Println("Installing NuvlaEdge as a service")
+	err := si.PrepareCommonFiles()
+	if err != nil {
+		fmt.Println("Error preparing common files, binary and configuration")
+		return err
+	}
+
+	serviceUrl := fmt.Sprintf(NuvlaEdgeServiceURL, si.Version)
+	fmt.Printf("Downloading service file from %s\n", serviceUrl)
+	_ = downloadFile(serviceUrl, filepath.Join(TempDir, "nuvlaedge.service"))
+
+	//err = InstallFileWithTmpDir(serviceUrl, "nuvlaedge.service", DefaultServicePath)
+	//if err != nil {
+	//	fmt.Printf("Error installing NuvlaEdge service file to %s\n", DefaultServicePath)
+	//	return err
+	//}
+
+	err = si.FillServiceFile()
+	if err != nil {
+		fmt.Println("Error filling service file")
+		return err
+	}
+
+	return nil
+}
+
+func (si *ServiceInstaller) Start() error {
+	fmt.Println("Starting NuvlaEdge as a service...")
+	// 1. Start the service
+	cmd := exec.Command("systemctl", "start", "nuvlaedge")
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+	fmt.Println("Starting NuvlaEdge as a service... Done")
+
+	// 2. Check the status
+	fmt.Println("Check NuvlaEdge health status after 5 seconds...")
+	cmd = exec.Command("systemctl", "is-active", "nuvlaedge")
+	output, err := cmd.Output()
+	if err != nil {
+		fmt.Println("Error checking NuvlaEdge status: ", err)
+		fmt.Println("NuvlaEdge might or might not be running")
+		return err
+	}
+
+	status := strings.TrimSpace(string(output))
+	if status != "active" {
+		fmt.Println("NuvlaEdge is not running")
+		return fmt.Errorf("NuvlaEdge is not running")
+	}
+
+	fmt.Printf("Check NuvlaEdge health status after 5 seconds... %s\n", status)
+
+	return nil
+}
+
+func (si *ServiceInstaller) Stop() error {
+	return nil
+}
+
+func (si *ServiceInstaller) Remove() error {
+	return nil
+}
+
+func (si *ServiceInstaller) Status() string {
+	return ""
+}
+
+func (si *ServiceInstaller) String() string {
+	return ""
+}
+
+type ProcessInstaller struct {
+	BaseBinaryInstaller
+}
+
+func NewProcessInstaller(uuid string, version string, flags *InstallFlags) *ProcessInstaller {
+	return &ProcessInstaller{
+		BaseBinaryInstaller: NewBaseInstaller(uuid, version, flags),
+	}
+}
+
+func (pi *ProcessInstaller) Install() error {
+	fmt.Println("Installing NuvlaEdge as a process")
+	return pi.PrepareCommonFiles()
+}
+
+func (pi *ProcessInstaller) Start() error {
+	return nil
+}
+
+func (pi *ProcessInstaller) Stop() error {
+	return nil
+}
+
+func (pi *ProcessInstaller) Remove() error {
+	return nil
+}
+
+func (pi *ProcessInstaller) Status() string {
+	return ""
+}
+
+func (pi *ProcessInstaller) String() string {
+	return ""
 }
