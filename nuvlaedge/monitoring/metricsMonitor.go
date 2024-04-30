@@ -344,6 +344,7 @@ func (t *MetricsMonitor) UpdaterComponents(errChan chan<- error) {
 }
 
 func (t *MetricsMonitor) UpdaterStatus(errChan chan<- error) {
+	t.nuvlaEdgeStatus.Status = "OPERATIONAL"
 	errChan <- nil
 }
 
