@@ -1,5 +1,57 @@
 # Changelog
 
+## [0.8.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.7.3...v0.8.0) (2024-04-30)
+
+
+### Features
+
+* add cli installer ([#22](https://github.com/nuvlaedge/nuvlaedge-go/issues/22)) ([a1475a5](https://github.com/nuvlaedge/nuvlaedge-go/commit/a1475a53153827a17190d440db0807e3d8adf264))
+* Add deployment set state capabilities ([#11](https://github.com/nuvlaedge/nuvlaedge-go/issues/11)) ([10e97ff](https://github.com/nuvlaedge/nuvlaedge-go/commit/10e97ff1d85083235c0709a4773908cef015bc98))
+* Add deployment start action ([#8](https://github.com/nuvlaedge/nuvlaedge-go/issues/8)) ([dd67280](https://github.com/nuvlaedge/nuvlaedge-go/commit/dd672802a653b34ff06c4f66e70f8d3abec9b2c8))
+* add installer files to release ([29aad62](https://github.com/nuvlaedge/nuvlaedge-go/commit/29aad62491ad8bf3d327e5e7ca992caf26feff69))
+* add persistence to nuvla session ([fec6cbb](https://github.com/nuvlaedge/nuvlaedge-go/commit/fec6cbb7fd47403671ddd982563d78b43573979a))
+* add release action ([#4](https://github.com/nuvlaedge/nuvlaedge-go/issues/4)) ([68a67e3](https://github.com/nuvlaedge/nuvlaedge-go/commit/68a67e3752eaaeb7f2f625dd8f7b37f05855688e))
+* add script installer ([5c83cc0](https://github.com/nuvlaedge/nuvlaedge-go/commit/5c83cc0dc6bca44125558a86013d9061206b145d))
+* add session persistence ([#18](https://github.com/nuvlaedge/nuvlaedge-go/issues/18)) ([971094a](https://github.com/nuvlaedge/nuvlaedge-go/commit/971094acfb786ce2dc203925e79de2b11672760e))
+* add stop and improve deployment handling ([#15](https://github.com/nuvlaedge/nuvlaedge-go/issues/15)) ([4717dd4](https://github.com/nuvlaedge/nuvlaedge-go/commit/4717dd4a0bd9f59f7097837aa8595ff1b4371b2d))
+* add version management ([1a33237](https://github.com/nuvlaedge/nuvlaedge-go/commit/1a33237bed6b9f1517aaaf9456857ce15e3898a1))
+* add-deployment actions skeletons ([2922de5](https://github.com/nuvlaedge/nuvlaedge-go/commit/2922de5e328fc163f009b0aaa674c192b7b1986b))
+* add-reboot-action ([#2](https://github.com/nuvlaedge/nuvlaedge-go/issues/2)) ([ad2bf02](https://github.com/nuvlaedge/nuvlaedge-go/commit/ad2bf022370c54ef1d898cd9ae8bd3e72b036213))
+* Added client library support ([653d426](https://github.com/nuvlaedge/nuvlaedge-go/commit/653d426cf95a76132d6150fbce95b77e79cfc542))
+
+
+### Bug Fixes
+
+* add compression to binaries release ([4578503](https://github.com/nuvlaedge/nuvlaedge-go/commit/4578503d916ece454033b3f12d6b70a3f67780c0))
+* bug on compressing binaries for macos ([121b3f5](https://github.com/nuvlaedge/nuvlaedge-go/commit/121b3f51831092a5f91d0d8a29e208d871483616))
+* bug on path composition for session freeze ([c97e980](https://github.com/nuvlaedge/nuvlaedge-go/commit/c97e98088bbfa4a464221856d393d3252bb0c2d5))
+* Deployment client no working ([3014a2d](https://github.com/nuvlaedge/nuvlaedge-go/commit/3014a2d99b8702a7505a5bbb357e33a0b5bcef8e))
+* enable the service after installing, not only starting it ([fc8627f](https://github.com/nuvlaedge/nuvlaedge-go/commit/fc8627f86ab464d4c05f21b417ece7acd7313676))
+* error on exporting Settings path on installer ([3ea5c2f](https://github.com/nuvlaedge/nuvlaedge-go/commit/3ea5c2f4167945dee4f260d12e36d48e8685b7bc))
+* fix default path for NuvlaEdge configuration in sudo mode ([e79a800](https://github.com/nuvlaedge/nuvlaedge-go/commit/e79a80069e9dd21f7e3ac16c37b7165171c03475))
+* fix release process bug ([ad7ae61](https://github.com/nuvlaedge/nuvlaedge-go/commit/ad7ae61ce332e2dfc1674c1008f1b8adca8a79b5))
+* improve detached run mode on installer script ([5043c51](https://github.com/nuvlaedge/nuvlaedge-go/commit/5043c51913d49b3b538262c59909ca4595cc92ca))
+* new get-ne.sh to point to nuvlaedge-cli installer ([507cdf1](https://github.com/nuvlaedge/nuvlaedge-go/commit/507cdf1842eaa8c5a48f2a30f3ada68dd35557ff))
+* release process version parsing bug ([1abb39e](https://github.com/nuvlaedge/nuvlaedge-go/commit/1abb39e2bfe7b27efaa46ad34c65cf541ba79d50))
+* remove replace dev statement from go.mod ([eaee032](https://github.com/nuvlaedge/nuvlaedge-go/commit/eaee032a7cbfca0a44c1b13e1fd8f42949d86e4d))
+* Remove Replace statement from go.mod ([641339c](https://github.com/nuvlaedge/nuvlaedge-go/commit/641339c38e0d469f71d1b5368568ebcc153e1bd8))
+* Simplify logging using base logger everywhere and clean of sourcecode ([f872a9e](https://github.com/nuvlaedge/nuvlaedge-go/commit/f872a9e23bf42bf9be5cd6403b84e9b710b7eac8))
+
+
+### Dependencies
+
+* Update client to 0.4.0 ([a54c4b2](https://github.com/nuvlaedge/nuvlaedge-go/commit/a54c4b2058e4add88cfeed59da60f552122cba70))
+* Updated api-client-go to 0.3.1 ([3014a2d](https://github.com/nuvlaedge/nuvlaedge-go/commit/3014a2d99b8702a7505a5bbb357e33a0b5bcef8e))
+* updated api-client-go to 0.4.1 ([d99d22c](https://github.com/nuvlaedge/nuvlaedge-go/commit/d99d22ca5406458d528e59091ec2ab5203d22b23))
+
+
+### Continuous Integration
+
+* Add dependency section to release notes ([84af2a9](https://github.com/nuvlaedge/nuvlaedge-go/commit/84af2a9e68eb279e12cad57bd6a16fab33b1a9ac))
+* add main branch as trigger for release ([a26ee58](https://github.com/nuvlaedge/nuvlaedge-go/commit/a26ee58f48f2beec1fc7617c7d3264fbf0da1a4d))
+* Fix changelog sections ([b1f2e29](https://github.com/nuvlaedge/nuvlaedge-go/commit/b1f2e2991b21b000a7182e71b94a18010b5b5e58))
+* Remove hardcoded initial release tag ([1a1f82a](https://github.com/nuvlaedge/nuvlaedge-go/commit/1a1f82a1311aff10b7797bb5a105b217534491b1))
+
 ## [0.7.3](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.7.2...v0.7.3) (2024-04-30)
 
 
