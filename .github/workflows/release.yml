@@ -95,19 +95,21 @@ jobs:
         id: build
         run: |
           cd installer/nuvlaedge-cli
+          mkdir -p bin
+          ls -la .
           go mod tidy
           export FILE_NAME="nuvlaedge-cli-${{ matrix.os }}-${{ matrix.arch }}-${{ needs.trigger-release.outputs.tag_name }}"
           export GOOS=${{ matrix.os }}
           export GOARCH=${{ matrix.arch }}
-          go build -o $FILE_NAME main.go
-          echo "cli_name=$FILE_NAME" >> $GITHUB_OUTPUT
+          go build -o bin/$FILE_NAME main.go
+          echo "file_name=$FILE_NAME" >> $GITHUB_OUTPUT
 
       - name: Add artifacts to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Uploading artifacts to release ${{ needs.trigger-release.outputs.tag_name }}"
-          gh release upload ${{ needs.trigger-release.outputs.tag_name }} ${{ steps.build.outputs.cli_name }}
+          gh release upload ${{ needs.trigger-release.outputs.tag_name }} installer/nuvlaedge-cli/bin/${{ steps.build.outputs.file_name }}
 
   publish-config-template:
     name: "Publish NuvlaEdge Config Template"
