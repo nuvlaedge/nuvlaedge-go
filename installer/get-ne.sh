@@ -1,116 +1,38 @@
-#!/bin/bash
+#!/bin/sh
 
-# Initialize variables
-VERSION=""
-DEST_DIR=""
-UUID=""
+BASE_URL="https://github.com/nuvlaedge/nuvlaedge-go/releases/download"
 
-# Parse command-line arguments
-while (( "$#" )); do
-  case "$1" in
-    --version)
-      VERSION="$2"
-      shift 2
-      ;;
-    --dir)
-      DEST_DIR="$2"
-      shift 2
-      ;;
-    --uuid)
-      UUID="$2"
-      shift 2
-      ;;
-    --) # end argument parsing
-      shift
-      break
-      ;;
-    -*|--*=) # unsupported flags
-      echo "Error: Unsupported flag $1" >&2
-      exit 1
-      ;;
-    *) # preserve positional arguments
-      PARAMS="$PARAMS $1"
-      shift
-      ;;
-  esac
-done
-# set positional arguments in their proper place
-eval set -- "$PARAMS"
-
-echo "Installing NuvlaEdge with parameters: version=$VERSION, dir=$DEST_DIR, uuid=$UUID"
-
-# Determine the OS and architecture
-OS=$(uname -s | tr '[:upper:]' '[:lower:]')
-ARCH=$(uname -m)
-
-# Map the architecture names to the ones used by NuvlaEdge
-case $ARCH in
-    x86_64) ARCH=amd64 ;;
-    aarch64) ARCH=arm64 ;;
-    arm64) ARCH=arm64 ;;
-    armv*) ARCH=arm ;;
-    *) echo "Unsupported architecture: $ARCH" ; exit 1 ;;
-esac
-
-# Map the OS names to the ones used by NuvlaEdge
-case $OS in
-    darwin) OS=darwin ;;
-    linux) OS=linux ;;
-    *) echo "Unsupported OS: $OS" ; exit 1 ;;
-esac
-
-# If no version is provided, get the latest version from the GitHub API
-if [ -z "$VERSION" ]
-then
+# Get the version from the command line arguments, or use the latest version
+if [ -z "$1" ]; then
     VERSION=$(curl --silent "https://api.github.com/repos/nuvlaedge/nuvlaedge-go/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+else
+    VERSION="$1"
 fi
 
-echo "Downloading NuvlaEdge version $VERSION for $OS/$ARCH"
+# Detect the operating system
+OS=$(uname -s | tr '[:upper:]' '[:lower:]')
 
-# Construct the URL for the binary
-URL="https://github.com/nuvlaedge/nuvlaedge-go/releases/download/$VERSION/nuvlaedge-$OS-$ARCH-$VERSION"
+# Detect the architecture
+ARCH_RAW=$(uname -m)
+if [ "$ARCH_RAW" = "x86_64" ]; then
+    ARCH="amd64"
+elif [ "$ARCH_RAW" = "aarch64" ]; then
+    ARCH="arm64"
+elif [ "$ARCH_RAW" = "arm64" ]; then
+    ARCH="arm64"
+elif [ "$ARCH_RAW" = "armv7l" ]; then
+    ARCH="arm"
+else
+    echo "Unsupported architecture: $ARCH_RAW"
+    exit 1
+fi
 
-echo "Downloading NuvlaEdge from $URL"
+# Construct the download URL
+URL="${BASE_URL}/${VERSION}/nuvlaedge-cli-${OS}-${ARCH}-${VERSION}"
 
+echo "Downloading NuvlaEdge CLI from $URL"
 # Download the binary
-curl -L -O "$URL"
+curl -L -o nuvlaedge-cli "$URL"
 
-# Determine the destination directory
-if [ -z "$DEST_DIR" ]
-then
-    if [ "$(id -u)" -eq 0 ]
-    then
-        DEST_DIR="/usr/local/bin"
-        CONF_DIR="/etc/nuvlaedge"
-        LOG_DIR="/var/log/nuvlaedge"
-        mkdir -p "$CONF_DIR"
-        mkdir -p "$LOG_DIR"
-    else
-        DEST_DIR="$HOME/.nuvlaedge/bin"
-        mkdir -p "$DEST_DIR"
-    fi
-fi
-
-# Move the binary to the destination directory
-mv "nuvlaedge-$OS-$ARCH-$VERSION" "$DEST_DIR/nuvlaedge"
-chmod +x "$DEST_DIR/nuvlaedge"
-
-# Download the template.toml file from the main branch
-curl -L -o "$CONF_DIR/template.toml" "https://raw.githubusercontent.com/nuvlaedge/nuvlaedge-go/main/config/template.toml"
-
-export NUVLAEDGE_SETTINGS="$CONF_DIR/template.toml"
-
-
-if [ -n "$UUID" ]
-then
-    echo "Starting NuvlaEdge with UUID $UUID..."
-
-    export NUVLAEDGE_UUID="$UUID"
-    export NUVLAEDGE_SETTINGS="$CONF_DIR/template.toml"
-    echo $NUVLAEDGE_UUID
-    echo $NUVLAEDGE_SETTINGS
-    cd $DEST_DIR
-    nohup ./nuvlaedge > "$LOG_DIR/nuvlaedge.log" 2>&1 &
-fi
-
-echo "NuvlaEdge has been installed to $DEST_DIR"
+# Make the binary executable
+chmod +x nuvlaedge-cli
