@@ -60,6 +60,15 @@ jobs:
           go build -o $FILE_NAME -ldflags="-X 'nuvlaedge-go/nuvlaedge/version.Version=${{ needs.trigger-release.outputs.tag_name }}'" ./cmd/nuvlaedge.go
           echo "file_name=$FILE_NAME" >> $GITHUB_OUTPUT
 
+      - name: Install UPX
+        uses: crazy-max/ghaction-upx@v3
+        with:
+          install-only: true
+
+      - name: Compress binaries
+        run: |
+          upx --lzma ${{ steps.build.outputs.file_name }}
+
       - name: Add artifacts to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -103,6 +112,15 @@ jobs:
           export GOARCH=${{ matrix.arch }}
           go build -o bin/$FILE_NAME main.go
           echo "file_name=$FILE_NAME" >> $GITHUB_OUTPUT
+
+      - name: Install UPX
+        uses: crazy-max/ghaction-upx@v3
+        with:
+          install-only: true
+
+      - name: Compress binaries
+        run: |
+          upx --lzma ./installer/nuvlaedge-cli/bin/${{ steps.build.outputs.file_name }}
 
       - name: Add artifacts to release
         env:
