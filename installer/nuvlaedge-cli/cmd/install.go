@@ -385,8 +385,14 @@ func (si *ServiceInstaller) Install() error {
 func (si *ServiceInstaller) Start() error {
 	fmt.Println("Starting NuvlaEdge as a service...")
 	// 1. Start the service
-	cmd := exec.Command("systemctl", "start", "nuvlaedge")
+	cmd := exec.Command("systemctl", "enable", "nuvlaedge")
 	err := cmd.Run()
+	if err != nil {
+		return err
+	}
+
+	cmd = exec.Command("systemctl", "start", "nuvlaedge")
+	err = cmd.Run()
 	if err != nil {
 		return err
 	}
