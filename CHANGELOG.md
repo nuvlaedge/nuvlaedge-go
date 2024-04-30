@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.7.2](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.7.1...v0.7.2) (2024-04-30)
+
+
+### Bug Fixes
+
+* add compression to binaries release ([4578503](https://github.com/nuvlaedge/nuvlaedge-go/commit/4578503d916ece454033b3f12d6b70a3f67780c0))
+* enable the service after installing, not only starting it ([fc8627f](https://github.com/nuvlaedge/nuvlaedge-go/commit/fc8627f86ab464d4c05f21b417ece7acd7313676))
+* new get-ne.sh to point to nuvlaedge-cli installer ([507cdf1](https://github.com/nuvlaedge/nuvlaedge-go/commit/507cdf1842eaa8c5a48f2a30f3ada68dd35557ff))
+
 ## [0.7.1](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.7.0...v0.7.1) (2024-04-30)
 
 
