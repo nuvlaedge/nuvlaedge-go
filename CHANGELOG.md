@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.1](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.7.0...v0.7.1) (2024-04-30)
+
+
+### Bug Fixes
+
+* fix release process bug ([ad7ae61](https://github.com/nuvlaedge/nuvlaedge-go/commit/ad7ae61ce332e2dfc1674c1008f1b8adca8a79b5))
+
 ## [0.7.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.6.0...v0.7.0) (2024-04-30)
 
 
