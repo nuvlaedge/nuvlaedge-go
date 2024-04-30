@@ -48,6 +48,7 @@ func CleanMap(m map[string]interface{}) {
 		}
 	}
 }
+
 func LoadJsonFile(filePath string, data interface{}) error {
 	if !FileExists(filePath) {
 		return NewFileMissingError(filePath)

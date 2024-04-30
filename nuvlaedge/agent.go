@@ -12,6 +12,7 @@ import (
 	"nuvlaedge-go/nuvlaedge/common"
 	"nuvlaedge-go/nuvlaedge/common/resources"
 	"nuvlaedge-go/nuvlaedge/orchestrator"
+	"path/filepath"
 	"time"
 )
 
@@ -41,7 +42,7 @@ type Agent struct {
 // NewNuvlaEdgeClient tries to create a new Nuvla client first from the local files if available, else from the settings
 func NewNuvlaEdgeClient(settings *AgentSettings) *clients.NuvlaEdgeClient {
 
-	clientFile := DataLocation + agent.NuvlaSessionDataFile
+	clientFile := filepath.Join(DataLocation, agent.NuvlaSessionDataFile)
 	log.Infof("Checking if freeze file exists: %s", clientFile)
 	var client *clients.NuvlaEdgeClient
 
@@ -136,7 +137,7 @@ func (a *Agent) Start() error {
 	}
 
 	// Freeze the client here
-	freezeFile := DataLocation + agent.NuvlaSessionDataFile
+	freezeFile := filepath.Join(DataLocation, agent.NuvlaSessionDataFile)
 	err = a.client.Freeze(freezeFile)
 
 	// Create commissioner
