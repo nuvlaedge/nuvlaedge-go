@@ -39,6 +39,26 @@ Then, it will enable and start the nuvlaedge service.
 At the same time, the cli will set the proper configuration in the template.toml file. This file is a template, 
 so it can be modified to fit the device needs.
 
+## MacOs usage
+
+For MacOS, the binary must be started manually and the configuration file edit accordingly. 
+Both the binary and the configuration file can be found in the release page (.
+
+```shell
+export NE_RELEASE=v0.7.3
+# Download configuration file
+$ curl -fsSL https://github.com/nuvlaedge/nuvlaedge-go/releases/download/$NE_RELEASE/template.toml -o template.toml
+# Download binary
+$ curl -fsSL https://github.com/nuvlaedge/nuvlaedge-go/releases/download/$NE_RELEASE/nuvlaedge-darwin-amd64-v0.7.3 -o nuvlaedge
+
+# Configure the nuvlaedge uuid inside the template.toml file
+$ export NUVLAEDGE_SETTINGS=/path/to/template.toml
+$ ./nuvlaedge
+# Or if you want to run it in detached mode
+$ nohup ./nuvlaedge > /dev/null 2>&1 &
+
+```
+
 
 
 
