@@ -71,6 +71,7 @@ type Deployer interface {
 	StartDeployment() error
 	StopDeployment() error
 	RemoveDeployment() error
+	UpdateDeployment() error
 	DeploymentState() error
 }
 
@@ -108,6 +109,10 @@ func (c *ComposeDeployer) StartDeployment() error {
 		return err
 	}
 	return nil
+}
+
+func (c *ComposeDeployer) UpdateDeployment() error {
+	return c.StartDeployment()
 }
 
 func (c *ComposeDeployer) StopDeployment() error {

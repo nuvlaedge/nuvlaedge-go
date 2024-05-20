@@ -9,10 +9,11 @@ import (
 type ActionType string
 
 const (
-	RebootActionType          ActionType = "reboot_nuvlabox"
-	StopDeploymentActionType  ActionType = "stop_deployment"
-	StartDeploymentActionType ActionType = "start_deployment"
-	StateDeploymentActionType ActionType = "deployment_state"
+	RebootActionType           ActionType = "reboot_nuvlabox"
+	StopDeploymentActionType   ActionType = "stop_deployment"
+	StartDeploymentActionType  ActionType = "start_deployment"
+	StateDeploymentActionType  ActionType = "deployment_state"
+	UpdateDeploymentActionType ActionType = "update_deployment"
 )
 
 func GetActionTypeFromString(action string) ActionType {
@@ -23,6 +24,8 @@ func GetActionTypeFromString(action string) ActionType {
 		return StopDeploymentActionType
 	case "start_deployment":
 		return StartDeploymentActionType
+	case "update_deployment":
+		return UpdateDeploymentActionType
 	case "deployment_state_10":
 		return StateDeploymentActionType
 	case "deployment_state_60":
@@ -46,6 +49,8 @@ func GetAction(actionName string) Action {
 		return &StopDeployment{}
 	case StartDeploymentActionType:
 		return &StartDeployment{}
+	case UpdateDeploymentActionType:
+		return &UpdateDeployment{}
 	case StateDeploymentActionType:
 		return &DeploymentState{}
 	default:

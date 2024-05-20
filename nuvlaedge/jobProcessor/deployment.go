@@ -77,6 +77,31 @@ func (d *StartDeployment) GetActionType() ActionType {
 }
 
 // --------------------------------------------
+// Deployment Update
+// --------------------------------------------
+
+type UpdateDeployment struct {
+	DeploymentBase
+}
+
+func (d *UpdateDeployment) ExecuteAction() error {
+	log.Infof("Updating deployment %s...", d.DeploymentResource.Id)
+	err := d.deployer.UpdateDeployment()
+	if err != nil {
+		log.Errorf("Error updating deployment: %s", err)
+		_ = d.DeploymentClient.SetState(clients.StateError)
+		return err
+	}
+	log.Infof("Updating deployment %s... Success", d.DeploymentResource.Id)
+	_ = d.DeploymentClient.SetStateStarted()
+	return nil
+}
+
+func (d *UpdateDeployment) GetActionType() ActionType {
+	return UpdateDeploymentActionType
+}
+
+// --------------------------------------------
 // Deployment Stop
 // --------------------------------------------
 
