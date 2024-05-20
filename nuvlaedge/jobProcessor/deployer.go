@@ -100,9 +100,9 @@ func (c *ComposeDeployer) StartDeployment() error {
 		log.Errorf("Error writing docker-compose file: %s", err)
 		return err
 	}
-	command := []string{"compose", "-f", fmt.Sprintf("/tmp/%s/docker-compose.yml", deploymentName), "up", "-d"}
-	log.Infof("Executing command: docker %s", command)
-	_, err = executeCommand("docker", command...)
+	command := []string{"-f", fmt.Sprintf("/tmp/%s/docker-compose.yml", deploymentName), "up", "-d"}
+	log.Infof("Executing command: docker compose %s", command)
+	_, err = executeCommand("docker-compose", command...)
 	if err != nil {
 		log.Infof("Error starting deployment: %s", err)
 		return err
@@ -112,9 +112,9 @@ func (c *ComposeDeployer) StartDeployment() error {
 
 func (c *ComposeDeployer) StopDeployment() error {
 	deploymentName := strings.Replace(c.deploymentId, "/", "-", -1)
-	command := []string{"compose", "-f", fmt.Sprintf("/tmp/%s/docker-compose.yml", deploymentName), "down"}
-	log.Infof("Executing command: docker %s", command)
-	_, err := executeCommand("docker", command...)
+	command := []string{"-f", fmt.Sprintf("/tmp/%s/docker-compose.yml", deploymentName), "down"}
+	log.Infof("Executing command: docker compose %s", command)
+	_, err := executeCommand("docker-compose", command...)
 	if err != nil {
 		log.Infof("Error starting deployment: %s", err)
 		return err
