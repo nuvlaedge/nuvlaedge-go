@@ -217,7 +217,7 @@ func (a *Agent) processResponseWithJobs(res *http.Response, action string) error
 	if sample.Jobs != nil && len(sample.Jobs) > 0 {
 		log.Infof("Jobs received: %v", sample.Jobs)
 		for _, job := range sample.Jobs {
-			log.Infof("Sending job %s to job channel", job)
+			log.Infof("Sending jobs %s to jobs channel", job)
 			a.jobChan <- job
 		}
 	}

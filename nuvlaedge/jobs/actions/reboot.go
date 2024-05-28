@@ -2,11 +2,11 @@ package actions
 
 import (
 	log "github.com/sirupsen/logrus"
-	"nuvlaedge-go/nuvlaedge/jobEngine/executors"
+	"nuvlaedge-go/nuvlaedge/jobs/executors"
 )
 
 // RebootAction reboots the system. It can do it from a container or from the host.
-// The reboot action should be scheduled to allow the job to complete.
+// The reboot action should be scheduled to allow the jobs to complete.
 type RebootAction struct {
 	ActionBase
 
@@ -20,7 +20,7 @@ func (r *RebootAction) ExecuteAction() error {
 		log.Errorf("Error executing reboot: %s", err)
 		return err
 	}
-	// TODO: Reboot is scheduled to allow the job to complete
+	// TODO: Reboot is scheduled to allow the jobs to complete
 	log.Infof("Reboot successfully scheduled")
 	return nil
 }

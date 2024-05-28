@@ -62,6 +62,17 @@ func (s *Stack) StartDeployment() error {
 }
 
 func (s *Stack) StopDeployment() error {
+	s.projectName = GetProjectNameFromDeploymentId(s.deploymentResource.Id)
+
+	if err := s.setUpDockerCLI(); err != nil {
+		return err
+	}
+
+	if err := s.remove(); err != nil {
+		log.Errorf("Error removing stack: %s", err)
+		return err
+	}
+
 	return nil
 }
 
@@ -70,7 +81,7 @@ func (s *Stack) StateDeployment() error {
 }
 
 func (s *Stack) UpdateDeployment() error {
-	return nil
+	return s.StartDeployment()
 }
 
 func (s *Stack) GetServices() ([]*DeploymentService, error) { return nil, nil }
@@ -84,6 +95,18 @@ func (s *Stack) deploy() error {
 	}
 
 	return nil
+}
+
+func (s *Stack) remove() error {
+	err := swarm.RunRemove(
+		s.context,
+		s.dockerCli,
+		options.Remove{
+			Namespaces: []string{s.projectName},
+			Detach:     true,
+		})
+
+	return err
 }
 
 func (s *Stack) setUpStackOpts() {

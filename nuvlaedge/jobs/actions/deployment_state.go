@@ -2,7 +2,7 @@ package actions
 
 import (
 	log "github.com/sirupsen/logrus"
-	"nuvlaedge-go/nuvlaedge/jobEngine/executors"
+	"nuvlaedge-go/nuvlaedge/jobs/executors"
 )
 
 type DeploymentState struct {

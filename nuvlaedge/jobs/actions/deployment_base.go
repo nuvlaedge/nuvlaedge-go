@@ -5,7 +5,7 @@ import (
 	"github.com/nuvla/api-client-go/clients"
 	"github.com/nuvla/api-client-go/clients/resources"
 	log "github.com/sirupsen/logrus"
-	"nuvlaedge-go/nuvlaedge/jobEngine/executors"
+	"nuvlaedge-go/nuvlaedge/jobs/executors"
 	"os"
 )
 
@@ -32,10 +32,10 @@ func (d *DeploymentBase) assertExecutor() error {
 }
 
 func (d *DeploymentBase) Init(optsFn ...ActionOptsFn) error {
-	// Retrieve deployment ID from job resource
+	// Retrieve deployment ID from jobs resource
 	opts := GetActionOpts(optsFn...)
 	if opts.JobResource == nil || opts.Client == nil {
-		return fmt.Errorf("job resource or client not available")
+		return fmt.Errorf("jobs resource or client not available")
 	}
 
 	d.deploymentId = opts.JobResource.TargetResource.Href

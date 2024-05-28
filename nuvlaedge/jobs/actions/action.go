@@ -4,12 +4,12 @@ import (
 	nuvla "github.com/nuvla/api-client-go"
 	"github.com/nuvla/api-client-go/clients/resources"
 	"nuvlaedge-go/nuvlaedge/errors"
-	"nuvlaedge-go/nuvlaedge/jobEngine/executors"
+	"nuvlaedge-go/nuvlaedge/jobs/executors"
 )
 
 type Action interface {
 	// Init allows implementations of the interface to each create their own client from the generic NuvlaClient
-	// and retrieve any field required from the job resource.
+	// and retrieve any field required from the jobs resource.
 	Init(opts ...ActionOptsFn) error
 	// GetExecutorName returns the name of the executor that will be used to execute the action. This will be
 	// initialised after asserting the executor. It should return an empty sting if the executor is not set.
@@ -78,8 +78,8 @@ func GetAction(actionName string) (Action, error) {
 
 type ActionOpts struct {
 	ActionName  string                 `json:"action-name,omitempty"`
-	JobId       string                 `json:"job-id,omitempty"`
-	JobResource *resources.JobResource `json:"job-resource,omitempty"`
+	JobId       string                 `json:"jobs-id,omitempty"`
+	JobResource *resources.JobResource `json:"jobs-resource,omitempty"`
 	Client      *nuvla.NuvlaClient     `json:"client,omitempty"`
 	IPs         []string               `json:"ips,omitempty"`
 }

@@ -1,11 +1,11 @@
-package jobEngine
+package jobs
 
 import (
 	nuvla "github.com/nuvla/api-client-go"
 	"github.com/nuvla/api-client-go/clients"
 	"github.com/nuvla/api-client-go/clients/resources"
 	log "github.com/sirupsen/logrus"
-	"nuvlaedge-go/nuvlaedge/jobEngine/actions"
+	"nuvlaedge-go/nuvlaedge/jobs/actions"
 )
 
 type Job struct {
@@ -26,9 +26,9 @@ func NewJob(jobId string, c *nuvla.NuvlaClient) *Job {
 }
 
 func (j *Job) Init() error {
-	log.Infof("Initialising job %s", j.JobId)
+	log.Infof("Initialising jobs %s", j.JobId)
 	if err := j.Client.UpdateResource(); err != nil {
-		log.Errorf("Error updating job resource: %s", err)
+		log.Errorf("Error updating jobs resource: %s", err)
 		return err
 	}
 

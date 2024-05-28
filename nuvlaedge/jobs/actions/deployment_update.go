@@ -1,6 +1,6 @@
 package actions
 
-import "nuvlaedge-go/nuvlaedge/jobEngine/executors"
+import "nuvlaedge-go/nuvlaedge/jobs/executors"
 
 type DeploymentUpdate struct {
 	DeploymentBase

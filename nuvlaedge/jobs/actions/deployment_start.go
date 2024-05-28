@@ -3,7 +3,7 @@ package actions
 import (
 	"github.com/nuvla/api-client-go/clients/resources"
 	log "github.com/sirupsen/logrus"
-	"nuvlaedge-go/nuvlaedge/jobEngine/executors"
+	"nuvlaedge-go/nuvlaedge/jobs/executors"
 )
 
 type DeploymentStart struct {
