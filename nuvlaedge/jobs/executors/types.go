@@ -84,14 +84,14 @@ func NewDeploymentServiceFromContainerSummary(c api.ContainerSummary) *Deploymen
 		Image:     c.Image,
 		Name:      c.Name,
 		ServiceID: c.ID,
-		NodeID:    c.Name,
+		NodeID:    c.Service,
 		State:     c.State,
 		Status:    c.Status,
 	}
 	if c.Publishers != nil {
 		s.ExternalPorts = make(map[string]int)
 		for _, p := range c.Publishers {
-			s.ExternalPorts[fmt.Sprintf("%s.%d", p.Protocol, p.PublishedPort)] = p.TargetPort
+			s.ExternalPorts[fmt.Sprintf("%s.%d", p.Protocol, p.TargetPort)] = p.PublishedPort
 		}
 	}
 

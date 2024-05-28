@@ -1,5 +1,7 @@
 package common
 
+import log "github.com/sirupsen/logrus"
+
 // Nuvla Endpoint constant configuration
 const (
 	NuvlaEndPoint  string = "https://nuvla.io"
@@ -36,3 +38,16 @@ const (
 const (
 	BaseImageName string = "alpine:3.18"
 )
+
+// LogLevel Global log level propagator
+var LogLevel log.Level = log.InfoLevel
+
+func SetLogLevel(level string) {
+	l, err := log.ParseLevel(level)
+	if err != nil {
+		log.Warnf("Invalid log level: %s", level)
+		LogLevel = log.InfoLevel
+	} else {
+		LogLevel = l
+	}
+}

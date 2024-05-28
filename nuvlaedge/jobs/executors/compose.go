@@ -11,6 +11,7 @@ import (
 	"github.com/docker/compose/v2/pkg/compose"
 	"github.com/nuvla/api-client-go/clients/resources"
 	log "github.com/sirupsen/logrus"
+	"nuvlaedge-go/nuvlaedge/common"
 	"strings"
 )
 
@@ -65,6 +66,7 @@ func (c *Compose) StopDeployment() error {
 
 func (c *Compose) GetServices() ([]*DeploymentService, error) {
 	c.ctx = context.TODO()
+	c.projectName = GetProjectNameFromDeploymentId(c.deploymentResource.Id)
 	if err := c.setUpService(); err != nil {
 		return nil, err
 	}
@@ -76,7 +78,6 @@ func (c *Compose) GetServices() ([]*DeploymentService, error) {
 	if err != nil {
 		log.Infof("Error getting services: %s", err)
 	}
-	log.Infof("Deployment %s services:", c.deploymentResource.Id)
 
 	c.services = make([]*DeploymentService, 0)
 	for _, container := range containers {
@@ -87,9 +88,9 @@ func (c *Compose) GetServices() ([]*DeploymentService, error) {
 
 func (c *Compose) StateDeployment() error {
 	c.projectName = GetProjectNameFromDeploymentId(c.deploymentResource.Id)
-	for _, s := range c.services {
-		log.Infof("Service status %s: %s", s.Name, s.Status)
-		log.Infof("Service state %s: %s", s.Name, s.State)
+	_, err := c.GetServices()
+	if err != nil {
+		log.Warnf("Error getting services for deployment %s: %s", c.deploymentResource.Id, err)
 	}
 	return nil
 }
@@ -160,7 +161,7 @@ func (c *Compose) setUpService() error {
 		return err
 	}
 
-	myOpts := &flags.ClientOptions{Context: "default"}
+	myOpts := &flags.ClientOptions{Context: "default", LogLevel: common.LogLevel.String()}
 	err = dockerCli.Initialize(myOpts)
 	if err != nil {
 		return err

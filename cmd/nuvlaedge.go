@@ -5,6 +5,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	_ "net/http/pprof"
 	"nuvlaedge-go/nuvlaedge"
+	"nuvlaedge-go/nuvlaedge/common"
 	"nuvlaedge-go/nuvlaedge/version"
 	"os"
 	"runtime"
@@ -61,10 +62,12 @@ func main() {
 }
 
 func initializeLogging(loggingSettings *nuvlaedge.LoggingSettings) {
+	common.SetLogLevel(loggingSettings.Level)
 	if loggingSettings.Debug {
-		log.SetLevel(log.DebugLevel)
+		common.SetLogLevel("DEBUG")
 	}
-	log.SetLevel(log.DebugLevel)
+	log.SetLevel(common.LogLevel)
+
 	log.SetReportCaller(true)
 	log.SetFormatter(&log.TextFormatter{
 		FullTimestamp:          true,
