@@ -145,7 +145,12 @@ func NewDockerCoe() *DockerCoe {
 	common.GenericErrorHandler("Error instantiating client", err)
 	ping, _ := cli.Ping(context.Background())
 
-	log.Infof("Is docker Swarm available?: %s", ping.SwarmStatus.ControlAvailable)
+	if ping.SwarmStatus == nil {
+		log.Infof("Swarm status is nil")
+	} else {
+		log.Infof("Swarm status: %s", ping.SwarmStatus.ControlAvailable)
+	}
+
 	return &DockerCoe{
 		coeType: DockerType,
 		client:  cli,
@@ -342,4 +347,22 @@ func (dc *DockerCoe) TelemetryStatus() (int, error) {
 
 func (dc *DockerCoe) TelemetryStop() (bool, error) {
 	return false, nil
+}
+
+/**************************************** Docker Compose Management *****************************************/
+
+func (dc *DockerCoe) RunCompose(composeFile string) error {
+	return nil
+}
+
+func (dc *DockerCoe) StopCompose() error {
+	return nil
+}
+
+func (dc *DockerCoe) RemoveCompose() error {
+	return nil
+}
+
+func (dc *DockerCoe) GetComposeStatus() (string, error) {
+	return "", nil
 }
