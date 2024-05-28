@@ -17,6 +17,10 @@ func (d *DeploymentState) ExecuteAction() error {
 		return err
 	}
 	log.Infof("Deployment %s services: %v", d.deploymentId, s)
+	err = d.manageServiceParameters(s)
+	if err != nil {
+		log.Warnf("Error managing service parameters for deployment %s: %s", d.deploymentId, err)
+	}
 
 	err = d.executor.StateDeployment()
 	if err != nil {

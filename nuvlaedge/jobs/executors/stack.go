@@ -155,7 +155,10 @@ func (s *Stack) setUpDockerCLI() error {
 		return err
 	}
 
-	err = dCli.Initialize(&flags.ClientOptions{Context: "default"})
+	err = dCli.Initialize(&flags.ClientOptions{
+		Context:  "default",
+		LogLevel: common.LogLevel.String()},
+	)
 	if err != nil {
 		log.Errorf("Error initializing docker cli")
 		return err

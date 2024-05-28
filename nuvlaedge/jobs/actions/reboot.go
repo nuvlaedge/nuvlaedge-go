@@ -10,8 +10,7 @@ import (
 type RebootAction struct {
 	ActionBase
 
-	executor   executors.Rebooter
-	actionName ActionName
+	executor executors.Rebooter
 }
 
 func (r *RebootAction) ExecuteAction() error {

@@ -1,6 +1,10 @@
 package actions
 
-import "nuvlaedge-go/nuvlaedge/jobs/executors"
+import (
+	"github.com/nuvla/api-client-go/clients/resources"
+	log "github.com/sirupsen/logrus"
+	"nuvlaedge-go/nuvlaedge/jobs/executors"
+)
 
 type DeploymentUpdate struct {
 	DeploymentBase
@@ -11,6 +15,16 @@ func (d *DeploymentUpdate) assertExecutor() error {
 }
 
 func (d *DeploymentUpdate) ExecuteAction() error {
+
+	if err := d.executor.UpdateDeployment(); err != nil {
+		if stateErr := d.client.SetState(resources.StateError); stateErr != nil {
+			log.Warnf("Error setting deployment state to error: %s", stateErr)
+		}
+		return err
+	}
+	if err := d.client.SetState(resources.StateStarted); err != nil {
+		log.Warnf("Error setting deployment state to started: %s", err)
+	}
 	return nil
 }
 

@@ -47,6 +47,14 @@ func (d *DeploymentBase) Init(optsFn ...ActionOptsFn) error {
 	}
 	d.deploymentResource = d.client.GetResource()
 
+	// After retrieving the deployment resource, update the session with the deployment credentials.
+	// Features such as deployment-parameters are only available for deployments and users and the received clients
+	// is logged in as a NuvlaEdge
+	if err := d.client.UpdateSessionFromDeploymentCredentials(); err != nil {
+		log.Errorf("Error refleshing session from deployment credentials: %s", err)
+		return err
+	}
+
 	err := d.assertExecutor()
 	if err != nil {
 		log.Errorf("Error asserting executor: %s", err)
@@ -111,6 +119,57 @@ func (d *DeploymentBase) ManageDeploymentParameters() error {
 			resources.WithName(p.Name),
 			resources.WithDescription(p.Description)); err != nil {
 			log.Warnf("Error creating parameter %s: %s", p.Name, err)
+		}
+	}
+	return nil
+}
+
+// manageServiceParameters updates the parameters corresponding to the services started by the deployment
+func (d *DeploymentBase) manageServiceParameters(services []*executors.DeploymentService) error {
+	for _, s := range services {
+		if err := d.updateServiceParameter(s); err != nil {
+			log.Warnf("Error updating service %s parameter: %s", s.Name, err)
+		}
+	}
+	return nil
+}
+
+func (d *DeploymentBase) updateParamInCurrentDeployment(paramName, value, nodeId string) error {
+	return d.client.UpdateParameter(
+		d.deploymentResource.Owner,
+		resources.WithParent(d.deploymentResource.Id),
+		resources.WithName(paramName),
+		resources.WithValue(value),
+		resources.WithNodeId(nodeId))
+}
+
+func (d *DeploymentBase) updateServiceParameter(s *executors.DeploymentService) error {
+	var paramName string
+	if s.Image != "" {
+		paramName = fmt.Sprintf("%s.image", s.NodeID)
+		if err := d.updateParamInCurrentDeployment(paramName, s.Image, s.NodeID); err != nil {
+			log.Warnf("Error updating parameter %s: %s", paramName, err)
+		}
+	}
+
+	if s.ServiceID != "" {
+		paramName = fmt.Sprintf("%s.service-id", s.NodeID)
+		if err := d.updateParamInCurrentDeployment(paramName, s.ServiceID, s.NodeID); err != nil {
+			log.Warnf("Error updating parameter %s: %s", paramName, err)
+		}
+	}
+
+	paramName = fmt.Sprintf("%s.node-id", s.NodeID)
+	if err := d.updateParamInCurrentDeployment(paramName, s.NodeID, s.NodeID); err != nil {
+		log.Warnf("Error updating parameter %s: %s", paramName, err)
+	}
+
+	if s.ExternalPorts != nil {
+		for k, v := range s.ExternalPorts {
+			paramName = fmt.Sprintf("%s.%s", s.NodeID, k)
+			if err := d.updateParamInCurrentDeployment(paramName, fmt.Sprintf("%d", v), s.NodeID); err != nil {
+				log.Warnf("Error updating parameter %s: %s", paramName, err)
+			}
 		}
 	}
 	return nil
