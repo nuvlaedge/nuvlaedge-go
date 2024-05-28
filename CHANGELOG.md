@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.1](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.8.0...v0.8.1) (2024-05-28)
+
+
+### Dependencies
+
+* Update fsevents to fix CI error ([392474b](https://github.com/nuvlaedge/nuvlaedge-go/commit/392474b6f4d6974b56167b2afe96edd68d7f6306))
+
 ## [0.8.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.7.3...v0.8.0) (2024-05-28)
 
 
