@@ -30,3 +30,9 @@ const (
 )
 
 // TODO: Release usage of pathlib
+
+// BaseImageName common NuvlaEdge image
+// Image Constants
+const (
+	BaseImageName string = "alpine:3.18"
+)

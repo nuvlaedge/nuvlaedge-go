@@ -2,9 +2,8 @@ package nuvlaedge
 
 import (
 	nuvla "github.com/nuvla/api-client-go"
-	"github.com/nuvla/api-client-go/types"
 	log "github.com/sirupsen/logrus"
-	"nuvlaedge-go/nuvlaedge/jobProcessor"
+	"nuvlaedge-go/nuvlaedge/jobEngine"
 	"nuvlaedge-go/nuvlaedge/orchestrator"
 	"sync"
 )
@@ -62,14 +61,14 @@ func (p *JobProcessor) processJob(j string) {
 	log.Infof("Job Processor starting new job with id %s", j)
 
 	// 1. Create Job structure
-	job := jobProcessor.NewJob(types.NewNuvlaIDFromId(j), p.client, p.coe)
+	job := jobEngine.NewJob(j, p.client)
 	p.runningJobs.Store(j, job)
 	defer p.runningJobs.Delete(j)
 
-	log.Debugf("Job created: %s", job.String())
+	log.Debugf("Job created: %s", job.JobId)
 
 	log.Infof("Initialising job... %s...", j)
-	err := job.Start()
+	err := job.Init()
 	if err != nil {
 		log.Errorf("Error starting job %s: %s", j, err)
 		return

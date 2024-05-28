@@ -69,3 +69,17 @@ func LoadJsonFile(filePath string, data interface{}) error {
 	}
 	return nil
 }
+
+func WriteContentToFile(content string, filePath string) error {
+	file, err := os.Create(filePath)
+	if err != nil {
+		log.Errorf("Error creating file %s: %s", filePath, err)
+		return err
+	}
+	_, err = file.Write([]byte(content))
+	if err != nil {
+		log.Errorf("Error writing to file %s: %s", filePath, err)
+		return err
+	}
+	return nil
+}

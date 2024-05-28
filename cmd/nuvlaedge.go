@@ -64,6 +64,7 @@ func initializeLogging(loggingSettings *nuvlaedge.LoggingSettings) {
 	if loggingSettings.Debug {
 		log.SetLevel(log.DebugLevel)
 	}
+	log.SetLevel(log.DebugLevel)
 	log.SetReportCaller(true)
 	log.SetFormatter(&log.TextFormatter{
 		FullTimestamp:          true,
