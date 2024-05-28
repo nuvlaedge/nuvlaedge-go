@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.8.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.7.3...v0.8.0) (2024-05-28)
+
+
+### Features
+
+* add docker stack deploy operation and stack executor ([#34](https://github.com/nuvlaedge/nuvlaedge-go/issues/34)) ([b6d728c](https://github.com/nuvlaedge/nuvlaedge-go/commit/b6d728cca8a5adc4885bfc7661d4018fb1b6b593))
+* Add update and stop operation to stack operation ([#35](https://github.com/nuvlaedge/nuvlaedge-go/issues/35)) ([a128819](https://github.com/nuvlaedge/nuvlaedge-go/commit/a128819f926ad1ec0a9a14eb46223c6005577a6d))
+
+
+### Documentation
+
+* Add MacOS usage documentation ([#29](https://github.com/nuvlaedge/nuvlaedge-go/issues/29)) ([b482f54](https://github.com/nuvlaedge/nuvlaedge-go/commit/b482f54dbeca046200c647f71ad7fed8d9866e5a))
+* update usage ([56728d3](https://github.com/nuvlaedge/nuvlaedge-go/commit/56728d39160227f7642cc24923d5cc66fc5ab928))
+
+
+### Code Refactoring
+
+* Re-write job processor to allow multiple ways of executing actions with ease ([#33](https://github.com/nuvlaedge/nuvlaedge-go/issues/33)) ([61de4f9](https://github.com/nuvlaedge/nuvlaedge-go/commit/61de4f92e511f28020c325980ebd11cf2172ef96))
+* rename jobEngine package into jobs ([d4c4bce](https://github.com/nuvlaedge/nuvlaedge-go/commit/d4c4bce0a796914b2a55d1857c17fde1c242fae9))
+
 ## [0.7.3](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.7.2...v0.7.3) (2024-04-30)
 
 
