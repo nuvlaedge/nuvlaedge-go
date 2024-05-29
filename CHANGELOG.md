@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.8.1](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.8.0...v0.8.1) (2024-05-29)
+
+
+### Bug Fixes
+
+* Fix update deployment for compose applications ([269722a](https://github.com/nuvlaedge/nuvlaedge-go/commit/269722a50e0ee2601bf3ff50fe6559c9d5ee62d1))
+
+
+### Minor Changes
+
+* Add service parameter for stack deployments ([60f0bdf](https://github.com/nuvlaedge/nuvlaedge-go/commit/60f0bdf1febf6e2a29753830787abbc17c1516df))
+
+
+### Continuous Integration
+
+* Add minor changes section to ChangLog notes ([5d3604a](https://github.com/nuvlaedge/nuvlaedge-go/commit/5d3604a0db1428fd8327ffc9b4c71ee78a067372))
+
 ## [0.8.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.7.3...v0.8.0) (2024-05-28)
 
 
