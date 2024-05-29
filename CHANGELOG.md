@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.3](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.8.2...v0.8.3) (2024-05-29)
+
+
+### Bug Fixes
+
+* Invert release build process order ([3b4ea18](https://github.com/nuvlaedge/nuvlaedge-go/commit/3b4ea18c64c604eb79314415dfa7c59ad92dd642))
+
 ## [0.8.2](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.8.1...v0.8.2) (2024-05-29)
 
 
