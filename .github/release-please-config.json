@@ -1,5 +1,6 @@
 {
   "release-type": "go",
+  "bootstrap-sha": "5d6dc533bb138bc4cf670099c6763725fd17927e",
   "changelog-sections": [
     { "type": "feat", "section": "Features" },
     { "type": "feature", "section": "Features" },
