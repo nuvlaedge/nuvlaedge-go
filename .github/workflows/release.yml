@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - id: release
-        uses: google-github-actions/release-please-action@v4
+        uses: googleapis/release-please-action@v4.1.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           target-branch: ${{ github.ref_name }}
@@ -45,7 +45,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: "Set up Go"
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@v5
         with:
           go-version: 1.22.0
           cache: true
@@ -53,10 +53,10 @@ jobs:
       - name: "Build and Publish"
         id: build
         run: |
-          go mod tidy
           export FILE_NAME="nuvlaedge-${{ matrix.os }}-${{ matrix.arch }}-${{ needs.trigger-release.outputs.tag_name }}"
           export GOOS=${{ matrix.os }}
           export GOARCH=${{ matrix.arch }}
+          go mod tidy
           go build -o $FILE_NAME -ldflags="-X 'nuvlaedge-go/nuvlaedge/version.Version=${{ needs.trigger-release.outputs.tag_name }}'" ./cmd/nuvlaedge.go
           echo "file_name=$FILE_NAME" >> $GITHUB_OUTPUT
 
