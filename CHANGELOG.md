@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.4](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.8.3...v0.8.4) (2024-05-29)
+
+
+### Bug Fixes
+
+* Remove darwin build from release ([4e58701](https://github.com/nuvlaedge/nuvlaedge-go/commit/4e587017b8fb064e5a0962f0aaa0ffc3bf16d915))
+
 ## [0.8.3](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.8.2...v0.8.3) (2024-05-29)
 
 
