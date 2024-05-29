@@ -125,10 +125,10 @@ func (d *DeploymentBase) ManageDeploymentParameters() error {
 }
 
 // manageServiceParameters updates the parameters corresponding to the services started by the deployment
-func (d *DeploymentBase) manageServiceParameters(services []*executors.DeploymentService) error {
+func (d *DeploymentBase) manageServiceParameters(services []executors.DeploymentService) error {
 	for _, s := range services {
 		if err := d.updateServiceParameter(s); err != nil {
-			log.Warnf("Error updating service %s parameter: %s", s.Name, err)
+			log.Warnf("Error updating service %s parameter: %s", s.GetServiceMap()["name"], err)
 		}
 	}
 	return nil
@@ -143,34 +143,22 @@ func (d *DeploymentBase) updateParamInCurrentDeployment(paramName, value, nodeId
 		resources.WithNodeId(nodeId))
 }
 
-func (d *DeploymentBase) updateServiceParameter(s *executors.DeploymentService) error {
-	var paramName string
-	if s.Image != "" {
-		paramName = fmt.Sprintf("%s.image", s.NodeID)
-		if err := d.updateParamInCurrentDeployment(paramName, s.Image, s.NodeID); err != nil {
+func (d *DeploymentBase) updateServiceParameter(s executors.DeploymentService) error {
+	serviceMap := s.GetServiceMap()
+	nodeId := serviceMap["node-id"]
+	for k, v := range s.GetServiceMap() {
+		paramName := fmt.Sprintf("%s.%s", nodeId, k)
+		if err := d.updateParamInCurrentDeployment(paramName, v, nodeId); err != nil {
 			log.Warnf("Error updating parameter %s: %s", paramName, err)
 		}
 	}
 
-	if s.ServiceID != "" {
-		paramName = fmt.Sprintf("%s.service-id", s.NodeID)
-		if err := d.updateParamInCurrentDeployment(paramName, s.ServiceID, s.NodeID); err != nil {
+	for k, v := range s.GetPorts() {
+		paramName := fmt.Sprintf("%s.%s", nodeId, k)
+		if err := d.updateParamInCurrentDeployment(paramName, fmt.Sprintf("%d", v), nodeId); err != nil {
 			log.Warnf("Error updating parameter %s: %s", paramName, err)
 		}
 	}
 
-	paramName = fmt.Sprintf("%s.node-id", s.NodeID)
-	if err := d.updateParamInCurrentDeployment(paramName, s.NodeID, s.NodeID); err != nil {
-		log.Warnf("Error updating parameter %s: %s", paramName, err)
-	}
-
-	if s.ExternalPorts != nil {
-		for k, v := range s.ExternalPorts {
-			paramName = fmt.Sprintf("%s.%s", s.NodeID, k)
-			if err := d.updateParamInCurrentDeployment(paramName, fmt.Sprintf("%d", v), s.NodeID); err != nil {
-				log.Warnf("Error updating parameter %s: %s", paramName, err)
-			}
-		}
-	}
 	return nil
 }

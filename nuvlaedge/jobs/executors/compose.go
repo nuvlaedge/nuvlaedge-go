@@ -30,7 +30,7 @@ type Compose struct {
 	composeService composeAPI.Service
 
 	// Services summary
-	services []*DeploymentService
+	services []DeploymentService
 }
 
 func (c *Compose) StartDeployment() error {
@@ -64,7 +64,7 @@ func (c *Compose) StopDeployment() error {
 	return nil
 }
 
-func (c *Compose) GetServices() ([]*DeploymentService, error) {
+func (c *Compose) GetServices() ([]DeploymentService, error) {
 	c.ctx = context.TODO()
 	c.projectName = GetProjectNameFromDeploymentId(c.deploymentResource.Id)
 	if err := c.setUpService(); err != nil {
@@ -79,7 +79,7 @@ func (c *Compose) GetServices() ([]*DeploymentService, error) {
 		log.Infof("Error getting services: %s", err)
 	}
 
-	c.services = make([]*DeploymentService, 0)
+	c.services = make([]DeploymentService, 0)
 	for _, container := range containers {
 		c.services = append(c.services, NewDeploymentServiceFromContainerSummary(container))
 	}

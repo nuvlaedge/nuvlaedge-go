@@ -1,10 +1,14 @@
 package executors
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/docker/compose/v2/pkg/api"
+	"github.com/docker/docker/api/types/swarm"
 	"github.com/nuvla/api-client-go/clients/resources"
 	"nuvlaedge-go/nuvlaedge/errors"
+	"strconv"
+	"strings"
 )
 
 // Rebooter is an interface for executors that can reboot the system.
@@ -37,7 +41,7 @@ type Deployer interface {
 	StopDeployment() error
 	StateDeployment() error
 	UpdateDeployment() error
-	GetServices() ([]*DeploymentService, error)
+	GetServices() ([]DeploymentService, error)
 }
 
 func GetDeployer(resource *resources.DeploymentResource) (Deployer, error) {
@@ -66,9 +70,14 @@ func GetDeployer(resource *resources.DeploymentResource) (Deployer, error) {
 	}
 }
 
-// DeploymentService description of a Nuvla deployment service. Should probably become an interface to allow for
+type DeploymentService interface {
+	GetServiceMap() map[string]string
+	GetPorts() map[string]int
+}
+
+// DeploymentComposeService description of a Nuvla deployment service. Should probably become an interface to allow for
 // k8s and docker.
-type DeploymentService struct {
+type DeploymentComposeService struct {
 	Image     string `json:"image,omitempty"`
 	Name      string `json:"name,omitempty"`
 	ServiceID string `json:"service-id,omitempty"`
@@ -76,11 +85,23 @@ type DeploymentService struct {
 	State     string `json:"state,omitempty"`
 	Status    string `json:"status,omitempty"`
 
-	ExternalPorts map[string]int // Only for external ports, protocol: port
+	ExternalPorts map[string]int `json:"-"` // Only for external ports, protocol: port
 }
 
-func NewDeploymentServiceFromContainerSummary(c api.ContainerSummary) *DeploymentService {
-	s := &DeploymentService{
+func (s *DeploymentComposeService) GetServiceMap() map[string]string {
+	// Convert struct to Map
+	m := make(map[string]string)
+	b, _ := json.Marshal(s)
+	_ = json.Unmarshal(b, &m)
+	return m
+}
+
+func (s *DeploymentComposeService) GetPorts() map[string]int {
+	return s.ExternalPorts
+}
+
+func NewDeploymentServiceFromContainerSummary(c api.ContainerSummary) *DeploymentComposeService {
+	s := &DeploymentComposeService{
 		Image:     c.Image,
 		Name:      c.Name,
 		ServiceID: c.ID,
@@ -96,6 +117,70 @@ func NewDeploymentServiceFromContainerSummary(c api.ContainerSummary) *Deploymen
 	}
 
 	return s
+}
+
+type DeploymentStackService struct {
+	ServiceID string `json:"service-id,omitempty"`
+	Mode      string `json:"mode,omitempty"`
+	Image     string `json:"image,omitempty"`
+	NodeID    string `json:"node-id,omitempty"`
+	Desired   string `json:"replicas.desired,omitempty"`
+	Running   string `json:"replicas.running,omitempty"`
+
+	Ports map[string]int `json:"-"`
+}
+
+func (s *DeploymentStackService) GetServiceMap() map[string]string {
+	// Convert struct to Map
+	m := make(map[string]string)
+	b, _ := json.Marshal(s)
+	_ = json.Unmarshal(b, &m)
+	return m
+}
+
+func (s *DeploymentStackService) GetPorts() map[string]int {
+	return s.Ports
+}
+
+func NewDeploymentStackServiceFromServiceSummary(s swarm.Service) *DeploymentStackService {
+	dService := &DeploymentStackService{
+		ServiceID: s.ID,
+	}
+
+	// Mode Extraction
+	if s.Spec.Mode.Replicated != nil {
+		dService.Mode = "replicated"
+	}
+
+	// Image extraction
+	if image, ok := s.Spec.Labels["com.docker.stack.image"]; ok {
+		dService.Image = image
+	} else {
+		i := s.Spec.TaskTemplate.ContainerSpec.Image
+		if strings.Contains(i, "@") {
+			dService.Image = strings.Split(i, "@")[0]
+		} else {
+			dService.Image = i
+		}
+	}
+
+	// Extract Node ID from Service Name
+	if strings.HasPrefix(s.Spec.Name, "deployment-") && strings.Contains(s.Spec.Name, "_") {
+		dService.NodeID = strings.Split(s.Spec.Name, "_")[1]
+	} else {
+		dService.NodeID = s.Spec.Name
+	}
+
+	// Replicas
+	dService.Desired = strconv.FormatUint(s.ServiceStatus.DesiredTasks, 10)
+	dService.Running = strconv.FormatUint(s.ServiceStatus.RunningTasks, 10)
+
+	// Ports
+	dService.Ports = make(map[string]int)
+	for _, p := range s.Endpoint.Ports {
+		dService.Ports[fmt.Sprintf("%s.%d", p.Protocol, p.TargetPort)] = int(p.PublishedPort)
+	}
+	return dService
 }
 
 type SSHKeyManager interface {

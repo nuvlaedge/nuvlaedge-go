@@ -2,6 +2,7 @@ package executors
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/cli/cli/command/stack/loader"
@@ -9,6 +10,7 @@ import (
 	"github.com/docker/cli/cli/command/stack/swarm"
 	composetypes "github.com/docker/cli/cli/compose/types"
 	"github.com/docker/cli/cli/flags"
+	"github.com/docker/cli/opts"
 	"github.com/nuvla/api-client-go/clients/resources"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
@@ -84,7 +86,36 @@ func (s *Stack) UpdateDeployment() error {
 	return s.StartDeployment()
 }
 
-func (s *Stack) GetServices() ([]*DeploymentService, error) { return nil, nil }
+func printStruct(s interface{}) {
+	p, _ := json.MarshalIndent(s, "", "  ")
+	log.Infof("\nStruct: %s", string(p))
+}
+
+func (s *Stack) GetServices() ([]DeploymentService, error) {
+	if err := s.setUpDockerCLI(); err != nil {
+		return nil, err
+	}
+	s.projectName = GetProjectNameFromDeploymentId(s.deploymentResource.Id)
+
+	//var services []*DeploymentComposeService
+	swarmServices, err := swarm.GetServices(s.context, s.dockerCli, options.Services{
+		Namespace: s.projectName,
+		Format:    "json",
+		Filter:    opts.NewFilterOpt(),
+	})
+
+	if err != nil {
+		log.Error("Error retrieving stack services")
+		return nil, err
+	}
+
+	services := make([]DeploymentService, 0)
+	for _, ser := range swarmServices {
+		services = append(services, NewDeploymentStackServiceFromServiceSummary(ser))
+	}
+
+	return services, nil
+}
 
 func (s *Stack) deploy() error {
 	// Deploy the stack

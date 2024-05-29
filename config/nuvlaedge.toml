@@ -10,7 +10,7 @@ log-max-size = 100
 log-max-backups = 3
 
 [agent]
-nuvlaedge-uuid = "nuvlabox/07b343c4-c89b-46d2-af1b-9519e8483513"
+nuvlaedge-uuid = "nuvlabox/b4356d55-96f8-40eb-8c92-2588cb03bb22"
 nuvla-endpoint = "https://nuvla.io"
 nuvla-insecure = false
 telemetry-period = 60
