@@ -6,6 +6,7 @@ on:
       - master
       - main
       - release/*
+      - test-release/*
 
 jobs:
   trigger-release:
