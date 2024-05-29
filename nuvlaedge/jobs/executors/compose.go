@@ -96,7 +96,7 @@ func (c *Compose) StateDeployment() error {
 }
 
 func (c *Compose) UpdateDeployment() error {
-	return nil
+	return c.StartDeployment()
 }
 
 func (c *Compose) getComposeFromDeployment() (string, error) {
