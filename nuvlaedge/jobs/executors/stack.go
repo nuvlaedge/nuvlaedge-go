@@ -161,7 +161,6 @@ func (s *Stack) setUpFiles() error {
 		s.deploymentResource.Module.Content.DockerCompose,
 		getEnvironmentMappingFromContent(s.deploymentResource.Module.Content))
 
-	log.Infof("Writing docker-compose with env \n%s\n\n file to %s", contentWithEnv, s.composeFile)
 	err := common.WriteContentToFile(contentWithEnv, s.composeFile)
 	if err != nil {
 		return err
