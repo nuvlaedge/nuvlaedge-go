@@ -10,7 +10,7 @@ require (
 	github.com/docker/compose/v2 v2.27.0
 	github.com/docker/docker v26.1.0+incompatible
 	github.com/jackpal/gateway v1.0.14
-	github.com/nuvla/api-client-go v0.7.1
+	github.com/nuvla/api-client-go v0.7.2
 	github.com/shirou/gopsutil/v3 v3.24.3
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/pflag v1.0.5
