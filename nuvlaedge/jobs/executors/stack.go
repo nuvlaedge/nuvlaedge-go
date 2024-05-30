@@ -2,7 +2,6 @@ package executors
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/cli/cli/command/stack/loader"
@@ -86,11 +85,6 @@ func (s *Stack) UpdateDeployment() error {
 	return s.StartDeployment()
 }
 
-func printStruct(s interface{}) {
-	p, _ := json.MarshalIndent(s, "", "  ")
-	log.Infof("\nStruct: %s", string(p))
-}
-
 func (s *Stack) GetServices() ([]DeploymentService, error) {
 	if err := s.setUpDockerCLI(); err != nil {
 		return nil, err
@@ -162,7 +156,13 @@ func (s *Stack) setUpFiles() error {
 	}
 
 	s.composeFile = filepath.Join(s.tempDir, "docker-compose.yml")
-	err := common.WriteContentToFile(s.deploymentResource.Module.Content.DockerCompose, s.composeFile)
+
+	contentWithEnv := ExpandEnvMap(
+		s.deploymentResource.Module.Content.DockerCompose,
+		getEnvironmentMappingFromContent(s.deploymentResource.Module.Content))
+
+	log.Infof("Writing docker-compose with env \n%s\n\n file to %s", contentWithEnv, s.composeFile)
+	err := common.WriteContentToFile(contentWithEnv, s.composeFile)
 	if err != nil {
 		return err
 	}

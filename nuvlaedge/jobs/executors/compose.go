@@ -122,7 +122,21 @@ func (c *Compose) setUpProjectConfig() error {
 		},
 		Environment: nil,
 	}
+
+	if c.deploymentResource.Module.Content.EnvironmentVariables != nil {
+		c.composeConfig.Environment = getEnvironmentMappingFromContent(c.deploymentResource.Module.Content)
+	}
 	return nil
+}
+
+func getEnvironmentMappingFromContent(content *resources.ModuleApplicationResource) types.Mapping {
+	envMap := make(types.Mapping)
+	for _, e := range content.EnvironmentVariables {
+		if e.Value != "" {
+			envMap[e.Name] = e.Value
+		}
+	}
+	return envMap
 }
 
 func (c *Compose) setUpProject() error {
