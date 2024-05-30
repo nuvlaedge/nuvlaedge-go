@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.8.1](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.8.0...v0.8.1) (2024-05-30)
+
+
+### Dependencies
+
+* Update Nuvla api client to 0.7.2 ([41f9efa](https://github.com/nuvlaedge/nuvlaedge-go/commit/41f9efa64b7c4883978634e788f18c4bec53cfbf))
+
+
+### Minor Changes
+
+* Add Environmental variables parsing for compose and swarm deployments ([#46](https://github.com/nuvlaedge/nuvlaedge-go/issues/46)) ([a5340f6](https://github.com/nuvlaedge/nuvlaedge-go/commit/a5340f67c3aa71cb199ebed80c4b4d58e64195a1))
+
+
+### Code Refactoring
+
+* Clean up unused files, functions and variables. ([bfe34c0](https://github.com/nuvlaedge/nuvlaedge-go/commit/bfe34c0f9ae973d8c95a723f349b735177bd4878))
+
 ## [0.8.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.7.3...v0.8.0) (2024-05-29)
 
 
