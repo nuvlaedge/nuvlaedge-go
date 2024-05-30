@@ -8,7 +8,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
-	"nuvlaedge-go/nuvlaedge/agent"
 	"nuvlaedge-go/nuvlaedge/common"
 	"nuvlaedge-go/nuvlaedge/common/resources"
 	"nuvlaedge-go/nuvlaedge/orchestrator"
@@ -19,6 +18,7 @@ import (
 const (
 	DefaultHeartbeatPeriod = 20
 	DefaultTelemetryPeriod = 60
+	NuvlaSessionDataFile   = "nuvla-session.json"
 )
 
 type Agent struct {
@@ -27,7 +27,7 @@ type Agent struct {
 	client       *clients.NuvlaEdgeClient // client: Http client library to interact with Nuvla
 	coeClient    orchestrator.Coe
 	telemetry    *Telemetry
-	commissioner *agent.Commissioner
+	commissioner *Commissioner
 
 	// Features
 	heartBeatPeriod     int
@@ -42,11 +42,11 @@ type Agent struct {
 // NewNuvlaEdgeClient tries to create a new Nuvla client first from the local files if available, else from the settings
 func NewNuvlaEdgeClient(settings *AgentSettings) *clients.NuvlaEdgeClient {
 
-	clientFile := filepath.Join(DataLocation, agent.NuvlaSessionDataFile)
+	clientFile := filepath.Join(DataLocation, NuvlaSessionDataFile)
 	log.Infof("Checking if freeze file exists: %s", clientFile)
 	var client *clients.NuvlaEdgeClient
 
-	client = NewNuvlaEdgeClientFromSessionFile(clientFile, settings)
+	client = NewNuvlaEdgeClientFromSessionFile(clientFile)
 
 	if client != nil {
 		log.Infof("Successfully created NuvlaEdge client from freeze file")
@@ -57,15 +57,14 @@ func NewNuvlaEdgeClient(settings *AgentSettings) *clients.NuvlaEdgeClient {
 }
 
 // NewNuvlaEdgeClientFromSessionFile creates a new Nuvla client from a freeze file.
-func NewNuvlaEdgeClientFromSessionFile(file string, settings *AgentSettings) *clients.NuvlaEdgeClient {
-	log.Infof("Creating NuvlaEdge client from freeze file: %s", file)
+func NewNuvlaEdgeClientFromSessionFile(file string) *clients.NuvlaEdgeClient {
 	// Check if the file exists
 	if !common.FileExists(file) {
 		log.Infof("Freeze file does not exist: %s", file)
 		return nil
 	}
+	log.Infof("Restoring NuvlaEdge client from file: %s", file)
 
-	log.Debugf("Freeze file exists: %s", file)
 	f := &clients.NuvlaEdgeSessionFreeze{}
 	err := f.Load(file)
 	if err != nil {
@@ -137,13 +136,12 @@ func (a *Agent) Start() error {
 	}
 
 	// Freeze the client here
-	freezeFile := filepath.Join(DataLocation, agent.NuvlaSessionDataFile)
+	freezeFile := filepath.Join(DataLocation, NuvlaSessionDataFile)
 	err = a.client.Freeze(freezeFile)
 
 	// Create commissioner
-	log.Infof("Creating commissioner...")
-	a.commissioner = agent.NewCommissioner(a.client, a.coeClient)
-	log.Infof("Creating commissioner... Success.")
+	a.commissioner = NewCommissioner(a.client, a.coeClient)
+
 	return nil
 }
 

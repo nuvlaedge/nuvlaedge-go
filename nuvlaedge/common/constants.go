@@ -16,13 +16,13 @@ const (
 	SessionEndpoint = "/api/session"
 )
 
-// BasePath NuvlaEdge local configuration path constants
-// ConfPath
-// NuvlaEdgeLocalDB
 const (
-	BasePath         string = "/etc/nuvlaedge/"
-	ConfPath                = BasePath + "config/"
-	NuvlaEdgeLocalDB        = BasePath + ".local/"
+	// BasePath NuvlaEdge local configuration path constants
+	BasePath string = "/etc/nuvlaedge/"
+	// ConfPath Location to NuvlaEdge configuration files locally
+	ConfPath = BasePath + "config/"
+	// NuvlaEdgeLocalDB Local database path
+	NuvlaEdgeLocalDB = BasePath + ".local/"
 )
 
 // NuvlaEdgeUserConfig
