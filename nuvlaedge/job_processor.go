@@ -2,16 +2,15 @@ package nuvlaedge
 
 import (
 	nuvla "github.com/nuvla/api-client-go"
-	"github.com/nuvla/api-client-go/types"
 	log "github.com/sirupsen/logrus"
-	"nuvlaedge-go/nuvlaedge/jobProcessor"
+	"nuvlaedge-go/nuvlaedge/jobs"
 	"nuvlaedge-go/nuvlaedge/orchestrator"
 	"sync"
 )
 
 type JobProcessor struct {
 	runningJobs sync.Map
-	jobChan     chan string        // Job channel. Receives job IDs from the agent
+	jobChan     chan string        // Job channel. Receives jobs IDs from the agent
 	exitChan    chan bool          // Exit channel. Receives exit signal from the agent
 	client      *nuvla.NuvlaClient // Nuvla session required in the jobs and deployment clients
 	coe         orchestrator.Coe   // COE client required in the jobs and deployment clients
@@ -26,12 +25,12 @@ func NewJobProcessor(jobChan chan string, client *nuvla.NuvlaClient, coe orchest
 }
 
 func (p *JobProcessor) Start() error {
-	log.Infof("Nothing to start in the job processor, passing...")
+	log.Infof("Nothing to start in the jobs processor, passing...")
 	return nil
 }
 
 func (p *JobProcessor) Stop() error {
-	// Send exit signal to the job processor
+	// Send exit signal to the jobs processor
 	log.Info("Stopping Job Processor")
 	p.exitChan <- true
 	return nil
@@ -59,30 +58,30 @@ func (p *JobProcessor) processJob(j string) {
 		return
 	}
 
-	log.Infof("Job Processor starting new job with id %s", j)
+	log.Infof("Job Processor starting new jobs with id %s", j)
 
 	// 1. Create Job structure
-	job := jobProcessor.NewJob(types.NewNuvlaIDFromId(j), p.client, p.coe)
+	job := jobs.NewJob(j, p.client)
 	p.runningJobs.Store(j, job)
 	defer p.runningJobs.Delete(j)
 
-	log.Debugf("Job created: %s", job.String())
+	log.Debugf("Job created: %s", job.JobId)
 
-	log.Infof("Initialising job... %s...", j)
-	err := job.Start()
+	log.Infof("Initialising jobs... %s...", j)
+	err := job.Init()
 	if err != nil {
-		log.Errorf("Error starting job %s: %s", j, err)
+		log.Errorf("Error starting jobs %s: %s", j, err)
 		return
 	}
-	log.Infof("Initialising job %s... Success.", j)
+	log.Infof("Initialising jobs %s... Success.", j)
 
-	// 2. Run the job
-	log.Infof("Running job %s...", j)
+	// 2. Run the jobs
+	log.Infof("Running jobs %s...", j)
 	err = job.Run()
 	if err != nil {
-		log.Errorf("Error running job %s: %s", j, err)
+		log.Errorf("Error running jobs %s: %s", j, err)
 		return
 	}
-	log.Infof("Running job %s... Success.", j)
+	log.Infof("Running jobs %s... Success.", j)
 
 }

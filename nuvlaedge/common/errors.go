@@ -1,8 +1,6 @@
 package common
 
-/*
-FileMissingError
-*/
+// FileMissingError is returned when a file is missing
 type FileMissingError struct {
 	FileName string
 }
@@ -15,9 +13,7 @@ func (e *FileMissingError) Error() string {
 	return "File " + e.FileName + " is missing"
 }
 
-/*
-FileOpenError
-*/
+// FileOpenError is returned when a file cannot be opened
 type FileOpenError struct {
 	FileName string
 }

@@ -1,4 +1,4 @@
-package agent
+package nuvlaedge
 
 import (
 	"encoding/json"

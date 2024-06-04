@@ -93,7 +93,7 @@ type AgentSettings struct {
 	ApiKey        string `toml:"api-key" env:"API_KEY"`
 	ApiSecret     string `toml:"api-secret" env:"API_SECRET"`
 
-	// NuvlaEdge main jobEngine periods
+	// NuvlaEdge main jobs periods
 	HeartbeatPeriod int `toml:"heartbeat-period" env:"HEARTBEAT_PERIOD"`
 	TelemetryPeriod int `toml:"telemetry-period" env:"TELEMETRY_PERIOD"`
 

@@ -1,5 +1,66 @@
 # Changelog
 
+## [0.8.1](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.8.0...v0.8.1) (2024-05-30)
+
+
+### Dependencies
+
+* Update Nuvla api client to 0.7.2 ([41f9efa](https://github.com/nuvlaedge/nuvlaedge-go/commit/41f9efa64b7c4883978634e788f18c4bec53cfbf))
+
+
+### Minor Changes
+
+* Add Environmental variables parsing for compose and swarm deployments ([#46](https://github.com/nuvlaedge/nuvlaedge-go/issues/46)) ([a5340f6](https://github.com/nuvlaedge/nuvlaedge-go/commit/a5340f67c3aa71cb199ebed80c4b4d58e64195a1))
+
+
+### Code Refactoring
+
+* Clean up unused files, functions and variables. ([bfe34c0](https://github.com/nuvlaedge/nuvlaedge-go/commit/bfe34c0f9ae973d8c95a723f349b735177bd4878))
+
+## [0.8.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.7.3...v0.8.0) (2024-05-29)
+
+
+### Features
+
+* add docker stack deploy operation and stack executor ([#34](https://github.com/nuvlaedge/nuvlaedge-go/issues/34)) ([b6d728c](https://github.com/nuvlaedge/nuvlaedge-go/commit/b6d728cca8a5adc4885bfc7661d4018fb1b6b593))
+* Add update and stop operation to stack operation ([#35](https://github.com/nuvlaedge/nuvlaedge-go/issues/35)) ([a128819](https://github.com/nuvlaedge/nuvlaedge-go/commit/a128819f926ad1ec0a9a14eb46223c6005577a6d))
+
+
+### Bug Fixes
+
+* Commit go.sum ([2efe412](https://github.com/nuvlaedge/nuvlaedge-go/commit/2efe41214b353d651ba76ee1ba74dd369eaa49a2))
+* Fix update deployment for compose applications ([269722a](https://github.com/nuvlaedge/nuvlaedge-go/commit/269722a50e0ee2601bf3ff50fe6559c9d5ee62d1))
+* Invert release build process order ([3b4ea18](https://github.com/nuvlaedge/nuvlaedge-go/commit/3b4ea18c64c604eb79314415dfa7c59ad92dd642))
+* Remove darwin build from release ([4e58701](https://github.com/nuvlaedge/nuvlaedge-go/commit/4e587017b8fb064e5a0962f0aaa0ffc3bf16d915))
+
+
+### Dependencies
+
+* Update fsevents to fix CI error ([ccf070f](https://github.com/nuvlaedge/nuvlaedge-go/commit/ccf070f2001f2c72d5f06181adfdb5740bb23483))
+* Update fsevents to fix CI error ([392474b](https://github.com/nuvlaedge/nuvlaedge-go/commit/392474b6f4d6974b56167b2afe96edd68d7f6306))
+
+
+### Minor Changes
+
+* Add service parameter for stack deployments ([60f0bdf](https://github.com/nuvlaedge/nuvlaedge-go/commit/60f0bdf1febf6e2a29753830787abbc17c1516df))
+
+
+### Documentation
+
+* Add MacOS usage documentation ([#29](https://github.com/nuvlaedge/nuvlaedge-go/issues/29)) ([b482f54](https://github.com/nuvlaedge/nuvlaedge-go/commit/b482f54dbeca046200c647f71ad7fed8d9866e5a))
+* update usage ([56728d3](https://github.com/nuvlaedge/nuvlaedge-go/commit/56728d39160227f7642cc24923d5cc66fc5ab928))
+
+
+### Code Refactoring
+
+* Re-write job processor to allow multiple ways of executing actions with ease ([#33](https://github.com/nuvlaedge/nuvlaedge-go/issues/33)) ([61de4f9](https://github.com/nuvlaedge/nuvlaedge-go/commit/61de4f92e511f28020c325980ebd11cf2172ef96))
+* rename jobEngine package into jobs ([d4c4bce](https://github.com/nuvlaedge/nuvlaedge-go/commit/d4c4bce0a796914b2a55d1857c17fde1c242fae9))
+
+
+### Continuous Integration
+
+* Add minor changes section to ChangLog notes ([5d3604a](https://github.com/nuvlaedge/nuvlaedge-go/commit/5d3604a0db1428fd8327ffc9b4c71ee78a067372))
+
 ## [0.7.3](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.7.2...v0.7.3) (2024-04-30)
 
 

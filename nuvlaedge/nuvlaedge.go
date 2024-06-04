@@ -14,7 +14,7 @@ type NuvlaEdge struct {
 	settings      *NuvlaEdgeSettings // settings:
 	agent         *Agent             // Agent: Nuvla-NuvlaEdge interface manager
 	systemManager *SystemManager     // systemManager: Manages the local system
-	jobProcessor  *JobProcessor      // jobProcessor: Read and execute jobEngine coming from Nuvla
+	jobProcessor  *JobProcessor      // jobProcessor: Read and execute jobs coming from Nuvla
 	telemetry     *Telemetry         // telemetry: Reads the local telemetry and exposes it. We provide two options, local NuvlaEdge telemetry or Prometheus exporter.
 }
 
@@ -51,7 +51,7 @@ func NewNuvlaEdge(settings *NuvlaEdgeSettings) *NuvlaEdge {
 // Requirements check: Checks if the local system meets the requirements to run NuvlaEdge
 // Agent: Initialises the agent, reads the local storage for previous installations of NuvlaEdge and acts accordingly
 // SystemManager: Initialises the local system based on the settings
-// JobProcessor: Reads the local storage for dangling jobEngine/deployments
+// JobProcessor: Reads the local storage for dangling jobs/deployments
 // Telemetry: Starts the telemetry collection right away
 func (ne *NuvlaEdge) Start() error {
 	// Run requirements check
