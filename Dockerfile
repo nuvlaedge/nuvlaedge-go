@@ -9,9 +9,11 @@ WORKDIR /build
 COPY . .
 
 #RUN apk add --no-cache tzdata
+RUN apk add --no-cache upx
 
 RUN go mod tidy
 RUN GOOS=$TARGETOS GOARCH=$TARGETARCH CGO_ENABLED=0 go build -o out/nuvlaedge ./cmd/nuvlaedge.go
+RUN upx --lzma out/nuvlaedge
 
 
 # --- NuvlaEdge image ---
