@@ -10,7 +10,7 @@ import (
 
 type JobProcessor struct {
 	runningJobs sync.Map
-	jobChan     chan string        // Job channel. Receives jobs IDs from the agent
+	jobChan     chan string        // NativeJob channel. Receives jobs IDs from the agent
 	exitChan    chan bool          // Exit channel. Receives exit signal from the agent
 	client      *nuvla.NuvlaClient // Nuvla session required in the jobs and deployment clients
 	coe         orchestrator.Coe   // COE client required in the jobs and deployment clients
@@ -31,20 +31,20 @@ func (p *JobProcessor) Start() error {
 
 func (p *JobProcessor) Stop() error {
 	// Send exit signal to the jobs processor
-	log.Info("Stopping Job Processor")
+	log.Info("Stopping NativeJob Processor")
 	p.exitChan <- true
 	return nil
 }
 
 func (p *JobProcessor) Run() error {
-	log.Info("Running Job Engine")
+	log.Info("Running NativeJob Engine")
 	go func() {
 		for {
 			select {
 			case job := <-p.jobChan:
 				go p.processJob(job)
 			case <-p.exitChan:
-				log.Warn("Job Processor received exit signal")
+				log.Warn("NativeJob Processor received exit signal")
 				return
 			}
 		}
@@ -54,32 +54,26 @@ func (p *JobProcessor) Run() error {
 
 func (p *JobProcessor) processJob(j string) {
 	if _, ok := p.runningJobs.Load(j); ok {
-		log.Infof("Job %s is already running", j)
+		log.Infof("NativeJob %s is already running", j)
 		return
 	}
 
-	log.Infof("Job Processor starting new jobs with id %s", j)
+	log.Infof("NativeJob Processor starting new jobs with id %s", j)
 
-	// 1. Create Job structure
-	job := jobs.NewJob(j, p.client)
+	// 1. Create NativeJob structure
+	job, err := jobs.NewJob(j, p.client, p.coe)
+	if err != nil {
+		log.Errorf("Error creating job %s: %s", j, err)
+		return
+	}
 	p.runningJobs.Store(j, job)
 	defer p.runningJobs.Delete(j)
 
-	log.Debugf("Job created: %s", job.JobId)
-
-	log.Infof("Initialising jobs... %s...", j)
-	err := job.Init()
-	if err != nil {
-		log.Errorf("Error starting jobs %s: %s", j, err)
-		return
-	}
-	log.Infof("Initialising jobs %s... Success.", j)
-
 	// 2. Run the jobs
 	log.Infof("Running jobs %s...", j)
-	err = job.Run()
+	err = job.RunJob()
 	if err != nil {
-		log.Errorf("Error running jobs %s: %s", j, err)
+		log.Errorf("Error running job %s: %s", j, err)
 		return
 	}
 	log.Infof("Running jobs %s... Success.", j)

@@ -36,7 +36,8 @@ const (
 // BaseImageName common NuvlaEdge image
 // Image Constants
 const (
-	BaseImageName string = "alpine:3.18"
+	BaseImageName           string = "alpine:3.18"
+	JobEngineContainerImage        = "sixsq/nuvlaedge:latest"
 )
 
 // LogLevel Global log level propagator

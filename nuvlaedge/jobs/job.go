@@ -1,52 +1,102 @@
 package jobs
 
 import (
+	"errors"
 	nuvla "github.com/nuvla/api-client-go"
 	"github.com/nuvla/api-client-go/clients"
 	"github.com/nuvla/api-client-go/clients/resources"
 	log "github.com/sirupsen/logrus"
+	nuvlaedgeErrors "nuvlaedge-go/nuvlaedge/errors"
 	"nuvlaedge-go/nuvlaedge/jobs/actions"
+	"nuvlaedge-go/nuvlaedge/orchestrator"
+	"nuvlaedge-go/nuvlaedge/types"
+	"time"
 )
 
-type Job struct {
-	JobId  string
-	Client *clients.NuvlaJobClient
+const (
+	JobEngineContainerImage = "sixsq/nuvlaedge:latest"
+)
 
-	JobName     string
-	JobType     actions.ActionName
-	Action      actions.Action
-	JobResource *resources.JobResource
+type Job interface {
+	RunJob() error
+	Init(coe orchestrator.Coe) (Job, error)
+	GetId() string
 }
 
-func NewJob(jobId string, c *nuvla.NuvlaClient) *Job {
-	return &Job{
+func NewJob(jobId string, c *nuvla.NuvlaClient, coe orchestrator.Coe) (Job, error) {
+	job := JobBase{
 		JobId:  jobId,
 		Client: clients.NewJobClient(jobId, c),
 	}
-}
-
-func (j *Job) Init() error {
-	log.Infof("Initialising jobs %s", j.JobId)
-	if err := j.Client.UpdateResource(); err != nil {
-		log.Errorf("Error updating jobs resource: %s", err)
-		return err
-	}
-
-	j.JobResource = j.Client.GetResource()
-	j.JobName = j.JobResource.Action
-
-	a, err := actions.GetAction(j.JobName)
+	j, err := job.Init(coe)
 	if err != nil {
-		log.Errorf("Error getting action: %s", err)
-		return err
+		log.Errorf("Error initialising job: %s", err)
+		return nil, err
 	}
-	j.Action = a
-	j.JobType = a.GetActionName()
-
-	return nil
+	return j, nil
 }
 
-func (j *Job) Run() error {
+type JobBase struct {
+	JobId       string
+	Client      *clients.NuvlaJobClient
+	JobResource *resources.JobResource
+}
+
+func (j *JobBase) tryGetNativeAction() (actions.Action, error) {
+
+	return nil, nil
+}
+
+func isNotSupportedActionError(err error) bool {
+	var notImplementedActionError nuvlaedgeErrors.NotImplementedActionError
+	return errors.As(err, &notImplementedActionError)
+}
+
+func (j *JobBase) Init(coe orchestrator.Coe) (Job, error) {
+	log.Infof("Initialising job %s", j.JobId)
+	if err := j.Client.UpdateResource(); err != nil {
+		log.Errorf("Error updating job resource: %s", err)
+		return nil, err
+	}
+	j.JobResource = j.Client.GetResource()
+
+	// Looks for the action in the implemented interface Action in the actions package
+	a, err := actions.GetAction(j.JobResource.Action)
+
+	if err == nil {
+		return NewNativeJobFromBase(j, a, j.JobResource.Action), nil
+	}
+
+	// If the action is not supported here, try to run it in the container
+	if isNotSupportedActionError(err) {
+		return NewContainerEngineJobFromBase(j, coe), nil
+	} else {
+		log.Errorf("Unexpected error creating new Job: %s", err)
+		return nil, err
+	}
+}
+
+func (j *JobBase) GetId() string {
+	return j.JobId
+}
+
+type NativeJob struct {
+	*JobBase
+	JobName string
+	JobType actions.ActionName
+	Action  actions.Action
+}
+
+func NewNativeJobFromBase(jb *JobBase, action actions.Action, actionName string) *NativeJob {
+	return &NativeJob{
+		JobBase: jb,
+		JobType: action.GetActionName(),
+		Action:  action,
+		JobName: actionName,
+	}
+}
+
+func (j *NativeJob) RunJob() error {
 	_ = j.Client.SetProgress(30)
 
 	// Initialise the action
@@ -68,5 +118,53 @@ func (j *Job) Run() error {
 		return err
 	}
 	j.Client.SetSuccessState()
+	return nil
+}
+
+type ContainerEngineJob struct {
+	*JobBase
+	coe orchestrator.Coe
+}
+
+func NewContainerEngineJobFromBase(jb *JobBase, coe orchestrator.Coe) *ContainerEngineJob {
+	return &ContainerEngineJob{
+		JobBase: jb,
+		coe:     coe,
+	}
+}
+
+func (cj *ContainerEngineJob) RunJob() error {
+	k, s, err := cj.Client.GetCredentials()
+	if err != nil {
+		log.Errorf("Error getting credentials: %s", err)
+		return err
+	}
+	conf := &types.LegacyJobConf{
+		JobId:            cj.JobId,
+		Image:            JobEngineContainerImage,
+		ApiKey:           k,
+		ApiSecret:        s,
+		Endpoint:         cj.Client.SessionOpts.Endpoint,
+		EndpointInsecure: cj.Client.SessionOpts.Insecure,
+	}
+	containerId, err := cj.coe.RunJobEngineContainer(conf)
+	if err != nil {
+		log.Errorf("Error running container: %s", err)
+		return err
+	}
+
+	// Wait container to finish
+	log.Infof("Waiting job to finish...")
+	finishStatus, err := cj.coe.WaitContainerFinish(containerId, 60*time.Second, true)
+	log.Infof("Container Job finished with status: %d", finishStatus)
+	if err != nil {
+		log.Errorf("Error waiting container to finish: %s", err)
+		return err
+	}
+
+	if finishStatus != 0 {
+		return errors.New("container job finished with error")
+	}
+	log.Infof("Success running container job")
 	return nil
 }
