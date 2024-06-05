@@ -2,8 +2,10 @@ package orchestrator
 
 import (
 	log "github.com/sirupsen/logrus"
+	"io"
 	"nuvlaedge-go/nuvlaedge/types"
 	"os"
+	"time"
 )
 
 type CoeType string
@@ -19,8 +21,11 @@ type Coe interface {
 	String() string
 
 	RunContainer(image string, configuration map[string]string) (string, error)
+	RunJobEngineContainer(conf *types.LegacyJobConf) (string, error)
 	StopContainer(containerId string, force bool) (bool, error)
 	RemoveContainer(containerId string, containerName string) (bool, error)
+	GetContainerLogs(containerId string, since string) (io.ReadCloser, error)
+	WaitContainerFinish(containerId string, timeout time.Duration, printLogs bool) (int64, error)
 
 	GetClusterData() (*ClusterData, error)
 	GetOrchestratorCredentials(*types.CommissioningAttributes) error

@@ -40,6 +40,7 @@ config-location = "/etc/nuvlaedge"
     heartbeat-period = 20
     api-key = ""
     api-secret = ""
+
     # Logging
     log-level = "debug"
     log-to-file = true
@@ -65,6 +66,8 @@ config-location = "/etc/nuvlaedge"
         log-level = "info"
         log-to-file = true
 
+    [agent.job]
+        enable-container-job-support = true
 
 # System Manager configuration. Mainly used for creation/deletion of NuvlaEdge containers
 [system-manager]
