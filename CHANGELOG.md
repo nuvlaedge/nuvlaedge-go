@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.9.0...v0.10.0) (2024-06-06)
+
+
+### Features
+
+* Merge NuvlaEdge and NuvlaEdge Cli into a single binary ([#50](https://github.com/nuvlaedge/nuvlaedge-go/issues/50)) ([0744970](https://github.com/nuvlaedge/nuvlaedge-go/commit/0744970dce25a7adc2e43d78f989ef9e3afe36bc))
+
 ## [0.9.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.8.1...v0.9.0) (2024-06-05)
 
 
