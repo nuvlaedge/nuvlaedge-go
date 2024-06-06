@@ -2,76 +2,37 @@ package nuvlaedge
 
 import (
 	"fmt"
-	"github.com/BurntSushi/toml"
-	"github.com/caarlos0/env/v10"
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 	"nuvlaedge-go/nuvlaedge/common"
-	"os"
 	"reflect"
 )
 
-type NuvlaEdgeSettings struct {
-	// Agent settings
-	Agent AgentSettings `toml:"agent"`
+var s *Settings
 
-	// NuvlaEdge System Manager settings
-	SystemManager SystemManagerSettings `toml:"system-manager"`
+func init() {
+	// Create settings and set Viper defaults and env bindings
+	s = NewSettings()
+	SetDefaults()
+}
+
+func NewSettings() *Settings {
+	return &Settings{}
+}
+
+type Settings struct {
+	// Agent s
+	Agent AgentSettings `toml:"agent" mapstructure:"agent" json:"agent,omitempty"`
 
 	// Higher logging levels
-	Logging LoggingSettings `toml:"logging"`
+	Logging common.LoggingSettings `toml:"logging" mapstructure:"logging" json:"logging,omitempty"`
 
 	// NuvlaEdge Database Location
-	DataLocation string `toml:"data-location" env:"DATA_LOCATION"`
+	DataLocation string `toml:"data-location" json:"data-location,omitempty" mapstructure:"data-location"`
+	ConfigFile   string `toml:"config-file" json:"config-file,omitempty" mapstructure:"config-file"`
 }
 
-type LoggingSettings struct {
-	Debug         bool   `toml:"debug" env:"DEBUG"`
-	Level         string `toml:"level" env:"LOG_LEVEL"`
-	LogFile       string `toml:"log-file" env:"LOG_FILE"`
-	LogPath       string `toml:"log-path" env:"LOG_PATH"`
-	LogMaxSize    int    `toml:"log-max-size" env:"LOG_MAX_SIZE"`
-	LogMaxBackups int    `toml:"log-max-backups" env:"LOG_MAX_BACKUPS"`
-}
-
-// SystemManagerSettings struct holds the configuration settings for the NuvlaEdge System Manager.
-// SystemRequirements: Defines the minimum system requirements for the NuvlaEdge System Manager.
-// VpnEnabled: Indicates whether the VPN is enabled from the start.
-// Mqtt: Holds the configuration settings for the MQTT broker.
-type SystemManagerSettings struct {
-
-	// SystemRequirements struct defines the minimum system requirements for the NuvlaEdge.
-	// Cores: The minimum number of CPU cores required.
-	// Memory: The minimum amount of memory required.
-	// Disk: The minimum amount of disk space required.
-	// DockerVersion: The required version of Docker.
-	// K8sVersion: The required version of Kubernetes.
-	SystemRequirements struct {
-		// CPU requirements
-		Cores int `toml:"cores" env:"CORES"`
-		// Memory requirements
-		Memory int `toml:"memory" env:"MEMORY"`
-		// Disk requirements
-		Disk int `toml:"disk" env:"DISK"`
-		// COE requirements
-		DockerVersion string `toml:"docker-version" env:"DOCKER_VERSION"`
-		K8sVersion    string `toml:"k8s-version" env:"K8S_VERSION"`
-	} `toml:"system-requirements"`
-
-	// VpnEnabled indicates whether the VPN is enabled from the start.
-	VpnEnabled bool `toml:"vpn-enabled" env:"VPN_ENABLED"`
-
-	// Mqtt struct holds the configuration settings for the MQTT broker.
-	// Enabled: Indicates whether the MQTT broker is enabled.
-	// Host: The host of the MQTT broker.
-	// Port: The port of the MQTT broker.
-	Mqtt struct {
-		Enabled bool   `toml:"enabled" env:"MQTT_ENABLED"`
-		Host    string `toml:"host" env:"MQTT_HOST"`
-		Port    int    `toml:"port" env:"MQTT_PORT"`
-	} `toml:"mqtt"`
-}
-
-// AgentSettings struct holds the configuration settings for the NuvlaEdge agent.
+// AgentSettings struct holds the configuration s for the NuvlaEdge agent.
 // NuvlaEndpoint: The endpoint for the Nuvla service.
 // NuvlaInsecure: Indicates whether the Nuvla service should be accessed in insecure mode.
 // NuvlaEdgeUUID: The UUID of the NuvlaEdge resource.
@@ -79,44 +40,44 @@ type SystemManagerSettings struct {
 // ApiSecret: The API secret for accessing the Nuvla service.
 // HeartbeatPeriod: The period for the heartbeat action of the NuvlaEdge agent.
 // TelemetryPeriod: The period for the monitoring action of the NuvlaEdge agent.
-// Commissioner: Holds the settings for the NuvlaEdge commissioner.
-// SystemConfiguration: Holds the settings for the host system configuration.
-// Telemetry: Holds the settings for the NuvlaEdge monitoring.
-// Vpn: Holds the settings for the NuvlaEdge VPN.
+// Commissioner: Holds the s for the NuvlaEdge commissioner.
+// SystemConfiguration: Holds the s for the host system configuration.
+// Telemetry: Holds the s for the NuvlaEdge monitoring.
+// Vpn: Holds the s for the NuvlaEdge VPN.
 type AgentSettings struct {
 	// nuvla endpoint definition
-	NuvlaEndpoint string `toml:"nuvla-endpoint" env:"NUVLA_ENDPOINT"`
-	NuvlaInsecure bool   `toml:"nuvla-insecure" env:"NUVLA_INSECURE"`
+	NuvlaEndpoint string `mapstructure:"nuvla-endpoint" toml:"nuvla-endpoint" json:"nuvla-endpoint,omitempty"`
+	NuvlaInsecure bool   `mapstructure:"nuvla-insecure" toml:"nuvla-insecure" json:"nuvla-insecure,omitempty"`
 
 	// nuvlaedge resource id and (optional) credentials
-	NuvlaEdgeUUID string `toml:"nuvlaedge-uuid" env:"NUVLAEDGE_UUID"`
-	ApiKey        string `toml:"api-key" env:"API_KEY"`
-	ApiSecret     string `toml:"api-secret" env:"API_SECRET"`
+	NuvlaEdgeUUID string `mapstructure:"nuvlaedge-uuid" toml:"nuvlaedge-uuid" json:"nuvlaedge-uuid,omitempty"`
+	ApiKey        string `mapstructure:"api-key" toml:"api-key" json:"api-key,omitempty"`
+	ApiSecret     string `mapstructure:"api-secret" toml:"api-secret" json:"api-secret,omitempty"`
 
 	// NuvlaEdge main jobs periods
-	HeartbeatPeriod int `toml:"heartbeat-period" env:"HEARTBEAT_PERIOD"`
-	TelemetryPeriod int `toml:"telemetry-period" env:"TELEMETRY_PERIOD"`
+	HeartbeatPeriod int `mapstructure:"heartbeat-period" toml:"heartbeat-period" json:"heartbeat-period,omitempty"`
+	TelemetryPeriod int `mapstructure:"telemetry-period" toml:"telemetry-period" json:"telemetry-period,omitempty"`
 
-	// Commissioner settings
+	// Commissioner s
 	Commissioner struct {
-		Period int `toml:"period" env:"COMMISSIONER_PERIOD"`
-	} `toml:"commissioner"`
+		Period int `mapstructure:"period" toml:"period" json:"period,omitempty"`
+	} `mapstructure:"commissioner" toml:"commissioner" json:"commissioner,omitempty"`
 
-	// NuvlaEdge Telemetry settings
+	// NuvlaEdge Telemetry s
 	Telemetry struct {
-		Period int `toml:"period" env:"TELEMETRY_PERIOD"`
-	} `toml:"telemetry"`
+		Period int `mapstructure:"period" toml:"period" json:"period,omitempty"`
+	} `mapstructure:"telemetry" toml:"telemetry" json:"telemetry,omitempty"`
 
-	// HostConfiguration settings
+	// HostConfiguration s
 	HostConfiguration struct {
-		Period int `toml:"period" env:"SYSTEM_CONFIGURATION_PERIOD"`
-	} `toml:"host-configuration"`
+		Period int `mapstructure:"period" toml:"period" json:"period,omitempty"`
+	} `mapstructure:"host-configuration" toml:"host-configuration" json:"host-configuration,omitempty"`
 
-	// Vpn settings
+	// Vpn s
 	Vpn struct {
-		Enabled     bool   `toml:"enabled" env:"VPN_ENABLED"`
-		ExtraConfig string `toml:"extra-config" env:"VPN_EXTRA_CONFIG"`
-	} `toml:"vpn"`
+		Enabled     bool   `mapstructure:"enabled" toml:"enabled" json:"enabled,omitempty"`
+		ExtraConfig string `mapstructure:"extra-config" toml:"extra-config" json:"extra-config,omitempty"`
+	} `mapstructure:"vpn" toml:"vpn" json:"vpn,omitempty"`
 }
 
 func (a *AgentSettings) String() string {
@@ -129,46 +90,85 @@ func (a *AgentSettings) String() string {
 	return s
 }
 
-func NewNuvlaEdgeSettings() *NuvlaEdgeSettings {
-	path := GetSettingsPath()
-	cfg := &NuvlaEdgeSettings{}
-	readTomlSettings(cfg, path)
-	readEnv(cfg)
+func SetDefaults() {
 
-	return cfg
-}
-
-func readEnv(cfg *NuvlaEdgeSettings) {
-	err := env.Parse(cfg)
+	// NuvlaEdge Defaults
+	err := viper.BindEnv("agent.nuvlaedge-uuid", "NUVLAEDGE_UUID")
 	if err != nil {
-		log.Warnf("Error parsing environment variables: %s", err)
+		log.Errorf("Error binding env var: %s", err)
 	}
+	viper.SetDefault("data-location", "/var/lib/nuvlaedge/")
+	_ = viper.BindEnv("data-location", "DATABASE_PATH")
+	viper.SetDefault("config-file", common.DefaultConfigPath+"nuvlaedge.toml")
+	_ = viper.BindEnv("config-file", "NUVLAEDGE_SETTINGS")
+
+	// Agent Defaults
+	viper.SetDefault("agent.nuvla-endpoint", "https://nuvla.io")
+	_ = viper.BindEnv("agent.nuvla-endpoint", "NUVLA_ENDPOINT")
+	viper.SetDefault("agent.nuvla-insecure", false)
+	_ = viper.BindEnv("agent.nuvla-insecure", "NUVLA_INSECURE")
+
+	viper.SetDefault("agent.heartbeat-period", 20)
+	_ = viper.BindEnv("agent.heartbeat-period", "HEARTBEAT_PERIOD")
+	viper.SetDefault("agent.telemetry-period", 60)
+	_ = viper.BindEnv("agent.telemetry-period", "TELEMETRY_PERIOD")
+
+	// Logging Defaults
+	viper.SetDefault("logging.debug", false)
+	_ = viper.BindEnv("logging.debug", "DEBUG")
+	viper.SetDefault("logging.log-level", "info")
+	_ = viper.BindEnv("logging.log-level", "LOG_LEVEL")
+	viper.SetDefault("logging.log-to-file", false)
+	_ = viper.BindEnv("logging.log-to-file", "LOG_TO_FILE")
+	viper.SetDefault("logging.log-file", "/var/log/nuvlaedge.log")
+	viper.SetDefault("logging.log-path", "/var/log/")
+	viper.SetDefault("logging.log-max-size", 10)
+	viper.SetDefault("logging.log-max-backups", 5)
 }
 
-func readTomlSettings(cfg *NuvlaEdgeSettings, path string) {
-	if !common.FileExistsAndNotEmpty(path) {
-		log.Infof("Settings file not found: %s. Will try with environmeltal variables", path)
-		return
+// SetConfigFile sets the config file for the application. We need to set the config file before getting to this point
+// since the config file comes from Viper configuration. It can either be set by environmental variable (NUVLAEDGE_CONFIG)
+// or via flag --config-file
+func SetConfigFile() error {
+	// Sets viper config file
+	file := viper.Get("config-file")
+
+	if file == nil || file.(string) == "" {
+		// No need to return an error here, we don't want the Config file as a mandatory flag if UUID is provided
+		log.Info("No config file provided. Using defaults, envs and flags.")
+		return nil
 	}
-	log.Debugf("Reading settings from file: %s...", path)
-	_, err := toml.DecodeFile(path, cfg)
+	viper.SetConfigFile(file.(string))
+	err := viper.ReadInConfig()
 	if err != nil {
-		log.Warnf("Error reading settings file: %s", err)
-		return
+		log.Errorf("Error reading config file: %s", err)
+		return err
 	}
-	log.Debugf("Reading settings from file: %s... Success", path)
-
+	return nil
 }
 
-func readCommandLineSetting(cfg *NuvlaEdgeSettings) {
+// UnfoldSettings unfolds the settings from Viper into the s struct. Before that, it checks if the config file is set
+// and reads it. If the config file is not set, it will use the defaults and the environmental variables.
+func UnfoldSettings() error {
+	if err := SetConfigFile(); err != nil {
+		// If there is an error reading the config file, we should we try running without it. Just log a warning
+		log.Warnf("Error reading config file: %s", err)
+	}
 
+	// Unfolds s
+	if err := viper.Unmarshal(s); err != nil {
+		// If the configuration is not properly unmarshalled into the s struct, we should return an error, we cannot run
+		// the nuvlaedge without some configuration
+		return err
+	}
+
+	return nil
 }
 
-func GetSettingsPath() string {
-	envSettingsFile := os.Getenv("NUVLAEDGE_SETTINGS")
-	if envSettingsFile != "" {
-		return envSettingsFile
+func GetSettings() (*Settings, error) {
+	if err := UnfoldSettings(); err != nil {
+		log.Errorf("Error unfolding s: %s", err)
+		return nil, err
 	}
-	return "/etc/nuvlaedge/nuvlaedge.toml"
-
+	return s, nil
 }

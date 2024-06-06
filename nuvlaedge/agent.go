@@ -39,7 +39,7 @@ type Agent struct {
 	jobChan  chan string
 }
 
-// NewNuvlaEdgeClient tries to create a new Nuvla client first from the local files if available, else from the settings
+// NewNuvlaEdgeClient tries to create a new Nuvla client first from the local files if available, else from the s
 func NewNuvlaEdgeClient(settings *AgentSettings) *clients.NuvlaEdgeClient {
 
 	clientFile := filepath.Join(DataLocation, NuvlaSessionDataFile)
@@ -110,7 +110,7 @@ func NewAgent(
 func (a *Agent) Start() error {
 	// Start the Agent
 	// Find
-	// TODO: Write a default function to generate Client opts from NuvlaEdge settings
+	// TODO: Write a default function to generate Client opts from NuvlaEdge s
 	a.client = NewNuvlaEdgeClient(a.settings)
 
 	// We assume the client is not activated if credentials are not set in the client

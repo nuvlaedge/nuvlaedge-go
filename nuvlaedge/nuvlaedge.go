@@ -2,23 +2,27 @@ package nuvlaedge
 
 import (
 	log "github.com/sirupsen/logrus"
+	"nuvlaedge-go/nuvlaedge/common"
 	"nuvlaedge-go/nuvlaedge/orchestrator"
 	"os"
 	"time"
 )
 
-var DataLocation string = "/var/lib/nuvlaedge/"
+var DataLocation string
 
-type NuvlaEdge struct {
-	coe           orchestrator.Coe   // coe: Orchestration engine to control deployments
-	settings      *NuvlaEdgeSettings // settings:
-	agent         *Agent             // Agent: Nuvla-NuvlaEdge interface manager
-	systemManager *SystemManager     // systemManager: Manages the local system
-	jobProcessor  *JobProcessor      // jobProcessor: Read and execute jobs coming from Nuvla
-	telemetry     *Telemetry         // telemetry: Reads the local telemetry and exposes it. We provide two options, local NuvlaEdge telemetry or Prometheus exporter.
+func init() {
+	DataLocation = common.DefaultDBPath
 }
 
-func NewNuvlaEdge(settings *NuvlaEdgeSettings) *NuvlaEdge {
+type NuvlaEdge struct {
+	coe          orchestrator.Coe // coe: Orchestration engine to control deployments
+	settings     *Settings        // settings:
+	agent        *Agent           // Agent: Nuvla-NuvlaEdge interface manager
+	jobProcessor *JobProcessor    // jobProcessor: Read and execute jobs coming from Nuvla
+	telemetry    *Telemetry       // telemetry: Reads the local telemetry and exposes it. We provide two options, local NuvlaEdge telemetry or Prometheus exporter.
+}
+
+func NewNuvlaEdge(settings *Settings) *NuvlaEdge {
 	// Set global data location
 	DataLocation = settings.DataLocation
 	log.Infof("Setting global data location to: %s", DataLocation)
@@ -37,12 +41,11 @@ func NewNuvlaEdge(settings *NuvlaEdgeSettings) *NuvlaEdge {
 	jobChan := make(chan string, 10)
 
 	return &NuvlaEdge{
-		coe:           coeClient,
-		settings:      settings,
-		agent:         NewAgent(&settings.Agent, coeClient, telemetry, jobChan),
-		systemManager: NewSystemManager(&settings.SystemManager, coeClient),
-		// Job engine needs a pointer to Nuvla Client which is created by the agent depending on input settings
-		// and previous installations so we defer the creation of the jobProcessor to the start method
+		coe:      coeClient,
+		settings: settings,
+		agent:    NewAgent(&settings.Agent, coeClient, telemetry, jobChan),
+		// Job engine needs a pointer to Nuvla Client which is created by the agent depending on input s
+		// and previous installations so, we defer the creation of the jobProcessor to the start method
 		telemetry: telemetry,
 	}
 }
@@ -50,7 +53,7 @@ func NewNuvlaEdge(settings *NuvlaEdgeSettings) *NuvlaEdge {
 // Start starts the NuvlaEdge, initialising all the components by calling their Start() method. Each component is responsible for its own initialisation.
 // Requirements check: Checks if the local system meets the requirements to run NuvlaEdge
 // Agent: Initialises the agent, reads the local storage for previous installations of NuvlaEdge and acts accordingly
-// SystemManager: Initialises the local system based on the settings
+// SystemManager: Initialises the local system based on the s
 // JobProcessor: Reads the local storage for dangling jobs/deployments
 // Telemetry: Starts the telemetry collection right away
 func (ne *NuvlaEdge) Start() error {
@@ -68,13 +71,6 @@ func (ne *NuvlaEdge) Start() error {
 	err = ne.agent.Start()
 	if err != nil {
 		log.Errorf("Error starting Agent: %s, cannot continue", err)
-		return err
-	}
-
-	// Start SystemManager
-	err = ne.systemManager.Start()
-	if err != nil {
-		log.Errorf("Error starting SystemManager: %s, cannot continue", err)
 		return err
 	}
 
