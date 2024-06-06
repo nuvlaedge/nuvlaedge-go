@@ -1,7 +1,5 @@
 package common
 
-import log "github.com/sirupsen/logrus"
-
 // Nuvla Endpoint constant configuration
 const (
 	NuvlaEndPoint  string = "https://nuvla.io"
@@ -40,15 +38,10 @@ const (
 	JobEngineContainerImage        = "sixsq/nuvlaedge:latest"
 )
 
-// LogLevel Global log level propagator
-var LogLevel log.Level = log.InfoLevel
-
-func SetLogLevel(level string) {
-	l, err := log.ParseLevel(level)
-	if err != nil {
-		log.Warnf("Invalid log level: %s", level)
-		LogLevel = log.InfoLevel
-	} else {
-		LogLevel = l
-	}
-}
+// Default Path Values
+const (
+	DefaultBinPath    = "/usr/local/bin/"     // DefaultBinPath default path for the binary
+	DefaultDBPath     = "/var/lib/nuvlaedge/" // DefaultDBPath default path for the database
+	DefaultLogPath    = "/var/log/nuvlaedge/" // DefaultLogPath default path for the logs
+	DefaultConfigPath = "/etc/nuvlaedge/"     // DefaultConfigPath default path for the configuration
+)
