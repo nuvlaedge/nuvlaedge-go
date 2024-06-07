@@ -61,10 +61,10 @@ func main() {
 	}
 }
 
-func initializeLogging(loggingSettings *nuvlaedge.LoggingSettings) {
-	common.SetLogLevel(loggingSettings.Level)
+func initializeLogging(loggingSettings *common.LoggingSettings) {
+	common.SetGlobalLogLevel(loggingSettings.Level)
 	if loggingSettings.Debug {
-		common.SetLogLevel("DEBUG")
+		common.SetGlobalLogLevel("DEBUG")
 	}
 	log.SetLevel(common.LogLevel)
 
@@ -85,15 +85,15 @@ func formatFilePath(filePath string) string {
 	return arr[len(arr)-1]
 }
 
-// getNuvlaEdgeSettings returns new NuvlaEdgeSettings.
+// getNuvlaEdgeSettings returns new Settings.
 // Moved to a function for testing purposes and possible future error handling.
-func getNuvlaEdgeSettings() *nuvlaedge.NuvlaEdgeSettings {
-	return nuvlaedge.NewNuvlaEdgeSettings()
+func getNuvlaEdgeSettings() *nuvlaedge.Settings {
+	return nil
 }
 
 // areMinimumSettingsPresent checks if the minimum settings are present.
 // Moved to a function for testing purposes and possible future error handling.
-func areMinimumSettingsPresent(nuvlaEdgeSettings *nuvlaedge.NuvlaEdgeSettings) ([]string, error) {
+func areMinimumSettingsPresent(nuvlaEdgeSettings *nuvlaedge.Settings) ([]string, error) {
 	if nuvlaEdgeSettings.Agent.NuvlaEdgeUUID == "" {
 		return []string{"Agent.NuvlaEdgeUUID"}, fmt.Errorf("Agent.NuvlaEdgeUUID is missing")
 	}

@@ -56,7 +56,7 @@ jobs:
           export FILE_NAME="nuvlaedge-${{ matrix.os }}-${{ matrix.arch }}-${{ needs.trigger-release.outputs.tag_name }}"
           export GOOS=${{ matrix.os }}
           export GOARCH=${{ matrix.arch }}
-          go build -o $FILE_NAME -ldflags="-X 'nuvlaedge-go/nuvlaedge/version.Version=${{ needs.trigger-release.outputs.tag_name }}'" ./cmd/nuvlaedge.go
+          go build -o $FILE_NAME -gcflags=all="-l -B" -ldflags="-s -w -X 'nuvlaedge-go/nuvlaedge/version.Version=${{ needs.trigger-release.outputs.tag_name }}'" ./cmd/cli.go
           echo "file_name=$FILE_NAME" >> $GITHUB_OUTPUT
 
       - name: Install UPX
@@ -68,7 +68,7 @@ jobs:
       - name: Compress binaries
         if: matrix.os == 'linux'
         run: |
-          upx --lzma ${{ steps.build.outputs.file_name }}
+          upx --best --lzma ${{ steps.build.outputs.file_name }}
 
       - name: Add artifacts to release
         env:
@@ -76,61 +76,6 @@ jobs:
         run: |
           echo "Uploading artifacts to release ${{ needs.trigger-release.outputs.tag_name }}"
           gh release upload ${{ needs.trigger-release.outputs.tag_name }} ${{ steps.build.outputs.file_name }}
-
-  publish-cli-release:
-    name: "Build and publish NuvlaEdge CLI"
-    needs: trigger-release
-    if: needs.trigger-release.outputs.release_created
-    runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        os: [ linux, darwin ]
-        arch: [ amd64, arm64 ]
-        # Darwin does not support arm(32) architecture. We need to build it to support small arm devices.
-        include:
-          - os: linux
-            arch: arm
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: "Set up Go"
-        uses: actions/setup-go@v4
-        with:
-          go-version: 1.22.0
-          cache: true
-
-      - name: "Build and Publish"
-        id: build
-        run: |
-          cd installer/nuvlaedge-cli
-          mkdir -p bin
-          ls -la .
-          go mod tidy
-          export FILE_NAME="nuvlaedge-cli-${{ matrix.os }}-${{ matrix.arch }}-${{ needs.trigger-release.outputs.tag_name }}"
-          export GOOS=${{ matrix.os }}
-          export GOARCH=${{ matrix.arch }}
-          go build -o bin/$FILE_NAME main.go
-          echo "file_name=$FILE_NAME" >> $GITHUB_OUTPUT
-
-      - name: Install UPX
-        if: matrix.os == 'linux'
-        uses: crazy-max/ghaction-upx@v3
-        with:
-          install-only: true
-
-      - name: Compress binaries
-        if: matrix.os == 'linux'
-        run: |
-          upx --lzma ./installer/nuvlaedge-cli/bin/${{ steps.build.outputs.file_name }}
-
-      - name: Add artifacts to release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          echo "Uploading artifacts to release ${{ needs.trigger-release.outputs.tag_name }}"
-          gh release upload ${{ needs.trigger-release.outputs.tag_name }} installer/nuvlaedge-cli/bin/${{ steps.build.outputs.file_name }}
 
   publish-config-template:
     name: "Publish NuvlaEdge Config Template"

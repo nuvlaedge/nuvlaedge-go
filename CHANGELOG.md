@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.10.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.9.0...v0.10.0) (2024-06-06)
+
+
+### Features
+
+* Merge NuvlaEdge and NuvlaEdge Cli into a single binary ([#50](https://github.com/nuvlaedge/nuvlaedge-go/issues/50)) ([0744970](https://github.com/nuvlaedge/nuvlaedge-go/commit/0744970dce25a7adc2e43d78f989ef9e3afe36bc))
+
+## [0.9.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.8.1...v0.9.0) (2024-06-05)
+
+
+### Features
+
+* Add job engine container support for unsupported native jobs ([#48](https://github.com/nuvlaedge/nuvlaedge-go/issues/48)) ([9621a3a](https://github.com/nuvlaedge/nuvlaedge-go/commit/9621a3a6bae50a81e4c23d918b95f28ca88efc8a))
+* Add Kubernetes installer for NuvlaEdge (non nuvlaedge-go) ([#47](https://github.com/nuvlaedge/nuvlaedge-go/issues/47)) ([b8446d0](https://github.com/nuvlaedge/nuvlaedge-go/commit/b8446d03c1ca699930adc71e2fb18fcef08842be))
+
 ## [0.8.1](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.8.0...v0.8.1) (2024-05-30)
 
 

@@ -28,11 +28,11 @@ else
 fi
 
 # Construct the download URL
-URL="${BASE_URL}/${VERSION}/nuvlaedge-cli-${OS}-${ARCH}-${VERSION}"
+URL="${BASE_URL}/${VERSION}/nuvlaedge-${OS}-${ARCH}-${VERSION}"
 
 echo "Downloading NuvlaEdge CLI from $URL"
 # Download the binary
-curl -L -o nuvlaedge-cli "$URL"
+curl -L -o nuvlaedge "$URL"
 
 # Make the binary executable
 chmod +x nuvlaedge-cli

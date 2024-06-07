@@ -10,19 +10,13 @@ log-max-size = 100
 log-max-backups = 3
 
 [agent]
-nuvlaedge-uuid = "nuvlabox/182cf201-0143-4e3e-89c4-6d4ca34c222e"
+nuvlaedge-uuid = "nuvlabox/5c67543b-8165-4902-b4bb-9c4d23a48abe"
 nuvla-endpoint = "https://nuvla.io"
 nuvla-insecure = false
 telemetry-period = 60
 heartbeat-period = 20
 api-key = ""
 api-secret = ""
-log-level = "info"
-log-to-file = true
-
-[system-manager]
-vpn-enabled = true
-mqtt-enabled = true
 log-level = "info"
 log-to-file = true
 
