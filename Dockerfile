@@ -16,12 +16,12 @@ RUN GOOS=$TARGETOS GOARCH=$TARGETARCH CGO_ENABLED=0 \
     go build \
     -ldflags "-w -s" \
     -gcflags=all="-l -B" \
-    -o out/nuvlaedge ./cmd/nuvlaedge.go
+    -o out/nuvlaedge ./cmd/cli.go
 RUN upx --lzma out/nuvlaedge
 
 
 # --- NuvlaEdge image ---
-FROM sixsq/nuvlaedge AS nuvlaedge
+#FROM sixsq/nuvlaedge AS nuvlaedge
 
 
 # --- Final image ---
@@ -38,9 +38,10 @@ ENV NUVLA_ENDPOINT=https://nuvla.io \
 #COPY --from=build /usr/share/zoneinfo /usr/share/zoneinfo
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 
+COPY --from=build /build/config/template.toml /etc/nuvlaedge/nuvlaedge.toml
 COPY --from=build /build/out/nuvlaedge /bin/nuvlaedge
 
-COPY --from=nuvlaedge /usr/local/libexec/docker/cli-plugins/docker-compose /bin/docker-compose
+#COPY --from=nuvlaedge /usr/local/libexec/docker/cli-plugins/docker-compose /bin/docker-compose
 
 ENTRYPOINT ["nuvlaedge"]
 CMD []
