@@ -17,7 +17,9 @@ import (
 
 const (
 	DefaultHeartbeatPeriod = 20
+	MinHeartbeatPeriod     = 10
 	DefaultTelemetryPeriod = 60
+	MinTelemetryPeriod     = 30
 	NuvlaSessionDataFile   = "nuvla-session.json"
 )
 
@@ -98,10 +100,12 @@ func NewAgent(
 
 	// Set default values
 	return &Agent{
-		settings:  settings,
-		coeClient: coeClient,
-		jobChan:   jobChan,
-		telemetry: telemetry,
+		settings:        settings,
+		coeClient:       coeClient,
+		jobChan:         jobChan,
+		telemetry:       telemetry,
+		telemetryPeriod: DefaultTelemetryPeriod,
+		heartBeatPeriod: DefaultHeartbeatPeriod,
 	}
 }
 
@@ -141,6 +145,34 @@ func (a *Agent) Start() error {
 
 	// Create commissioner
 	a.commissioner = NewCommissioner(a.client, a.coeClient)
+
+	return nil
+}
+
+func (a *Agent) updateRefreshPeriods(tickers map[string]*time.Ticker) error {
+	err := a.client.UpdateResourceSelect([]string{"refresh-interval", "heartbeat-interval"})
+	if err != nil {
+		log.Errorf("Error retrieving intervals: %s", err)
+		return err
+	}
+	res := a.client.GetNuvlaEdgeResource()
+	// Extract the refresh and heartbeat intervals
+	refreshInterval := res.RefreshInterval
+	heartbeatInterval := res.HeartbeatInterval
+
+	// Update the telemetry period and reset the ticker if necessary
+	if refreshInterval != a.telemetryPeriod && refreshInterval > MinTelemetryPeriod {
+		log.Infof("Updating telemetry period to %d", refreshInterval)
+		a.telemetryPeriod = refreshInterval
+		tickers["telemetry"].Reset(time.Duration(a.telemetryPeriod) * time.Second)
+	}
+
+	// Update the heartbeat period and reset the ticker if necessary
+	if heartbeatInterval != a.heartBeatPeriod && heartbeatInterval > MinHeartbeatPeriod {
+		log.Infof("Updating heartbeat period to %d", heartbeatInterval)
+		a.heartBeatPeriod = heartbeatInterval
+		tickers["heartbeat"].Reset(time.Duration(a.heartBeatPeriod) * time.Second)
+	}
 
 	return nil
 }
@@ -209,9 +241,6 @@ func (a *Agent) processResponseWithJobs(res *http.Response, action string) error
 		return err
 	}
 
-	bytes, _ := json.MarshalIndent(sample, "", "  ")
-	log.Infof("Processing response from %s: %s", action, string(bytes))
-
 	if sample.Jobs != nil && len(sample.Jobs) > 0 {
 		log.Infof("Jobs received: %v", sample.Jobs)
 		for _, job := range sample.Jobs {
@@ -228,6 +257,8 @@ func (a *Agent) processResponseWithJobs(res *http.Response, action string) error
 
 func (a *Agent) Stop() error {
 	// Stop the Agent
+	log.Warnf("Stopping agent...")
+	a.exitChan <- true
 	return nil
 }
 
@@ -236,13 +267,16 @@ func (a *Agent) Run() error {
 	go a.commissioner.Run()
 
 	// Create ticker for sendHeartBeat function
-	heartbeatTicker := time.NewTicker(time.Second * DefaultHeartbeatPeriod)
+	heartbeatTicker := time.NewTicker(time.Second * time.Duration(a.heartBeatPeriod))
 	defer heartbeatTicker.Stop()
 
 	// Create ticker for sendTelemetry function
-	telemetryTicker := time.NewTicker(time.Second * DefaultTelemetryPeriod)
+	telemetryTicker := time.NewTicker(time.Second * time.Duration(a.telemetryPeriod))
 	defer telemetryTicker.Stop()
-
+	tickers := map[string]*time.Ticker{
+		"heartbeat": heartbeatTicker,
+		"telemetry": telemetryTicker,
+	}
 	// Updater ticker
 	updaterTicker := time.NewTicker(time.Second * 60)
 	defer updaterTicker.Stop()
@@ -258,8 +292,14 @@ func (a *Agent) Run() error {
 			if err != nil {
 				log.Errorf("Error sending telemetry: %s", err)
 			}
+		case <-updaterTicker.C:
+			err := a.updateRefreshPeriods(tickers)
+			if err != nil {
+				log.Errorf("Error updating refresh periods: %s", err)
+			}
 		case <-a.exitChan:
 			log.Infof("Exiting agent...")
+			return nil
 		}
 	}
 }
