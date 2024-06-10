@@ -18,9 +18,6 @@ RUN GOOS=$TARGETOS GOARCH=$TARGETARCH CGO_ENABLED=0 \
     -gcflags=all="-l -B" \
     -o out/nuvlaedge ./cmd/cli.go
 
-RUN apk add upx
-RUN upx --best --lzma out/nuvlaedge
-
 # --- NuvlaEdge image ---
 #FROM sixsq/nuvlaedge AS nuvlaedge
 
