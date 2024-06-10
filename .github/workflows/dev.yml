@@ -35,7 +35,7 @@ jobs:
           push: true
           tags: >
             nuvladev/${{ github.event.repository.name }}:latest
-#            nuvladev/${{ github.event.repository.name }}:${{ github.head_ref || github.ref_name }}
+            nuvladev/${{ github.event.repository.name }}:${{ github.head_ref || github.ref_name }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
