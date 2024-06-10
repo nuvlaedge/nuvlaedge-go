@@ -30,12 +30,13 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile.dev
+          file: ./Dockerfile
           platforms: linux/amd64,linux/arm64,linux/arm
+          build-args: |
+            NUVLAEDGE_VERSION=${{ github.head_ref || github.ref_name }}
           push: true
           tags: >
             nuvladev/${{ github.event.repository.name }}:latest,
             nuvladev/${{ github.event.repository.name }}:${{ github.head_ref || github.ref_name }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-

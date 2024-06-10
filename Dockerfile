@@ -3,6 +3,7 @@ FROM --platform=$BUILDPLATFORM golang:1.22-alpine AS build
 
 ARG TARGETOS 
 ARG TARGETARCH
+ARG NUVLAEDGE_VERSION=dev
 
 WORKDIR /build
 
@@ -15,11 +16,8 @@ RUN go mod tidy
 RUN GOOS=$TARGETOS GOARCH=$TARGETARCH CGO_ENABLED=0 \
     go build \
     -ldflags "-w -s" \
-    -gcflags=all="-l -B" \
+    -gcflags=all="-l -B -X 'nuvlaedge-go/nuvlaedge/version.Version=$NUVLAEDGE_VERSION'" \
     -o out/nuvlaedge ./cmd/cli.go
-
-# --- NuvlaEdge image ---
-#FROM sixsq/nuvlaedge AS nuvlaedge
 
 
 # --- Final image ---
@@ -40,4 +38,3 @@ COPY --from=build /build/config/template.toml /etc/nuvlaedge/nuvlaedge.toml
 COPY --from=build /build/out/nuvlaedge /bin/nuvlaedge
 
 ENTRYPOINT ["nuvlaedge"]
-CMD []
