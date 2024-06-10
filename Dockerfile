@@ -15,8 +15,8 @@ COPY . .
 RUN go mod tidy
 RUN GOOS=$TARGETOS GOARCH=$TARGETARCH CGO_ENABLED=0 \
     go build \
-    -ldflags "-w -s" \
-    -gcflags=all="-l -B -X 'nuvlaedge-go/nuvlaedge/version.Version=$NUVLAEDGE_VERSION'" \
+    -ldflags "-w -s -X 'nuvlaedge-go/nuvlaedge/version.Version=$NUVLAEDGE_VERSION'" \
+    -gcflags=all="-l -B" \
     -o out/nuvlaedge ./cmd/cli.go
 
 
