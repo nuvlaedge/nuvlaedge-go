@@ -1,5 +1,9 @@
 name: "NuvlaEdge-Go Dev Build"
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
 on:
   pull_request:
 
