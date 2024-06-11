@@ -29,6 +29,8 @@ func (r *LegacySession) ConvertToNuvlaSession() *clients.NuvlaEdgeSessionFreeze 
 	f.NuvlaEdgeStatusId = r.NuvlaEdgeStatusUUID
 	f.Endpoint = r.Endpoint
 	f.Insecure = r.Insecure
+	// TODO: Need to fix this to true so the struct is created to prevent nil pointer error
+	f.PersistCookie = true
 	return f
 }
 
