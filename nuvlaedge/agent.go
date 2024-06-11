@@ -11,6 +11,7 @@ import (
 	"nuvlaedge-go/nuvlaedge/common"
 	"nuvlaedge-go/nuvlaedge/common/resources"
 	"nuvlaedge-go/nuvlaedge/orchestrator"
+	neTypes "nuvlaedge-go/nuvlaedge/types"
 	"path/filepath"
 	"time"
 )
@@ -21,6 +22,7 @@ const (
 	DefaultTelemetryPeriod = 60
 	MinTelemetryPeriod     = 30
 	NuvlaSessionDataFile   = "nuvla-session.json"
+	LegacySessionDataFile  = "nuvlaedge-session.json"
 )
 
 type Agent struct {
@@ -45,16 +47,25 @@ type Agent struct {
 func NewNuvlaEdgeClient(settings *AgentSettings) *clients.NuvlaEdgeClient {
 
 	clientFile := filepath.Join(DataLocation, NuvlaSessionDataFile)
-	log.Infof("Checking if freeze file exists: %s", clientFile)
+	legacyFile := filepath.Join(DataLocation, LegacySessionDataFile)
+
 	var client *clients.NuvlaEdgeClient
 
-	client = NewNuvlaEdgeClientFromSessionFile(clientFile)
+	// Try to load the client from the freeze file of Golang version
+	if common.FileExists(clientFile) {
+		log.Infof("Loading NuvlaEdge client from freeze file: %s", clientFile)
+		client = NewNuvlaEdgeClientFromSessionFile(clientFile)
+		// Try to load the client from the freeze file of Python version
+	} else if common.FileExists(legacyFile) {
+		log.Infof("Loading NuvlaEdge client from legacy freeze file: %s", legacyFile)
+		client = NewNuvlaEdgeClientFromLegacySession(legacyFile)
+	}
 
 	if client != nil {
 		log.Infof("Successfully created NuvlaEdge client from freeze file")
 		return client
 	}
-
+	// If the freeze file does not exist, create a new client from the settings
 	return NewNuvlaEdgeClientFromSettings(settings)
 }
 
@@ -74,6 +85,33 @@ func NewNuvlaEdgeClientFromSessionFile(file string) *clients.NuvlaEdgeClient {
 		return nil
 	}
 	return clients.NewNuvlaEdgeClientFromSessionFreeze(f)
+}
+
+// NewNuvlaEdgeClientFromLegacySession creates a new Nuvla client from a legacy freeze file.
+// It first converts the legacy freeze file to the new freeze file format and then creates the client.
+func NewNuvlaEdgeClientFromLegacySession(file string) *clients.NuvlaEdgeClient {
+	if file == "" {
+		file = filepath.Join(DataLocation, LegacySessionDataFile)
+	}
+
+	if !common.FileExists(file) {
+		log.Infof("Legacy freeze file does not exist: %s", file)
+		return nil
+	}
+
+	l := &neTypes.LegacySession{}
+	if err := l.Load(file); err != nil {
+		log.Errorf("Error loading legacy session freeze file: %s", err)
+		return nil
+	}
+
+	f := l.ConvertToNuvlaSession()
+	sessionFile := filepath.Join(DataLocation, NuvlaSessionDataFile)
+	if err := f.Save(sessionFile); err != nil {
+		log.Errorf("Error saving Nuvla session freeze file: %s", err)
+		return nil
+	}
+	return NewNuvlaEdgeClientFromSessionFile(sessionFile)
 }
 
 func NewNuvlaEdgeClientFromSettings(settings *AgentSettings) *clients.NuvlaEdgeClient {
