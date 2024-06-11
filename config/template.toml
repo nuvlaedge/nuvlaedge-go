@@ -42,7 +42,7 @@ config-location = "/etc/nuvlaedge"
     api-secret = ""
 
     # Logging
-    log-level = "debug"
+    log-level = "info"
     log-to-file = true
 
     [agent.commissioner]

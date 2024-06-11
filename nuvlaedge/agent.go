@@ -22,7 +22,7 @@ const (
 	DefaultTelemetryPeriod = 60
 	MinTelemetryPeriod     = 30
 	NuvlaSessionDataFile   = "nuvla-session.json"
-	LegacySessionDataFile  = "nuvlaedge-session.json"
+	LegacySessionDataFile  = "nuvlaedge_session.json"
 )
 
 type Agent struct {
