@@ -1,0 +1,49 @@
+
+services:
+  agent:
+    image: ${NE_IMAGE_REGISTRY:-}${NE_IMAGE_ORGANIZATION:-sixsq}/${NE_IMAGE_GO_REPOSITORY:-nuvlaedge-go}:${NE_IMAGE_TAG:-2.0.1}
+    container_name: ${COMPOSE_PROJECT_NAME:-nuvlaedge}-agent-go
+    network_mode: "host"
+    restart: always
+    stop_grace_period: 5s
+    environment:
+      - COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME:-nuvlaedge}
+      - NUVLAEDGE_UUID=${NUVLAEDGE_UUID}
+      - NUVLA_ENDPOINT=${NUVLA_ENDPOINT:-nuvla.io}
+      - NUVLA_INSECURE=${NUVLA_ENDPOINT_INSECURE:-false}
+      - HOME
+      - DEBUG=${NUVLAEDGE_DEBUG:-false}
+      - LOG_TO_FILE=${LOG_TO_FILE:-false}
+      - LOG_LEVEL=${NUVLAEDGE_LOG_LEVEL:-INFO}
+      # Below variables are not directly used by agent but are here
+      # to be sent to Nuvla so they are not lost when updating NE
+      - LOG_MAX_SIZE
+      - LOG_MAX_FILE
+      - DOCKER_SOCKET_PATH
+    volumes:
+      - ${DOCKER_SOCKET_PATH:-/var/run/docker.sock}:/var/run/docker.sock
+      - nuvlaedge-data:/var/lib/nuvlaedge
+      - nuvlaedge-logs:/var/log
+      - /:/rootfs:ro
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "${LOG_MAX_SIZE:-250k}"
+        max-file: "${LOG_MAX_FILE:-10}"
+    labels:
+      - "nuvlaedge.component=True"
+      - "nuvlaedge.deployment=production"
+
+volumes:
+  nuvlaedge-data:
+    driver: local
+    labels:
+      - "nuvlaedge.volume=True"
+      - "nuvlaedge.deployment=production"
+      - "nuvlaedge.volume.type=data"
+  nuvlaedge-logs:
+    driver: local
+    labels:
+      - "nuvlaedge.volume=True"
+      - "nuvlaedge.deployment=production"
+      - "nuvlaedge.volume.type=logging"
