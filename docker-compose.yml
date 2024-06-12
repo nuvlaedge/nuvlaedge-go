@@ -9,12 +9,14 @@ services:
     environment:
       - COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME:-nuvlaedge}
       - NUVLAEDGE_UUID=${NUVLAEDGE_UUID}
+      - NUVLAEDGE_API_KEY=${NUVLAEDGE_API_KEY:-}
+      - NUVLAEDGE_API_SECRET=${NUVLAEDGE_API_SECRET:-}
+      - NUVLAEDGE_DEBUG=${NUVLAEDGE_DEBUG:-false}
+      - NUVLAEDGE_LOG_LEVEL=${NUVLAEDGE_LOG_LEVEL:-INFO}
+      - LOG_TO_FILE=${LOG_TO_FILE:-false}
       - NUVLA_ENDPOINT=${NUVLA_ENDPOINT:-nuvla.io}
       - NUVLA_INSECURE=${NUVLA_ENDPOINT_INSECURE:-false}
       - HOME
-      - DEBUG=${NUVLAEDGE_DEBUG:-false}
-      - LOG_TO_FILE=${LOG_TO_FILE:-false}
-      - LOG_LEVEL=${NUVLAEDGE_LOG_LEVEL:-INFO}
       # Below variables are not directly used by agent but are here
       # to be sent to Nuvla so they are not lost when updating NE
       - LOG_MAX_SIZE
