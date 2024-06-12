@@ -107,7 +107,7 @@ func SetDefaults() {
 
 	viper.SetDefault("agent.job-engine-image", common.JobEngineContainerImage)
 	_ = viper.BindEnv("agent.job-engine-image", "NUVLAEDGE_JOB_ENGINE_LITE_IMAGE", "JOB_LEGACY_IMAGE")
-	viper.SetDefault("agent.enable-legacy-job-support", false)
+	viper.SetDefault("agent.enable-legacy-job-support", true)
 	_ = viper.BindEnv("agent.enable-legacy-job-support", "JOB_LEGACY_ENABLE")
 
 	// Bind envs without defaults
