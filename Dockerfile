@@ -33,5 +33,4 @@ COPY --from=build /build/config/template.toml /etc/nuvlaedge/nuvlaedge.toml
 # NuvlaEdge binary previously built
 COPY --from=build /build/out/nuvlaedge /bin/nuvlaedge
 
-ENTRYPOINT ["nuvlaedge"]
-CMD ["run"]
+ENTRYPOINT ["nuvlaedge", "run"]
