@@ -41,7 +41,6 @@ type Settings struct {
 // HeartbeatPeriod: The period for the heartbeat action of the NuvlaEdge agent.
 // TelemetryPeriod: The period for the monitoring action of the NuvlaEdge agent.
 // Commissioner: Holds the s for the NuvlaEdge commissioner.
-// SystemConfiguration: Holds the s for the host system configuration.
 // Telemetry: Holds the s for the NuvlaEdge monitoring.
 // Vpn: Holds the s for the NuvlaEdge VPN.
 type AgentSettings struct {
@@ -78,6 +77,9 @@ type AgentSettings struct {
 		Enabled     bool   `mapstructure:"enabled" toml:"enabled" json:"enabled,omitempty"`
 		ExtraConfig string `mapstructure:"extra-config" toml:"extra-config" json:"extra-config,omitempty"`
 	} `mapstructure:"vpn" toml:"vpn" json:"vpn,omitempty"`
+
+	// Job Engine Configuration
+	JobEngineImage string `mapstructure:"job-engine-image" toml:"job-engine-image" json:"job-engine-image,omitempty"`
 }
 
 func (a *AgentSettings) String() string {
@@ -98,9 +100,16 @@ func SetDefaults() {
 		log.Errorf("Error binding env var: %s", err)
 	}
 	viper.SetDefault("data-location", "/var/lib/nuvlaedge/")
-	_ = viper.BindEnv("data-location", "DATABASE_PATH")
+	_ = viper.BindEnv("data-location", "DATABASE_PATH", "DATA_LOCATION")
 	viper.SetDefault("config-file", common.DefaultConfigPath+"nuvlaedge.toml")
 	_ = viper.BindEnv("config-file", "NUVLAEDGE_SETTINGS")
+
+	viper.SetDefault("agent.job-engine-image", "sixsq/nuvlaedge:latest")
+	_ = viper.BindEnv("agent.job-engine-image", "NUVLAEDGE_JOB_ENGINE_LITE_IMAGE")
+
+	// Bind envs without defaults
+	_ = viper.BindEnv("agent.api-key", "NUVLAEDGE_API_KEY")
+	_ = viper.BindEnv("agent.api-secret", "NUVLAEDGE_API_SECRET")
 
 	// Agent Defaults
 	viper.SetDefault("agent.nuvla-endpoint", "https://nuvla.io")
@@ -115,9 +124,9 @@ func SetDefaults() {
 
 	// Logging Defaults
 	viper.SetDefault("logging.debug", false)
-	_ = viper.BindEnv("logging.debug", "DEBUG")
+	_ = viper.BindEnv("logging.debug", "NUVLAEDGE_DEBUG")
 	viper.SetDefault("logging.log-level", "info")
-	_ = viper.BindEnv("logging.log-level", "LOG_LEVEL")
+	_ = viper.BindEnv("logging.log-level", "LOG_LEVEL", "NUVLAEDGE_LOG_LEVEL")
 	viper.SetDefault("logging.log-to-file", false)
 	_ = viper.BindEnv("logging.log-to-file", "LOG_TO_FILE")
 	viper.SetDefault("logging.log-file", "/var/log/nuvlaedge.log")
