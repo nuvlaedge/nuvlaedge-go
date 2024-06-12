@@ -79,7 +79,8 @@ type AgentSettings struct {
 	} `mapstructure:"vpn" toml:"vpn" json:"vpn,omitempty"`
 
 	// Job Engine Configuration
-	JobEngineImage string `mapstructure:"job-engine-image" toml:"job-engine-image" json:"job-engine-image,omitempty"`
+	JobEngineImage         string `mapstructure:"job-engine-image" toml:"job-engine-image" json:"job-engine-image,omitempty"`
+	EnableLegacyJobSupport bool   `mapstructure:"enable-legacy-job-support" toml:"enable-legacy-job-support" json:"enable-legacy-job-support,omitempty"`
 }
 
 func (a *AgentSettings) String() string {
@@ -104,8 +105,10 @@ func SetDefaults() {
 	viper.SetDefault("config-file", common.DefaultConfigPath+"nuvlaedge.toml")
 	_ = viper.BindEnv("config-file", "NUVLAEDGE_SETTINGS")
 
-	viper.SetDefault("agent.job-engine-image", "sixsq/nuvlaedge:latest")
-	_ = viper.BindEnv("agent.job-engine-image", "NUVLAEDGE_JOB_ENGINE_LITE_IMAGE")
+	viper.SetDefault("agent.job-engine-image", common.JobEngineContainerImage)
+	_ = viper.BindEnv("agent.job-engine-image", "NUVLAEDGE_JOB_ENGINE_LITE_IMAGE", "JOB_LEGACY_IMAGE")
+	viper.SetDefault("agent.enable-legacy-job-support", false)
+	_ = viper.BindEnv("agent.enable-legacy-job-support", "JOB_LEGACY_ENABLE")
 
 	// Bind envs without defaults
 	_ = viper.BindEnv("agent.api-key", "NUVLAEDGE_API_KEY")
