@@ -42,11 +42,6 @@ type JobBase struct {
 	JobResource *resources.JobResource
 }
 
-func (j *JobBase) tryGetNativeAction() (actions.Action, error) {
-
-	return nil, nil
-}
-
 func isNotSupportedActionError(err error) bool {
 	var notImplementedActionError nuvlaedgeErrors.NotImplementedActionError
 	return errors.As(err, &notImplementedActionError)
