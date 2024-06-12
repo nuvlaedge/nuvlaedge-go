@@ -387,6 +387,8 @@ func (dc *DockerCoe) RunJobEngineContainer(conf *neTypes.LegacyJobConf) (string,
 		command = append(command, "--api-insecure")
 	}
 
+	envs := common.GetEnvironWithPrefix("NE_IMAGE_", "JOB_")
+	log.Debugf("Passing envs: %v", envs)
 	// Create container config
 	config := &container.Config{
 		Image:        conf.Image,
@@ -395,6 +397,7 @@ func (dc *DockerCoe) RunJobEngineContainer(conf *neTypes.LegacyJobConf) (string,
 		AttachStdout: false,
 		AttachStdin:  false,
 		Hostname:     conf.JobId,
+		Env:          envs,
 	}
 
 	hostConf := &container.HostConfig{
