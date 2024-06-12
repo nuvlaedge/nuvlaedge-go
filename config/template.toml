@@ -23,8 +23,8 @@ data-location = "/var/lib/nuvlaedge"
 config-location = "/etc/nuvlaedge"
 
 [logging]
-    debug = true
-    level = "debug"
+    debug = false
+    level = "info"
     log-path = "/var/log/nuvlaedge"
     log-file = "nuvlaedge.log"
     log-max-size = 100
