@@ -60,6 +60,9 @@ func NewNetworkMetricsUpdater() *NetworkMetricsUpdater {
 // getGateway retrieves the default gateway IP address.
 func getGateway() (string, error) {
 	g, err := gateway.DiscoverInterface()
+	if err != nil {
+		return "", err
+	}
 	return g.String(), err
 }
 

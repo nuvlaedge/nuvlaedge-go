@@ -3,6 +3,7 @@ package orchestrator
 import (
 	log "github.com/sirupsen/logrus"
 	"io"
+	"nuvlaedge-go/nuvlaedge/common/resources"
 	"nuvlaedge-go/nuvlaedge/types"
 	"os"
 	"time"
@@ -30,6 +31,7 @@ type Coe interface {
 	GetClusterData() (*ClusterData, error)
 	GetOrchestratorCredentials(*types.CommissioningAttributes) error
 
+	GetInstallationParameters(parameters *resources.InstallationParameters) error
 	TelemetryStart() error
 	TelemetryStatus() (int, error)
 	TelemetryStop() (bool, error)

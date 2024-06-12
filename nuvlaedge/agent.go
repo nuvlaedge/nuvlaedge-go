@@ -242,10 +242,9 @@ func (a *Agent) sendTelemetry() error {
 		return err
 	}
 	log.Infof("Preparing telemetry... Success.")
+
 	log.Infof("Sending telemetry...")
 	common.CleanMap(status)
-	cleant, _ := json.MarshalIndent(status, "", "  ")
-	log.Debugf("Telemetry data: %s", string(cleant))
 	res, err := a.client.Telemetry(status, nil)
 	if err != nil {
 		log.Errorf("Error sending telemetry: %s", err)
