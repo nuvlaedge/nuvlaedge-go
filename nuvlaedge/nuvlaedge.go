@@ -75,7 +75,13 @@ func (ne *NuvlaEdge) Start() error {
 	}
 
 	// Start JobProcessor
-	ne.jobProcessor = NewJobProcessor(ne.agent.jobChan, ne.agent.client.GetNuvlaClient(), ne.coe)
+	ne.jobProcessor = NewJobProcessor(
+		ne.agent.jobChan,
+		ne.agent.client.GetNuvlaClient(),
+		ne.coe,
+		ne.settings.Agent.EnableLegacyJobSupport,
+		ne.settings.Agent.JobEngineImage)
+
 	err = ne.jobProcessor.Start()
 	if err != nil {
 		log.Errorf("Error starting JobProcessor: %s, cannot continue", err)

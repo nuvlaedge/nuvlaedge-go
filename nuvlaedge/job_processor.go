@@ -9,18 +9,27 @@ import (
 )
 
 type JobProcessor struct {
-	runningJobs sync.Map
-	jobChan     chan string        // NativeJob channel. Receives jobs IDs from the agent
-	exitChan    chan bool          // Exit channel. Receives exit signal from the agent
-	client      *nuvla.NuvlaClient // Nuvla session required in the jobs and deployment clients
-	coe         orchestrator.Coe   // COE client required in the jobs and deployment clients
+	runningJobs    sync.Map
+	jobChan        chan string        // NativeJob channel. Receives jobs IDs from the agent
+	exitChan       chan bool          // Exit channel. Receives exit signal from the agent
+	client         *nuvla.NuvlaClient // Nuvla session required in the jobs and deployment clients
+	coe            orchestrator.Coe   // COE client required in the jobs and deployment clients
+	enableLegacy   bool
+	legacyJobImage string
 }
 
-func NewJobProcessor(jobChan chan string, client *nuvla.NuvlaClient, coe orchestrator.Coe) *JobProcessor {
+func NewJobProcessor(
+	jobChan chan string,
+	client *nuvla.NuvlaClient,
+	coe orchestrator.Coe,
+	enableLegacy bool,
+	legacyImage string) *JobProcessor {
 	return &JobProcessor{
-		jobChan: jobChan,
-		client:  client,
-		coe:     coe,
+		jobChan:        jobChan,
+		client:         client,
+		coe:            coe,
+		enableLegacy:   enableLegacy,
+		legacyJobImage: legacyImage,
 	}
 }
 
@@ -61,7 +70,7 @@ func (p *JobProcessor) processJob(j string) {
 	log.Infof("NativeJob Processor starting new jobs with id %s", j)
 
 	// 1. Create NativeJob structure
-	job, err := jobs.NewJob(j, p.client, p.coe)
+	job, err := jobs.NewJob(j, p.client, p.coe, p.enableLegacy, p.legacyJobImage)
 	if err != nil {
 		log.Errorf("Error creating job %s: %s", j, err)
 		return

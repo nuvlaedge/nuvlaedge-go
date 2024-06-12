@@ -23,11 +23,7 @@ RUN GOOS=$TARGETOS GOARCH=$TARGETARCH CGO_ENABLED=0 \
 # --- Final image ---
 FROM scratch
 
-ENV NUVLA_ENDPOINT=https://nuvla.io \
-    DATA_LOCATION=/var/lib/nuvlaedge/ \
-    HEARTBEAT_PERIOD=20 \
-    TELEMETRY_PERIOD=60 \
-    PATH=/bin
+ENV PATH=/bin
 
 # Add default certificates to allow HTTPS connections
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
@@ -37,4 +33,4 @@ COPY --from=build /build/config/template.toml /etc/nuvlaedge/nuvlaedge.toml
 # NuvlaEdge binary previously built
 COPY --from=build /build/out/nuvlaedge /bin/nuvlaedge
 
-ENTRYPOINT ["nuvlaedge"]
+ENTRYPOINT ["nuvlaedge", "run"]

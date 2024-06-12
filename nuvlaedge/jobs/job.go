@@ -19,18 +19,17 @@ const (
 
 type Job interface {
 	RunJob() error
-	Init(coe orchestrator.Coe) (Job, error)
+	Init(coe orchestrator.Coe, enableLegacy bool, legacyImage string) (Job, error)
 	GetId() string
 }
 
-func NewJob(jobId string, c *nuvla.NuvlaClient, coe orchestrator.Coe) (Job, error) {
+func NewJob(jobId string, c *nuvla.NuvlaClient, coe orchestrator.Coe, enableLegacy bool, legacyImage string) (Job, error) {
 	job := JobBase{
 		JobId:  jobId,
 		Client: clients.NewJobClient(jobId, c),
 	}
-	j, err := job.Init(coe)
+	j, err := job.Init(coe, enableLegacy, legacyImage)
 	if err != nil {
-		log.Errorf("Error initialising job: %s", err)
 		return nil, err
 	}
 	return j, nil
@@ -42,17 +41,12 @@ type JobBase struct {
 	JobResource *resources.JobResource
 }
 
-func (j *JobBase) tryGetNativeAction() (actions.Action, error) {
-
-	return nil, nil
-}
-
 func isNotSupportedActionError(err error) bool {
 	var notImplementedActionError nuvlaedgeErrors.NotImplementedActionError
 	return errors.As(err, &notImplementedActionError)
 }
 
-func (j *JobBase) Init(coe orchestrator.Coe) (Job, error) {
+func (j *JobBase) Init(coe orchestrator.Coe, enableLegacy bool, legacyImage string) (Job, error) {
 	log.Infof("Initialising job %s", j.JobId)
 	if err := j.Client.UpdateResource(); err != nil {
 		log.Errorf("Error updating job resource: %s", err)
@@ -69,7 +63,11 @@ func (j *JobBase) Init(coe orchestrator.Coe) (Job, error) {
 
 	// If the action is not supported here, try to run it in the container
 	if isNotSupportedActionError(err) {
-		return NewContainerEngineJobFromBase(j, coe), nil
+		if !enableLegacy {
+			log.Infof("Legacy actions are disabled, cannot run unsupported job %s", j.JobId)
+			return nil, err
+		}
+		return NewContainerEngineJobFromBase(j, coe, legacyImage), nil
 	} else {
 		log.Errorf("Unexpected error creating new Job: %s", err)
 		return nil, err
@@ -123,13 +121,15 @@ func (j *NativeJob) RunJob() error {
 
 type ContainerEngineJob struct {
 	*JobBase
-	coe orchestrator.Coe
+	coe            orchestrator.Coe
+	ContainerImage string
 }
 
-func NewContainerEngineJobFromBase(jb *JobBase, coe orchestrator.Coe) *ContainerEngineJob {
+func NewContainerEngineJobFromBase(jb *JobBase, coe orchestrator.Coe, legacyImage string) *ContainerEngineJob {
 	return &ContainerEngineJob{
-		JobBase: jb,
-		coe:     coe,
+		JobBase:        jb,
+		coe:            coe,
+		ContainerImage: legacyImage,
 	}
 }
 
@@ -141,7 +141,7 @@ func (cj *ContainerEngineJob) RunJob() error {
 	}
 	conf := &types.LegacyJobConf{
 		JobId:            cj.JobId,
-		Image:            JobEngineContainerImage,
+		Image:            cj.ContainerImage,
 		ApiKey:           k,
 		ApiSecret:        s,
 		Endpoint:         cj.Client.SessionOpts.Endpoint,
