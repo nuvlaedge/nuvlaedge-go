@@ -69,11 +69,8 @@ func NewSwarmData(client *client.Client) *SwarmData {
 	for i := 0; i < swarmFields.NumField(); i++ {
 		fieldName := swarmFields.Type().Field(i).Name
 		updaterName := "Update" + fieldName
-		log.Debugf("Updating swarm sw field: %s", updaterName)
 		updater := reflect.ValueOf(sw).MethodByName(updaterName)
-		log.Infof("Updater %s", updater.String())
 		if updater.IsValid() {
-			log.Debugf("Calling updater: %s", updaterName)
 			sw.updaters[fieldName] = updater.Interface().(func() error)
 		}
 	}
