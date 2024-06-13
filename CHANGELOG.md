@@ -1,5 +1,33 @@
 # Changelog
 
+## [2.0.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.10.0...2.0.0) (2024-06-13)
+
+
+### Features
+
+* Add docker-compose file ([#55](https://github.com/nuvlaedge/nuvlaedge-go/issues/55)) ([8385090](https://github.com/nuvlaedge/nuvlaedge-go/commit/8385090deed32b8e4b3c61afbdcac991638c9e95))
+* Add Dockerfile and docker build  for release and devel  workflows ([#30](https://github.com/nuvlaedge/nuvlaedge-go/issues/30)) ([d0980fd](https://github.com/nuvlaedge/nuvlaedge-go/commit/d0980fdb428b86d8777b1a1cf1ff5503d684570c))
+* Add installation parameter readings for in and out of docker runs ([#58](https://github.com/nuvlaedge/nuvlaedge-go/issues/58)) ([a53aa7b](https://github.com/nuvlaedge/nuvlaedge-go/commit/a53aa7bed471e601907c0e5ad4caf21c1cc1a2a2))
+
+
+### Bug Fixes
+
+* Fix deployment names to be only the UUID ([#59](https://github.com/nuvlaedge/nuvlaedge-go/issues/59)) ([4c0fa90](https://github.com/nuvlaedge/nuvlaedge-go/commit/4c0fa905cfe2f6db2face50aac57fe21e8bccef3))
+* Fix release CI syntax error ([79b7eb0](https://github.com/nuvlaedge/nuvlaedge-go/commit/79b7eb0b05637c291d99db81c3416ffcd545d14d))
+
+
+### Minor Changes
+
+* Add parser from Session stored by NuvlaEdge python ([#54](https://github.com/nuvlaedge/nuvlaedge-go/issues/54)) ([fd0b343](https://github.com/nuvlaedge/nuvlaedge-go/commit/fd0b3439bd3139ed0215b9c5ac211ea6a8b09f6c))
+* Add updater function in Agent for telemetry and heartbeat intervals ([715e820](https://github.com/nuvlaedge/nuvlaedge-go/commit/715e820b9706293eac3169c53ab2d57ce5d6704b))
+* Adds legacy job execution env parsing and filtering ([#57](https://github.com/nuvlaedge/nuvlaedge-go/issues/57)) ([5ec215e](https://github.com/nuvlaedge/nuvlaedge-go/commit/5ec215e712c95366318af986f5602718fddbbad5))
+* Align input settings names with Docker-Compose. Add job engine image configurability ([#56](https://github.com/nuvlaedge/nuvlaedge-go/issues/56)) ([2895111](https://github.com/nuvlaedge/nuvlaedge-go/commit/2895111bb8923f7988998abc00df932d12f30425))
+
+
+### Continuous Integration
+
+* Update release CI to edit docker-compose file with repo latest release and publish docker-compose.yml to each release ([#61](https://github.com/nuvlaedge/nuvlaedge-go/issues/61)) ([4248d02](https://github.com/nuvlaedge/nuvlaedge-go/commit/4248d02d93674450c8fd26b4289550ff4c3d8380))
+
 ## [0.10.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.9.0...v0.10.0) (2024-06-06)
 
 
