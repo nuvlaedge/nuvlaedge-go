@@ -95,12 +95,12 @@ jobs:
           gh release upload ${{ needs.trigger-release.outputs.tag_name }} installer/get-ne.sh
           gh release upload ${{ needs.trigger-release.outputs.tag_name }} installer/nuvlaedge.service
 
+      # Remove x-release-please-start-version and x-release-please-end from released version
       - name: Release docker-compose
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Uploading docker-compose.yml to release ${{ needs.trigger-release.outputs.tag_name }}"
-#          Remove x-release-please-start-version and x-release-please-end from released version
           sed -i '/^# x-release-please.*/d' docker-compose.yml          
           gh release upload ${{ needs.trigger-release.outputs.tag_name }} docker-compose.yml
 
