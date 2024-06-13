@@ -1,7 +1,9 @@
 
 services:
   agent:
-    image: ${NE_IMAGE_REGISTRY:-}${NE_IMAGE_ORGANIZATION:-sixsq}/${NE_IMAGE_GO_REPOSITORY:-nuvlaedge-go}:${NE_IMAGE_TAG:-2.0.1}
+    # x-release-please-start-version
+    image: ${NE_IMAGE_REGISTRY:-}${NE_IMAGE_ORGANIZATION:-sixsq}/${NE_IMAGE_GO_REPOSITORY:-nuvlaedge-go}:${NE_IMAGE_TAG:-0.10.0}
+    # x-release-please-end
     container_name: ${COMPOSE_PROJECT_NAME:-nuvlaedge}-agent-go
     network_mode: "host"
     restart: always
