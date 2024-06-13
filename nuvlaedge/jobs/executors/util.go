@@ -83,7 +83,7 @@ func IsRunningInKubernetes() bool {
 }
 
 func GetProjectNameFromDeploymentId(deploymentId string) string {
-	return strings.Replace(deploymentId, "/", "-", -1)
+	return strings.Split(deploymentId, "/")[1]
 }
 
 // ExpandEnvMap replaces ${var} or $var in the string s by the value of the corresponding key in the map envMap.
