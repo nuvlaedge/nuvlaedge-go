@@ -34,12 +34,12 @@ jobs:
 
     strategy:
       matrix:
-        os: [linux]
-        arch: [amd64, arm64, arm]
+        os: [ linux ]
+        arch: [ amd64, arm64, arm ]
         # Darwin does not support arm(32) architecture. We need to build it to support small arm devices.
-#        include:
-#          - os: linux
-#            arch: arm
+    #        include:
+    #          - os: linux
+    #            arch: arm
 
     steps:
       - uses: actions/checkout@v4
@@ -95,6 +95,15 @@ jobs:
           gh release upload ${{ needs.trigger-release.outputs.tag_name }} installer/get-ne.sh
           gh release upload ${{ needs.trigger-release.outputs.tag_name }} installer/nuvlaedge.service
 
+      - name: Release docker-compose
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Uploading docker-compose.yml to release ${{ needs.trigger-release.outputs.tag_name }}"
+#          Remove x-release-please-start-version and x-release-please-end from released version
+          sed -i '/^# x-release-please.*/d' docker-compose.yml          
+          gh release upload ${{ needs.trigger-release.outputs.tag_name }} docker-compose.yml
+
   publish-docker-hub:
     name: "Publish NuvlaEdge Docker Image"
     needs: trigger-release
@@ -130,8 +139,8 @@ jobs:
             NUVLAEDGE_VERSION=${{ needs.trigger-release.outputs.tag_name }}
           push: true
           tags: >
-            nuvladev/${{ github.event.repository.name }}:latest,
-            nuvladev/${{ github.event.repository.name }}:${{ needs.trigger-release.outputs.tag_name }}
+            sixsq/${{ github.event.repository.name }}:latest,
+            sixsq/${{ github.event.repository.name }}:${{ needs.trigger-release.outputs.tag_name }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
