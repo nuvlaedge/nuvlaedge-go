@@ -336,6 +336,15 @@ func (t *MetricsMonitor) UpdaterHostUserHome(errChan chan<- error) {
 }
 
 func (t *MetricsMonitor) UpdaterInstallationParameters(errChan chan<- error) {
+	log.Info("Updating installation parameters")
+	if t.nuvlaEdgeStatus.InstallationParameters == nil {
+		t.nuvlaEdgeStatus.InstallationParameters = &resources.InstallationParameters{}
+	}
+	err := t.coeClient.GetInstallationParameters(t.nuvlaEdgeStatus.InstallationParameters)
+	if err != nil {
+		errChan <- err
+		return
+	}
 	errChan <- nil
 }
 

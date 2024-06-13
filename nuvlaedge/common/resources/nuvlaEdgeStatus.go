@@ -1,27 +1,6 @@
 package resources
 
 type NuvlaEdgeStatus struct {
-	// Nuvla resource data
-	//LastHeartbeat string `json:"last-heartbeat,omitempty"`
-	//LastTelemetry string `json:"last-monitoring,omitempty"`
-	//NextHeartbeat string `json:"next-heartbeat,omitempty"`
-	//NextTelemetry string `json:"next-monitoring,omitempty"`
-	//Online        bool   `json:"online,omitempty"`
-	//
-	//Updated      string `json:"updated,omitempty"`
-	//Created      string `json:"created,omitempty"`
-	//ResourceType string `json:"resource-type,omitempty"`
-	//
-	//// ids information
-	//Id        string `json:"id,omitempty"`
-	//Parent    string `json:"parent,omitempty"`
-	//UpdatedBy string `json:"updated-by,omitempty"`
-	//CreatedBy string `json:"created-by,omitempty"`
-
-	// Basic configuration
-	//Name        string `json:"name,omitempty"`
-	//Description string `json:"description,omitempty"`
-
 	// Clustering configuration
 	// Either Swarm or Kubernetes
 	Orchestrator            string   `json:"orchestrator,omitempty"`
@@ -43,13 +22,13 @@ type NuvlaEdgeStatus struct {
 	DockerServerVersion string `json:"docker-server-version,omitempty"`
 
 	// NuvlaEdge Configuration
-	ContainerPlugins       []string       `json:"container-plugins,omitempty"`
-	CurrentTime            string         `json:"current-time,omitempty"`
-	NuvlaEdgeEngineVersion string         `json:"nuvlabox-engine-version,omitempty"`
-	Version                int            `json:"version,omitempty"`
-	HostUserHome           string         `json:"host-user-home,omitempty"`
-	InstallationParameters map[string]any `json:"installation-parameters,omitempty"` // Parameters that allow to relaunch the Nuvlaedge
-	Components             []string       `json:"components,omitempty"`
+	ContainerPlugins       []string                `json:"container-plugins,omitempty"`
+	CurrentTime            string                  `json:"current-time,omitempty"`
+	NuvlaEdgeEngineVersion string                  `json:"nuvlabox-engine-version,omitempty"`
+	Version                int                     `json:"version,omitempty"`
+	HostUserHome           string                  `json:"host-user-home,omitempty"`
+	InstallationParameters *InstallationParameters `json:"installation-parameters,omitempty"` // Parameters that allow to relaunch the Nuvlaedge
+	Components             []string                `json:"components,omitempty"`
 
 	// NuvlaEdge report
 	Status      string   `json:"status,omitempty"`
@@ -63,4 +42,11 @@ type NuvlaEdgeStatus struct {
 type Vulnerabilities struct {
 	Summary map[string]any   `json:"summary,omitempty"`
 	Items   []map[string]any `json:"items,omitempty"`
+}
+
+type InstallationParameters struct {
+	ProjectName string   `json:"project-name,omitempty"`
+	Environment []string `json:"environment,omitempty"`
+	WorkingDir  string   `json:"working-dir,omitempty"`
+	ConfigFiles []string `json:"config-files,omitempty"`
 }

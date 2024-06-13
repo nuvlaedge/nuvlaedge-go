@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
@@ -13,7 +15,10 @@ import (
 	log "github.com/sirupsen/logrus"
 	"io"
 	"nuvlaedge-go/nuvlaedge/common"
+	"nuvlaedge-go/nuvlaedge/common/resources"
+	"nuvlaedge-go/nuvlaedge/jobs/executors"
 	neTypes "nuvlaedge-go/nuvlaedge/types"
+	"os"
 	"reflect"
 	"strings"
 	"sync"
@@ -365,6 +370,41 @@ func (dc *DockerCoe) pullAndWaitImage(ctx context.Context, imageName string) err
 	log.Infof("Successfully pulled image %s", imageName)
 	return nil
 
+}
+
+func (dc *DockerCoe) GetInstallationParameters(parameters *resources.InstallationParameters) error {
+	log.Infof("Reading installation parameters...")
+	if executors.IsRunningOnHost() {
+		log.Info("Reading parameters as Host")
+		parameters.ConfigFiles = []string{"/bin/nuvlaedge"}
+		parameters.ProjectName = "nuvlaedge"
+		parameters.Environment = os.Environ()
+		dir, err := os.Getwd()
+		if err == nil {
+			parameters.WorkingDir = dir
+		}
+	}
+
+	if executors.IsRunningInDocker() {
+		log.Debug("Reading installation parameters as Docker")
+
+		parameters.Environment = os.Environ()
+		pName := os.Getenv("COMPOSE_PROJECT_NAME")
+		if pName == "" {
+			return errors.New("COMPOSE_PROJECT_NAME not set")
+		}
+		containerName := fmt.Sprintf("%s-agent-go", pName)
+		inspect, err := dc.client.ContainerInspect(context.Background(), containerName)
+		if err != nil {
+			return err
+		}
+		log.Infof("Inspecting container: %v", inspect.Config.Labels)
+		parameters.ConfigFiles = strings.Split(inspect.Config.Labels["com.docker.compose.project.config_files"], ",")
+		parameters.ProjectName = inspect.Config.Labels["com.docker.compose.project"]
+		parameters.WorkingDir = inspect.Config.Labels["com.docker.compose.project.working_dir"]
+	}
+
+	return nil
 }
 
 func (dc *DockerCoe) RunJobEngineContainer(conf *neTypes.LegacyJobConf) (string, error) {
