@@ -25,6 +25,11 @@ services:
       - LOG_MAX_SIZE
       - LOG_MAX_FILE
       - DOCKER_SOCKET_PATH
+      - NE_IMAGE_REGISTRY
+      - NE_IMAGE_ORGANIZATION
+      - NE_IMAGE_REPOSITORY
+      - NE_IMAGE_GO_REPOSITORY
+      - NE_IMAGE_INSTALLER
     volumes:
       - ${DOCKER_SOCKET_PATH:-/var/run/docker.sock}:/var/run/docker.sock
       - nuvlaedge-data:/var/lib/nuvlaedge
@@ -37,6 +42,7 @@ services:
     labels:
       - "nuvlaedge.component=True"
       - "nuvlaedge.deployment=production"
+      - "nuvlaedge.type=go"
 
 volumes:
   nuvlaedge-data:
