@@ -1,6 +1,5 @@
 {
   "release-type": "go",
-  "release-as": "2.0.0",
   "include-v-in-tag": false,
   "changelog-sections": [
     { "type": "feat", "section": "Features" },
@@ -21,7 +20,6 @@
   "packages": {
     ".": {
       "release-type": "go",
-      "release-as": "2.0.0",
       "include-v-in-tag": false,
       "changelog-sections": [
         { "type": "feat", "section": "Features" },
