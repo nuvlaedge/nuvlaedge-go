@@ -6,7 +6,6 @@ on:
       - master
       - main
       - release/*
-      - update-release-ci
 
 jobs:
   trigger-release:
@@ -101,7 +100,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Uploading docker-compose.yml to release ${{ needs.trigger-release.outputs.tag_name }}"
-          sed -i '' -E "s/\\\${NE_IMAGE_TAG[^}]+}/\\\${NE_IMAGE_TAG:-${{ needs.trigger-release.outputs.tag_name }}"}/g" docker-compose*.yml          
+#          Remove x-release-please-start-version and x-release-please-end from released version
+          sed -i '/^# x-release-please.*/d' docker-compose.yml          
           gh release upload ${{ needs.trigger-release.outputs.tag_name }} docker-compose.yml
 
   publish-docker-hub:
