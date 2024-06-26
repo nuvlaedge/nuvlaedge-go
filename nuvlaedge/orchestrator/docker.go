@@ -20,6 +20,7 @@ import (
 	neTypes "nuvlaedge-go/nuvlaedge/types"
 	"os"
 	"reflect"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
@@ -560,6 +561,83 @@ func (dc *DockerCoe) WaitContainerFinish(containerId string, timeout time.Durati
 		return status.StatusCode, nil
 	}
 	return -1, nil
+}
+
+func (dc *DockerCoe) GetContainers() ([]map[string]interface{}, error) {
+	containers, err := dc.client.ContainerList(context.Background(), container.ListOptions{All: true})
+	if err != nil {
+		return nil, err
+	}
+	var containerInfos []map[string]interface{}
+	for _, containerInfo := range containers {
+		var containerMap = make(map[string]interface{})
+		containerMap["id"] = containerInfo.ID
+		containerMap["name"] = containerInfo.Names[0]
+		containerMap["image"] = containerInfo.Image
+		containerMap["state"] = containerInfo.State
+		containerMap["status"] = containerInfo.Status
+		containerMap["created"] = time.Unix(containerInfo.Created, 0).Format(time.RFC3339)
+		containerInfos = append(containerInfos, containerMap)
+	}
+	return containerInfos, nil
+}
+
+func (dc *DockerCoe) GetContainerStats(containerId string, statMap *map[string]interface{}) error {
+	stats, err := dc.client.ContainerStats(context.Background(), containerId, false)
+	if err != nil {
+		return err
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Errorf("Error closing stats body: %s", err)
+		}
+	}(stats.Body)
+
+	var stat types.StatsJSON
+	err = json.NewDecoder(stats.Body).Decode(&stat)
+	if err != nil {
+		return err
+	}
+
+	(*statMap)["cpu-usage"] = stat.CPUStats.CPUUsage.TotalUsage
+	(*statMap)["cpu-capacity"] = stat.CPUStats.OnlineCPUs
+
+	(*statMap)["memory-usage"] = stat.MemoryStats.Usage
+	(*statMap)["memory-limit"] = stat.MemoryStats.Limit
+
+	if runtime.GOOS == "windows" {
+		(*statMap)["disk-in"] = stat.StorageStats.ReadSizeBytes
+		(*statMap)["disk-out"] = stat.StorageStats.WriteSizeBytes
+	} else {
+		var blkIn, blkOut uint64 = 0, 0
+		for _, blkStat := range stat.BlkioStats.IoServiceBytesRecursive {
+			if blkStat.Op == "Read" {
+				blkIn += blkStat.Value
+			} else if blkStat.Op == "Write" {
+				blkOut += blkStat.Value
+			}
+		}
+		(*statMap)["disk-in"] = blkIn
+		(*statMap)["disk-out"] = blkOut
+	}
+
+	var rxBytes uint64 = 0
+	var txBytes uint64 = 0
+
+	for _, netStat := range stat.Networks {
+		rxBytes += netStat.RxBytes
+		txBytes += netStat.TxBytes
+	}
+	(*statMap)["net-in"] = rxBytes
+	(*statMap)["net-out"] = txBytes
+
+	inspect, err := dc.client.ContainerInspect(context.Background(), containerId)
+	if err != nil {
+		return err
+	}
+	(*statMap)["restart-count"] = inspect.RestartCount
+	return nil
 }
 
 func (dc *DockerCoe) StopContainer(containerId string, force bool) (bool, error) {
