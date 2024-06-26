@@ -39,7 +39,7 @@ type NuvlaEdgeStatus struct {
 	Resources map[string]any `json:"resources,omitempty"`
 
 	// Container Stats
-	ContainerStats []ContainerStats `json:"container-stats,omitempty"`
+	ContainerStats []map[string]any `json:"container-stats,omitempty"`
 }
 
 type Vulnerabilities struct {
@@ -52,22 +52,4 @@ type InstallationParameters struct {
 	Environment []string `json:"environment,omitempty"`
 	WorkingDir  string   `json:"working-dir,omitempty"`
 	ConfigFiles []string `json:"config-files,omitempty"`
-}
-
-type ContainerStats struct {
-	Id           string `json:"id,omitempty"`
-	CreatedAt    string `json:"created-at,omitempty"`
-	Status       string `json:"status,omitempty"`
-	State        string `json:"state,omitempty"`
-	Name         string `json:"name,omitempty"`
-	Image        string `json:"image,omitempty"`
-	RestartCount int    `json:"restart-count,omitempty"`
-	NetIn        int64  `json:"net-in,omitempty"`
-	NetOut       int64  `json:"net-out,omitempty"`
-	MemUsage     int64  `json:"mem-usage,omitempty"`
-	MemLimit     int64  `json:"mem-limit,omitempty"`
-	CpuUsage     int64  `json:"cpu-usage,omitempty"`
-	CpuCapacity  int    `json:"cpu-capacity,omitempty"`
-	DiskIn       int64  `json:"disk-in,omitempty"`
-	DiskOut      int64  `json:"disk-out,omitempty"`
 }
