@@ -11,6 +11,8 @@ type DeploymentStop struct {
 }
 
 func (d *DeploymentStop) ExecuteAction() error {
+	defer CloseDeploymentClientWithLog(d.client)
+
 	if err := d.client.SetState(resources.StateStopping); err != nil {
 		log.Warnf("Error setting deployment state to stopping: %s", err)
 	}

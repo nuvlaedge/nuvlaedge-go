@@ -30,6 +30,7 @@ func NewJobProcessor(
 		coe:            coe,
 		enableLegacy:   enableLegacy,
 		legacyJobImage: legacyImage,
+		runningJobs:    sync.Map{},
 	}
 }
 

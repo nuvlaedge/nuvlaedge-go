@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	nuvla "github.com/nuvla/api-client-go"
 	"github.com/nuvla/api-client-go/clients"
+	apiCommon "github.com/nuvla/api-client-go/common"
 	"github.com/nuvla/api-client-go/types"
 	log "github.com/sirupsen/logrus"
 	"io"
@@ -172,6 +173,7 @@ func (a *Agent) Start() error {
 	}
 
 	err = a.client.UpdateResource()
+
 	if err != nil {
 		log.Errorf("Error getting NuvlaEdge resource: %s", err)
 		return err
@@ -261,12 +263,11 @@ func (a *Agent) sendTelemetry() error {
 func (a *Agent) processResponseWithJobs(res *http.Response, action string) error {
 	log.Infof("Processing response with jobs...")
 	body, err := io.ReadAll(res.Body)
+	defer apiCommon.CloseGenericResponseWithLog(res, err)
 	if err != nil {
 		log.Errorf("Error reading response body: %s", err)
 		return err
 	}
-
-	defer res.Body.Close()
 
 	var sample struct {
 		Message string   `json:"message"`
