@@ -37,6 +37,7 @@ func (cs *ContainerStats) getStats() ([]map[string]any, error) {
 func (cs *ContainerStats) getContainerStats() []map[string]any {
 	containers, err := cs.Coe.GetContainers()
 	if err != nil {
+		log.Errorf("Got Error while getting containers %s", err)
 		return nil
 	}
 

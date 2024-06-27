@@ -579,6 +579,7 @@ func (dc *DockerCoe) GetContainers() ([]map[string]interface{}, error) {
 		containerMap["created"] = time.Unix(containerInfo.Created, 0).Format(time.RFC3339)
 		containerInfos = append(containerInfos, containerMap)
 	}
+	log.Debugf("Got the Containers %v", containerInfos)
 	return containerInfos, nil
 }
 
