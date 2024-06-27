@@ -22,13 +22,15 @@ func NewContainerStats(coe *orchestrator.Coe, refreshInterval int) *ContainerSta
 }
 
 func (cs *ContainerStats) getStats() ([]map[string]any, error) {
-	if time.Since(cs.updateTime) < time.Duration(cs.refreshInterval)*time.Second {
+	if time.Since(cs.updateTime) < 10*time.Second {
+		log.Debugf("Getting the CS stats ")
 		if len(cs.stats) == 0 {
 			cs.stats <- cs.getContainerStats()
 		}
 	} else {
 		cs.stats <- cs.getContainerStats()
 	}
+	log.Debugf("Got the CS stats ")
 	return <-cs.stats, nil
 }
 
