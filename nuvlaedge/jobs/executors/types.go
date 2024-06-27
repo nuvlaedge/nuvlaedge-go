@@ -1,6 +1,7 @@
 package executors
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/docker/compose/v2/pkg/api"
@@ -42,6 +43,8 @@ type Deployer interface {
 	StateDeployment() error
 	UpdateDeployment() error
 	GetServices() ([]DeploymentService, error)
+	// Close TODO: For the moment, we only need to close dockerCLI
+	Close() error
 }
 
 func GetDeployer(resource *resources.DeploymentResource) (Deployer, error) {
@@ -54,11 +57,14 @@ func GetDeployer(resource *resources.DeploymentResource) (Deployer, error) {
 		switch compatibility {
 		case "docker-compose":
 			return &Compose{
+				ExecutorBase:       ExecutorBase{Name: ComposeExecutorName},
 				deploymentResource: resource,
 			}, nil
 		case "swarm":
 			return &Stack{
+				ExecutorBase:       ExecutorBase{Name: StackExecutorName},
 				deploymentResource: resource,
+				context:            context.Background(),
 			}, nil
 		default:
 			return nil, errors.NewNotImplementedActionError(compatibility)

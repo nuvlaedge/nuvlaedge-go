@@ -157,10 +157,10 @@ func (s *Stack) setUpFiles() error {
 
 	s.composeFile = filepath.Join(s.tempDir, "docker-compose.yml")
 
-	contentWithEnv := ExpandEnvMap(
+	contentWithEnv := ExpandEnvMapWithDefaults(
 		s.deploymentResource.Module.Content.DockerCompose,
 		getEnvironmentMappingFromContent(s.deploymentResource.Module.Content))
-
+	log.Infof("Writing docker-compose file to %s", contentWithEnv)
 	err := common.WriteContentToFile(contentWithEnv, s.composeFile)
 	if err != nil {
 		return err
@@ -170,10 +170,22 @@ func (s *Stack) setUpFiles() error {
 
 	c, err := loader.LoadComposefile(s.dockerCli, *s.stackOpts)
 	if err != nil {
-		log.Errorf("Error loading compose file")
+		log.Errorf("Error loading compose file: %s", err)
 		return err
 	}
 	s.stackConfig = c
+
+	// Setup config files if they exist
+	if s.deploymentResource.Module.Content.Files != nil {
+		log.Infof("Processing config files")
+		for _, f := range s.deploymentResource.Module.Content.Files {
+			err = common.WriteContentToFile(f.FileContent, filepath.Join(s.tempDir, f.FileName))
+			if err != nil {
+				log.Errorf("Error writing file %s: %s", f.FileName, err)
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -195,8 +207,14 @@ func (s *Stack) setUpDockerCLI() error {
 	}
 
 	s.dockerCli = dCli
-	s.context = context.TODO()
 
+	return nil
+}
+
+func (s *Stack) Close() error {
+	if s.dockerCli != nil {
+		return s.dockerCli.Client().Close()
+	}
 	return nil
 }
 

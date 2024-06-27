@@ -27,6 +27,8 @@ func (d *DeploymentStart) CreateUserOutputParams() {
 
 func (d *DeploymentStart) ExecuteAction() error {
 	defer CloseDeploymentClientWithLog(d.client)
+	defer d.executor.Close()
+
 	if err := d.client.SetState(resources.StateStarting); err != nil {
 		log.Warnf("Error setting deployment state to starting: %s", err)
 	}
