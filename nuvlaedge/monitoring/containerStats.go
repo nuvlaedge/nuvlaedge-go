@@ -6,12 +6,10 @@ import (
 	"time"
 )
 
-const StatsChannelSize int = 5
-
 type ContainerStats struct {
 	Coe             orchestrator.Coe
 	refreshInterval int // in seconds
-	stats           chan []map[string]any
+	stats           []map[string]any
 	updateTime      time.Time
 }
 
@@ -20,33 +18,29 @@ func NewContainerStats(coe *orchestrator.Coe, refreshInterval int) *ContainerSta
 		Coe:             *coe,
 		refreshInterval: refreshInterval,
 		updateTime:      time.Now(),
-		stats:           make(chan []map[string]any, StatsChannelSize),
+		stats:           nil,
 	}
 }
 
 func (cs *ContainerStats) getStats() ([]map[string]any, error) {
-	if time.Since(cs.updateTime) < 10*time.Second {
-		log.Debugf("Getting the CS stats ")
-		if len(cs.stats) == 0 {
-			cs.stats <- cs.getContainerStats()
-		}
-	} else {
-		if len(cs.stats) < StatsChannelSize {
-			cs.stats <- cs.getContainerStats()
+	if time.Since(cs.updateTime) > 10*time.Second || cs.stats == nil {
+		cs.stats = []map[string]any{}
+		err := cs.getContainerStats()
+		if err != nil {
+			return nil, err
 		}
 	}
 	log.Debugf("Got the CS stats ")
-	return <-cs.stats, nil
+	return cs.stats, nil
 }
 
-func (cs *ContainerStats) getContainerStats() []map[string]any {
+func (cs *ContainerStats) getContainerStats() error {
 	containers, err := cs.Coe.GetContainers()
 	if err != nil {
 		log.Errorf("Got Error while getting containers %s", err)
-		return nil
+		return err
 	}
 
-	var containerStats []map[string]any
 	for _, containerInfo := range containers {
 		id, ok := containerInfo["id"].(string)
 		if !ok {
@@ -58,6 +52,7 @@ func (cs *ContainerStats) getContainerStats() []map[string]any {
 			log.Errorf("Error getting container stats: %s", err)
 			return nil
 		}
+		cs.stats = append(cs.stats, containerInfo)
 	}
-	return containerStats
+	return nil
 }
