@@ -601,7 +601,6 @@ func (dc *DockerCoe) GetContainerStats(containerId string, statMap *map[string]i
 		return err
 	}
 
-	(*statMap)["cpu-usage"] = stat.CPUStats.CPUUsage.TotalUsage
 	(*statMap)["cpu-capacity"] = stat.CPUStats.OnlineCPUs
 
 	(*statMap)["memory-usage"] = stat.MemoryStats.Usage
@@ -638,6 +637,18 @@ func (dc *DockerCoe) GetContainerStats(containerId string, statMap *map[string]i
 		return err
 	}
 	(*statMap)["restart-count"] = inspect.RestartCount
+	(*statMap)["cpu-limit"] = float64(inspect.HostConfig.NanoCPUs) / 1_000_000_000
+
+	cpuUsage := stat.CPUStats.CPUUsage.TotalUsage - stat.PreCPUStats.CPUUsage.TotalUsage
+	systemUsage := stat.CPUStats.SystemUsage - stat.PreCPUStats.SystemUsage
+
+	cpuPercent := 0.0
+	if systemUsage != 0 {
+		cpuPercent = float64(cpuUsage) / float64(systemUsage)
+	}
+
+	(*statMap)["cpu-usage"] = cpuPercent
+	
 	return nil
 }
 

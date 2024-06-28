@@ -52,6 +52,7 @@ func (cs *ContainerStats) getContainerStats() error {
 			log.Errorf("Error getting container stats: %s", err)
 			return nil
 		}
+
 		cs.stats = append(cs.stats, containerInfo)
 	}
 	return nil
