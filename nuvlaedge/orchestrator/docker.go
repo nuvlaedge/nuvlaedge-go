@@ -601,8 +601,7 @@ func (dc *DockerCoe) GetContainerStats(containerId string, statMap *map[string]i
 		return err
 	}
 
-	// Not in the server spec (yet)
-	// (*statMap)["cpu-capacity"] = stat.CPUStats.OnlineCPUs
+	(*statMap)["cpu-capacity"] = stat.CPUStats.OnlineCPUs
 
 	(*statMap)["mem-usage"] = stat.MemoryStats.Usage
 	(*statMap)["mem-limit"] = stat.MemoryStats.Limit
@@ -645,11 +644,11 @@ func (dc *DockerCoe) GetContainerStats(containerId string, statMap *map[string]i
 
 	cpuPercent := 0.0
 	if systemUsage != 0 {
-		cpuPercent = float64(cpuUsage) / float64(systemUsage)
+		cpuPercent = (float64(cpuUsage) / float64(systemUsage)) * 100
 	}
 
 	(*statMap)["cpu-usage"] = cpuPercent
-	
+
 	return nil
 }
 
