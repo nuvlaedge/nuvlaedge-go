@@ -6,6 +6,8 @@ import (
 	"time"
 )
 
+const StatsChannelSize int = 5
+
 type ContainerStats struct {
 	Coe             orchestrator.Coe
 	refreshInterval int // in seconds
@@ -18,6 +20,7 @@ func NewContainerStats(coe *orchestrator.Coe, refreshInterval int) *ContainerSta
 		Coe:             *coe,
 		refreshInterval: refreshInterval,
 		updateTime:      time.Now(),
+		stats:           make(chan []map[string]any, StatsChannelSize),
 	}
 }
 
@@ -28,7 +31,9 @@ func (cs *ContainerStats) getStats() ([]map[string]any, error) {
 			cs.stats <- cs.getContainerStats()
 		}
 	} else {
-		cs.stats <- cs.getContainerStats()
+		if len(cs.stats) < StatsChannelSize {
+			cs.stats <- cs.getContainerStats()
+		}
 	}
 	log.Debugf("Got the CS stats ")
 	return <-cs.stats, nil
