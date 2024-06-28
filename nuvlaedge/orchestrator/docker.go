@@ -601,7 +601,8 @@ func (dc *DockerCoe) GetContainerStats(containerId string, statMap *map[string]i
 		return err
 	}
 
-	(*statMap)["cpu-capacity"] = stat.CPUStats.OnlineCPUs
+	// Not in the server spec (yet)
+	// (*statMap)["cpu-capacity"] = stat.CPUStats.OnlineCPUs
 
 	(*statMap)["memory-usage"] = stat.MemoryStats.Usage
 	(*statMap)["memory-limit"] = stat.MemoryStats.Limit
