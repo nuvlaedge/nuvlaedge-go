@@ -28,9 +28,7 @@ type Compose struct {
 	composeConfig  *types.ConfigDetails
 	composeProject *types.Project
 	composeService composeAPI.Service
-
-	// Services summary
-	services []DeploymentService
+	dockerCli      *command.DockerCli
 }
 
 func (c *Compose) StartDeployment() error {
@@ -65,25 +63,28 @@ func (c *Compose) StopDeployment() error {
 }
 
 func (c *Compose) GetServices() ([]DeploymentService, error) {
-	c.ctx = context.TODO()
 	c.projectName = GetProjectNameFromDeploymentId(c.deploymentResource.Id)
 	if err := c.setUpService(); err != nil {
 		return nil, err
 	}
+	defer c.dockerCli.Client().Close()
 
 	containers, err := c.composeService.Ps(c.ctx, c.projectName, composeAPI.PsOptions{
 		All: true,
 	})
+	for _, container := range containers {
+		log.Infof("Container: %s", container.Name)
+	}
 
 	if err != nil {
 		log.Infof("Error getting services: %s", err)
 	}
 
-	c.services = make([]DeploymentService, 0)
+	services := make([]DeploymentService, 0)
 	for _, container := range containers {
-		c.services = append(c.services, NewDeploymentServiceFromContainerSummary(container))
+		services = append(services, NewDeploymentServiceFromContainerSummary(container))
 	}
-	return c.services, nil
+	return services, nil
 }
 
 func (c *Compose) StateDeployment() error {
@@ -174,9 +175,10 @@ func (c *Compose) setUpService() error {
 	if err != nil {
 		return err
 	}
+	c.dockerCli = dockerCli
 
 	myOpts := &flags.ClientOptions{Context: "default", LogLevel: common.LogLevel.String()}
-	err = dockerCli.Initialize(myOpts)
+	err = c.dockerCli.Initialize(myOpts)
 	if err != nil {
 		return err
 	}
@@ -203,6 +205,13 @@ func (c *Compose) prepareComposeUp() error {
 func (c *Compose) prepareComposeDown() error {
 	if err := c.setUpService(); err != nil {
 		return err
+	}
+	return nil
+}
+
+func (c *Compose) Close() error {
+	if c.dockerCli != nil {
+		return c.dockerCli.Client().Close()
 	}
 	return nil
 }

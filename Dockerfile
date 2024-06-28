@@ -4,6 +4,7 @@ FROM --platform=$BUILDPLATFORM golang:1.22-alpine AS build
 ARG TARGETOS 
 ARG TARGETARCH
 ARG NUVLAEDGE_VERSION=dev
+ARG GO_BUILD_TAGS
 
 WORKDIR /build
 
@@ -17,7 +18,10 @@ RUN GOOS=$TARGETOS GOARCH=$TARGETARCH CGO_ENABLED=0 \
     go build \
     -ldflags "-w -s -X 'nuvlaedge-go/nuvlaedge/version.Version=$NUVLAEDGE_VERSION'" \
     -gcflags=all="-l -B" \
-    -o out/nuvlaedge ./cmd/cli.go
+    -o out/nuvlaedge \
+    -tags "$GO_BUILD_TAGS" \
+    ./cmd/cli.go
+
 
 
 # --- Final image ---
