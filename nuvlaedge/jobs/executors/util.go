@@ -5,6 +5,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 )
 
@@ -88,9 +89,25 @@ func GetProjectNameFromDeploymentId(deploymentId string) string {
 
 // ExpandEnvMap replaces ${var} or $var in the string s by the value of the corresponding key in the map envMap.
 func ExpandEnvMap(s string, envMap map[string]string) string {
+	log.Infof("Expanding with envs: %v", envMap)
 	return os.Expand(s, func(key string) string {
 		if val, ok := envMap[key]; ok {
 			return val
+		}
+		return ""
+	})
+}
+
+var envVarRegex = regexp.MustCompile(`\$\{(.+?)(?::-([^}]*))?}`)
+
+func ExpandEnvMapWithDefaults(s string, envMap map[string]string) string {
+	return envVarRegex.ReplaceAllStringFunc(s, func(m string) string {
+		match := envVarRegex.FindStringSubmatch(m)
+		if val, ok := envMap[match[1]]; ok {
+			return val
+		}
+		if len(match) == 3 {
+			return match[2] // return default value
 		}
 		return ""
 	})

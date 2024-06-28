@@ -38,6 +38,7 @@ jobs:
           platforms: linux/amd64,linux/arm64,linux/arm
           build-args: |
             NUVLAEDGE_VERSION=${{ github.head_ref || github.ref_name }}
+            GO_BUILD_TAGS=pprof
           push: true
           tags: >
             nuvladev/${{ github.event.repository.name }}:latest,

@@ -162,3 +162,9 @@ func (d *DeploymentBase) updateServiceParameter(s executors.DeploymentService) e
 
 	return nil
 }
+
+func CloseDeploymentClientWithLog(client *clients.NuvlaDeploymentClient) {
+	if err := client.Logout(); err != nil {
+		log.Errorf("Error logging out deployment client: %s", err)
+	}
+}

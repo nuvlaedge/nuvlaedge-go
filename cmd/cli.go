@@ -1,6 +1,8 @@
 package main
 
-import "nuvlaedge-go/cli/cmd"
+import (
+	"nuvlaedge-go/cli/cmd"
+)
 
 func main() {
 	cmd.Execute()
