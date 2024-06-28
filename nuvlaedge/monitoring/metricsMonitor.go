@@ -35,7 +35,6 @@ type MetricsMonitor struct {
 	coeClient               orchestrator.Coe // Interfaces need no pointer
 	resourcesMetricsUpdater *ResourceMetricsUpdater
 	networkMetricsUpdater   *NetworkMetricsUpdater
-	containerStats          *ContainerStats
 
 	// Report and exit channels
 	reportChan chan resources.NuvlaEdgeStatus
@@ -50,13 +49,14 @@ func NewMetricsMonitor(
 	refreshRate int) *MetricsMonitor {
 
 	networkUpdater := NewNetworkMetricsUpdater()
+	containerUpdater := NewContainerStats(&coeClient, refreshRate)
+
 	t := &MetricsMonitor{
 		nuvlaEdgeStatus:         &resources.NuvlaEdgeStatus{},
 		updateFuncs:             make(map[string]UpdaterFunction),
 		coeClient:               coeClient,
-		resourcesMetricsUpdater: NewResourceMetricsUpdater(networkUpdater),
+		resourcesMetricsUpdater: NewResourceMetricsUpdater(networkUpdater, containerUpdater),
 		networkMetricsUpdater:   networkUpdater,
-		containerStats:          NewContainerStats(&coeClient, refreshRate),
 		refreshRate:             refreshRate,
 		updateMutex:             &sync.Mutex{},
 	}
@@ -385,15 +385,4 @@ func (t *MetricsMonitor) UpdaterResources(errChan chan<- error) {
 	log.Debugf("Last metrics update: %s", string(pMetrics))
 	t.nuvlaEdgeStatus.Resources = metrics
 	errChan <- nil
-}
-
-func (t *MetricsMonitor) UpdaterContainerStats(errChan chan<- error) {
-	stats, err := t.containerStats.getStats()
-	if err != nil {
-		log.Warnf("Error retrieving container stats: %s", err)
-		errChan <- err
-		return
-	}
-	log.Debugf("Last Container Stats update: %v", stats)
-	t.nuvlaEdgeStatus.ContainerStats = stats
 }

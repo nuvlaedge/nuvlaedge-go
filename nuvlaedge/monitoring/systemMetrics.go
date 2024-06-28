@@ -174,20 +174,22 @@ func gatherDiskMetrics() ([]DiskMetrics, error) {
 }
 
 type ResourceMetrics struct {
-	ContainerStats []any           `json:"container-stats,omitempty"`
-	Cpu            *CpuMetrics     `json:"cpu,omitempty"`
-	Ram            *RamMetrics     `json:"ram,omitempty"`
-	Disks          []DiskMetrics   `json:"disks,omitempty"`
-	NetStats       []IfaceNetStats `json:"net-stats,omitempty"`
+	ContainerStats []map[string]any `json:"container-stats,omitempty"`
+	Cpu            *CpuMetrics      `json:"cpu,omitempty"`
+	Ram            *RamMetrics      `json:"ram,omitempty"`
+	Disks          []DiskMetrics    `json:"disks,omitempty"`
+	NetStats       []IfaceNetStats  `json:"net-stats,omitempty"`
 
 	networkInfo *NetworkMetricsUpdater
+	containers *ContainerStats
 }
 
-func NewResourceMetrics(info *NetworkMetricsUpdater) *ResourceMetrics {
+func NewResourceMetrics(network *NetworkMetricsUpdater, containers *ContainerStats) *ResourceMetrics {
 	return &ResourceMetrics{
 		Cpu:         NewCpuMetrics(),
 		Ram:         NewRamMetrics(),
-		networkInfo: info,
+		networkInfo: network,
+		containers:  containers,
 	}
 }
 
@@ -213,9 +215,9 @@ type ResourceMetricsUpdater struct {
 	updateTime time.Time
 }
 
-func NewResourceMetricsUpdater(info *NetworkMetricsUpdater) *ResourceMetricsUpdater {
+func NewResourceMetricsUpdater(network *NetworkMetricsUpdater, containers *ContainerStats) *ResourceMetricsUpdater {
 	return &ResourceMetricsUpdater{
-		metrics:    NewResourceMetrics(info),
+		metrics:    NewResourceMetrics(network, containers),
 		updateLock: sync.Mutex{},
 	}
 }
@@ -242,6 +244,14 @@ func (r *ResourceMetricsUpdater) updateMetrics() error {
 		return err
 	}
 	r.metrics.NetStats = netStats
+
+	containerStats, err := r.metrics.containers.getStats()
+	if err != nil {
+		log.Warnf("Error retrieving container stats: %s", err)
+		return err
+	}
+	log.Debugf("Last Container Stats update: %v", containerStats)
+	r.metrics.ContainerStats = containerStats
 
 	r.updateTime = time.Now()
 	return nil
