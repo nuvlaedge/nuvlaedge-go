@@ -30,7 +30,7 @@ func (cs *ContainerStats) getStats() ([]map[string]any, error) {
 			return nil, err
 		}
 	}
-	log.Debugf("Got the CS stats ")
+	log.Debugf("Container Stats Collected")
 	return cs.stats, nil
 }
 

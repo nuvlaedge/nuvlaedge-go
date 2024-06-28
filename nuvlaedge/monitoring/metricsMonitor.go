@@ -388,7 +388,6 @@ func (t *MetricsMonitor) UpdaterResources(errChan chan<- error) {
 }
 
 func (t *MetricsMonitor) UpdaterContainerStats(errChan chan<- error) {
-	log.Infof("Updater Container Stats Called")
 	stats, err := t.containerStats.getStats()
 	if err != nil {
 		log.Warnf("Error retrieving container stats: %s", err)
