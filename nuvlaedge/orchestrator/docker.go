@@ -576,7 +576,7 @@ func (dc *DockerCoe) GetContainers() ([]map[string]interface{}, error) {
 		containerMap["image"] = containerInfo.Image
 		containerMap["state"] = containerInfo.State
 		containerMap["status"] = containerInfo.Status
-		containerMap["created"] = time.Unix(containerInfo.Created, 0).Format(time.RFC3339)
+		containerMap["created-at"] = time.Unix(containerInfo.Created, 0).Format(time.RFC3339)
 		containerInfos = append(containerInfos, containerMap)
 	}
 	log.Debugf("Got the Containers %v", containerInfos)
@@ -604,8 +604,8 @@ func (dc *DockerCoe) GetContainerStats(containerId string, statMap *map[string]i
 	// Not in the server spec (yet)
 	// (*statMap)["cpu-capacity"] = stat.CPUStats.OnlineCPUs
 
-	(*statMap)["memory-usage"] = stat.MemoryStats.Usage
-	(*statMap)["memory-limit"] = stat.MemoryStats.Limit
+	(*statMap)["mem-usage"] = stat.MemoryStats.Usage
+	(*statMap)["mem-limit"] = stat.MemoryStats.Limit
 
 	if runtime.GOOS == "windows" {
 		(*statMap)["disk-in"] = stat.StorageStats.ReadSizeBytes
