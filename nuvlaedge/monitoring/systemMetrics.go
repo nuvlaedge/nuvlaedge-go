@@ -181,7 +181,7 @@ type ResourceMetrics struct {
 	NetStats       []IfaceNetStats  `json:"net-stats,omitempty"`
 
 	networkInfo *NetworkMetricsUpdater
-	containers *ContainerStats
+	containers  *ContainerStats
 }
 
 func NewResourceMetrics(network *NetworkMetricsUpdater, containers *ContainerStats) *ResourceMetrics {
@@ -225,23 +225,23 @@ func NewResourceMetricsUpdater(network *NetworkMetricsUpdater, containers *Conta
 func (r *ResourceMetricsUpdater) updateMetrics() error {
 	err := r.metrics.Cpu.Update()
 	if err != nil {
-		return err
+		return fmt.Errorf("error getting CPU metrics: %s", err)
 	}
 
 	err = r.metrics.Ram.Update()
 	if err != nil {
-		return err
+		return fmt.Errorf("error getting RAM metrics: %s", err)
 	}
 
 	diskMetrics, err := gatherDiskMetrics()
 	if err != nil {
-		return err
+		return fmt.Errorf("error getting disk metrics: %s", err)
 	}
 	r.metrics.Disks = diskMetrics
 
 	netStats, err := r.metrics.networkInfo.GetStats()
 	if err != nil {
-		return err
+		return fmt.Errorf("error getting network stats: %s", err)
 	}
 	r.metrics.NetStats = netStats
 

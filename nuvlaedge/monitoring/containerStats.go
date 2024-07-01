@@ -26,6 +26,7 @@ func (cs *ContainerStats) getStats() ([]map[string]any, error) {
 	if time.Since(cs.updateTime) > 10*time.Second || cs.stats == nil {
 		cs.stats = []map[string]any{}
 		err := cs.getContainerStats()
+		cs.updateTime = time.Now()
 		if err != nil {
 			return nil, err
 		}
@@ -35,6 +36,7 @@ func (cs *ContainerStats) getStats() ([]map[string]any, error) {
 }
 
 func (cs *ContainerStats) getContainerStats() error {
+	log.Debugf("Getting Container Stats")
 	containers, err := cs.Coe.GetContainers()
 	if err != nil {
 		log.Errorf("Got Error while getting containers %s", err)
