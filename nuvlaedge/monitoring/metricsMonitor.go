@@ -49,11 +49,13 @@ func NewMetricsMonitor(
 	refreshRate int) *MetricsMonitor {
 
 	networkUpdater := NewNetworkMetricsUpdater()
+	containerUpdater := NewContainerStats(&coeClient, refreshRate)
+
 	t := &MetricsMonitor{
 		nuvlaEdgeStatus:         &resources.NuvlaEdgeStatus{},
 		updateFuncs:             make(map[string]UpdaterFunction),
 		coeClient:               coeClient,
-		resourcesMetricsUpdater: NewResourceMetricsUpdater(networkUpdater),
+		resourcesMetricsUpdater: NewResourceMetricsUpdater(networkUpdater, containerUpdater),
 		networkMetricsUpdater:   networkUpdater,
 		refreshRate:             refreshRate,
 		updateMutex:             &sync.Mutex{},

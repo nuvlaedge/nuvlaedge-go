@@ -37,6 +37,9 @@ type NuvlaEdgeStatus struct {
 	// Telemetry
 	Network   map[string]any `json:"network,omitempty"`
 	Resources map[string]any `json:"resources,omitempty"`
+
+	// Container Stats
+	ContainerStats []map[string]any `json:"container-stats,omitempty"`
 }
 
 type Vulnerabilities struct {
