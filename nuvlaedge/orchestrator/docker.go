@@ -586,7 +586,7 @@ func (dc *DockerCoe) GetContainers() ([]map[string]interface{}, error) {
 func (dc *DockerCoe) GetContainerStats(containerId string, statMap *map[string]interface{}) error {
 	stats, err := dc.client.ContainerStats(context.Background(), containerId, false)
 	if err != nil {
-		return err
+		return fmt.Errorf("error getting container stats from docker: %s", err)
 	}
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
@@ -634,7 +634,7 @@ func (dc *DockerCoe) GetContainerStats(containerId string, statMap *map[string]i
 
 	inspect, err := dc.client.ContainerInspect(context.Background(), containerId)
 	if err != nil {
-		return err
+		return fmt.Errorf("error inspecting container: %s", err)
 	}
 	(*statMap)["restart-count"] = inspect.RestartCount
 	(*statMap)["cpu-limit"] = float64(inspect.HostConfig.NanoCPUs) / 1_000_000_000
