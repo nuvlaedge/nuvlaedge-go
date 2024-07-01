@@ -5,6 +5,7 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -82,4 +83,27 @@ func WriteContentToFile(content string, filePath string) error {
 		return err
 	}
 	return nil
+}
+
+// SanitiseUUID returns the resource ID. If UUID starts with the resource name, means we already have the full ID.
+// Else, we need to add the resource name to the UUID.
+func SanitiseUUID(uuid, resourceName string) string {
+	if uuid == "" {
+		log.Infof("UUID for resource %s is empty", resourceName)
+		return uuid
+	}
+
+	if strings.HasPrefix(uuid, resourceName) {
+		return uuid
+	}
+
+	if strings.Contains(uuid, "/") {
+		s := strings.Split(uuid, "/")
+		if len(s) == 2 {
+			log.Infof("UUID (%s) belongs to resource %s, not %s", s[0], s[1], resourceName)
+		}
+		return ""
+	}
+
+	return fmt.Sprintf("%s/%s", resourceName, uuid)
 }
