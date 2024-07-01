@@ -67,6 +67,9 @@ func newNuvlaEdgeCommand() (*cobra.Command, error) {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			log.Infof("Starting NuvlaEdge on version: %s", version.GetVersion())
 			opts := GetSettings()
+
+			updateLoggingLevel(&opts.Logging)
+
 			return nuvlaEdgeMain(opts)
 		},
 	}
