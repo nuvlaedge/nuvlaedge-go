@@ -1,6 +1,7 @@
 package nuvlaedge
 
 import (
+	"context"
 	nuvla "github.com/nuvla/api-client-go"
 	log "github.com/sirupsen/logrus"
 	"nuvlaedge-go/nuvlaedge/jobs"
@@ -9,6 +10,7 @@ import (
 )
 
 type JobProcessor struct {
+	ctx            context.Context
 	runningJobs    sync.Map
 	jobChan        chan string        // NativeJob channel. Receives jobs IDs from the agent
 	exitChan       chan bool          // Exit channel. Receives exit signal from the agent
@@ -53,7 +55,7 @@ func (p *JobProcessor) Run() error {
 			select {
 			case job := <-p.jobChan:
 				go p.processJob(job)
-			case <-p.exitChan:
+			case <-p.ctx.Done():
 				log.Warn("NativeJob Processor received exit signal")
 				return
 			}
