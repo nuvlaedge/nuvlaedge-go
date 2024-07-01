@@ -24,6 +24,7 @@ func NewContainerStats(coe *orchestrator.Coe, refreshInterval int) *ContainerSta
 
 func (cs *ContainerStats) getStats() ([]map[string]any, error) {
 	if time.Since(cs.updateTime) > 10*time.Second || cs.stats == nil {
+		log.Infof("Container Stats need to be updated")
 		cs.stats = []map[string]any{}
 		err := cs.getContainerStats()
 		cs.updateTime = time.Now()
