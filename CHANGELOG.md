@@ -1,5 +1,18 @@
 # Changelog
 
+## [2.0.1](https://github.com/nuvlaedge/nuvlaedge-go/compare/2.0.0...2.0.1) (2024-07-01)
+
+
+### Bug Fixes
+
+* **docker-compose:** add NE_IMAGE_* env vars and nuvlaedge.type=go label ([d366a52](https://github.com/nuvlaedge/nuvlaedge-go/commit/d366a5239246e22e6fa38bf104c35d27d876fcb3))
+* Fix memory and Goroutine leaks from unclosed clients and response bodies. Add pprof debugging and listener server of dev builds.  ([#63](https://github.com/nuvlaedge/nuvlaedge-go/issues/63)) ([69cfbff](https://github.com/nuvlaedge/nuvlaedge-go/commit/69cfbff4dd73b6cce6c03a1b973936adeca3951b))
+
+
+### Minor Changes
+
+* **docker-compose.yml:** add memory limits ([8f1ed1b](https://github.com/nuvlaedge/nuvlaedge-go/commit/8f1ed1b8162837fe86618050d40c4267c19a428c))
+
 ## [2.0.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.10.0...2.0.0) (2024-06-13)
 
 
