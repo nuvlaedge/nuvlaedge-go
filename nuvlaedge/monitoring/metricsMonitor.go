@@ -59,7 +59,6 @@ func NewMetricsMonitor(
 		updateMutex:             &sync.Mutex{},
 	}
 	val := reflect.ValueOf(*t.nuvlaEdgeStatus)
-	log.Infof("Number of fields: %d", val.NumField())
 	for i := 0; i < val.NumField(); i++ {
 		fieldName := val.Type().Field(i).Name
 		updaterName := "Updater" + fieldName

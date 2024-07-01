@@ -39,7 +39,7 @@ func main() {
 func nuvlaEdgeMain(settings *nuvlaedge.Settings) error {
 	ctx, cancelNotify := signal.NotifyContext(context.Background(), signals.TerminationSignal...)
 	defer cancelNotify()
-
+	log.Infof("Starting nuvlaedge with ID %s", settings.Agent.NuvlaEdgeUUID)
 	nuvlaEdge := nuvlaedge.NewNuvlaEdge(ctx, settings)
 
 	if err := nuvlaEdge.Start(); err != nil {

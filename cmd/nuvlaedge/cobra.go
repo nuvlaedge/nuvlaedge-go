@@ -92,6 +92,7 @@ func bindEnvs() {
 		}
 	}
 	// NuvlaEdge Defaults
+	onError(viper.BindEnv("agent.nuvlaedge-uuid", "NUVLAEDGE_UUID"))
 	onError(viper.BindEnv("data-location", "DATABASE_PATH", "DATA_LOCATION"))
 	onError(viper.BindEnv("config-file", "NUVLAEDGE_SETTINGS"))
 	onError(viper.BindEnv("agent.job-engine-image", "NUVLAEDGE_JOB_ENGINE_LITE_IMAGE", "JOB_LEGACY_IMAGE"))

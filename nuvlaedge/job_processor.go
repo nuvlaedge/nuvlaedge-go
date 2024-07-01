@@ -21,12 +21,14 @@ type JobProcessor struct {
 }
 
 func NewJobProcessor(
+	ctx context.Context,
 	jobChan chan string,
 	client *nuvla.NuvlaClient,
 	coe orchestrator.Coe,
 	enableLegacy bool,
 	legacyImage string) *JobProcessor {
 	return &JobProcessor{
+		ctx:            ctx,
 		jobChan:        jobChan,
 		client:         client,
 		coe:            coe,

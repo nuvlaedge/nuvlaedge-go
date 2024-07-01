@@ -1,7 +1,10 @@
 package nuvlaedge
 
 import (
+	"errors"
 	"fmt"
+	"github.com/nuvla/api-client-go/clients"
+	log "github.com/sirupsen/logrus"
 	"nuvlaedge-go/nuvlaedge/common"
 	"reflect"
 )
@@ -77,4 +80,59 @@ func (a *AgentSettings) String() string {
 		s += fmt.Sprintf("%s: %v\n", v.Type().Field(i).Name, v.Field(i))
 	}
 	return s
+}
+
+// CheckMinimumSettings checks if the minimum required settings are present in the AgentSettings struct.
+// Takes sessionFile as input and loads the session into a file
+func (a *AgentSettings) CheckMinimumSettings(sessionFile string) error {
+	var f *clients.NuvlaEdgeSessionFreeze
+	log.Info("Checking NuvlaEdge minimum settings...")
+
+	if common.FileExists(sessionFile) {
+		log.Info("Session file exists, loading it...")
+		// Load session file
+		f = &clients.NuvlaEdgeSessionFreeze{}
+		if err := f.Load(sessionFile); err != nil {
+			log.Infof("Error loading NuvlaEdge session freeze file: %s", err)
+			// If there is an error, just reset the session freeze
+			f = nil
+		}
+	}
+
+	if f == nil {
+		// If the session file does not exist, just return and assume settings
+		log.Infof("Session file does not exist, assuming settings. Probably first run")
+		return nil
+	}
+
+	if f.NuvlaEdgeId != a.NuvlaEdgeUUID {
+		log.Warnf("NuvlaEdge UUID in session file does not match the one in the settings, ingonring settings")
+		a.NuvlaEdgeUUID = f.NuvlaEdgeId
+	}
+
+	if f.Credentials.Key != a.ApiKey {
+		log.Warnf("API Key in session file does not match the one in the settings, ignoring settings")
+		a.ApiKey = f.Credentials.Key
+	}
+
+	if f.Credentials.Secret != a.ApiSecret {
+		log.Warnf("API Secret in session file does not match the one in the settings, ignoring settings")
+		a.ApiSecret = f.Credentials.Secret
+	}
+
+	if f.Endpoint != a.NuvlaEndpoint {
+		log.Warnf("NuvlaEndpoint in session file does not match the one in the settings, ignoring settings")
+		a.NuvlaEndpoint = f.Endpoint
+	}
+
+	if f.Insecure != a.NuvlaInsecure {
+		log.Warnf("NuvlaInsecure in session file does not match the one in the settings, ignoring settings")
+		a.NuvlaInsecure = f.Insecure
+	}
+
+	if a.NuvlaEdgeUUID == "" {
+		return errors.New("NuvlaEdge UUID is missing and required")
+	}
+
+	return nil
 }

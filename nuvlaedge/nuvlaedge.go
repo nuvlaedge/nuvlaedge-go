@@ -52,7 +52,7 @@ func NewNuvlaEdge(ctx context.Context, settings *Settings) *NuvlaEdge {
 	}
 }
 
-// Initialise initialises the NuvlaEdge.
+// Start initialises the NuvlaEdge.
 // The initialisation process consists in the creation of all the components and the execution
 // of the first required operations as follows:
 // - Check minimum settings
@@ -67,16 +67,6 @@ func NewNuvlaEdge(ctx context.Context, settings *Settings) *NuvlaEdge {
 // - Send first telemetry
 // None of these steps are executed in a routine, they should be blocking operations to ensure the correct
 // initialisation of the system.
-func (ne *NuvlaEdge) Initialise() error {
-	return nil
-}
-
-// Start starts the NuvlaEdge, initialising all the components by calling their Start() method. Each component is responsible for its own initialisation.
-// Requirements check: Checks if the local system meets the requirements to run NuvlaEdge
-// Agent: Initialises the agent, reads the local storage for previous installations of NuvlaEdge and acts accordingly
-// SystemManager: Initialises the local system based on the s
-// JobProcessor: Reads the local storage for dangling jobs/deployments
-// Telemetry: Starts the telemetry collection right away
 func (ne *NuvlaEdge) Start() error {
 	// Run requirements check
 	log.Infof("Running requirements check")
@@ -85,6 +75,13 @@ func (ne *NuvlaEdge) Start() error {
 	err := ne.coe.TelemetryStart()
 	if err != nil {
 		log.Errorf("Error starting COE telemetry: %s, cannot continue", err)
+		return err
+	}
+
+	// Start Telemetry
+	err = ne.telemetry.Start()
+	if err != nil {
+		log.Errorf("Error starting Telemetry: %s, cannot continue", err)
 		return err
 	}
 
@@ -97,6 +94,7 @@ func (ne *NuvlaEdge) Start() error {
 
 	// Start JobProcessor
 	ne.jobProcessor = NewJobProcessor(
+		ne.ctx,
 		ne.agent.jobChan,
 		ne.agent.client.GetNuvlaClient(),
 		ne.coe,
@@ -106,13 +104,6 @@ func (ne *NuvlaEdge) Start() error {
 	err = ne.jobProcessor.Start()
 	if err != nil {
 		log.Errorf("Error starting JobProcessor: %s, cannot continue", err)
-		return err
-	}
-
-	// Start Telemetry
-	err = ne.telemetry.Start()
-	if err != nil {
-		log.Errorf("Error starting Telemetry: %s, cannot continue", err)
 		return err
 	}
 
@@ -143,15 +134,4 @@ func (ne *NuvlaEdge) Run(errChan chan error) {
 	case <-ne.ctx.Done():
 		log.Info("NuvlaEdge has been stopped")
 	}
-}
-
-func (ne *NuvlaEdge) CheckMinimumSettings() error {
-	log.Info("Checking NuvlaEdge minimum settings...")
-	// Check if session file exists, if so, load it
-	if common.FileExists(DataLocation + "nuvlaedge-session.json") {
-		log.Info("Session file exists, loading it...")
-
-	}
-
-	return nil
 }
