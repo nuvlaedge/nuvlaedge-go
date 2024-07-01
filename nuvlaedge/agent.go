@@ -1,6 +1,7 @@
 package nuvlaedge
 
 import (
+	"context"
 	"encoding/json"
 	nuvla "github.com/nuvla/api-client-go"
 	"github.com/nuvla/api-client-go/clients"
@@ -28,6 +29,7 @@ const (
 
 type Agent struct {
 	settings *AgentSettings
+	ctx      context.Context
 
 	client       *clients.NuvlaEdgeClient // client: Http client library to interact with Nuvla
 	coeClient    orchestrator.Coe
@@ -132,6 +134,7 @@ func NewNuvlaEdgeClientFromSettings(settings *AgentSettings) *clients.NuvlaEdgeC
 }
 
 func NewAgent(
+	ctx context.Context,
 	settings *AgentSettings,
 	coeClient orchestrator.Coe,
 	telemetry *Telemetry,
@@ -139,6 +142,7 @@ func NewAgent(
 
 	// Set default values
 	return &Agent{
+		ctx:             ctx,
 		settings:        settings,
 		coeClient:       coeClient,
 		jobChan:         jobChan,
@@ -293,13 +297,6 @@ func (a *Agent) processResponseWithJobs(res *http.Response, action string) error
 	return nil
 }
 
-func (a *Agent) Stop() error {
-	// Stop the Agent
-	log.Warnf("Stopping agent...")
-	a.exitChan <- true
-	return nil
-}
-
 func (a *Agent) Run() error {
 	// Start workers
 	go a.commissioner.Run()
@@ -335,7 +332,7 @@ func (a *Agent) Run() error {
 			if err != nil {
 				log.Errorf("Error updating refresh periods: %s", err)
 			}
-		case <-a.exitChan:
+		case <-a.ctx.Done():
 			log.Infof("Exiting agent...")
 			return nil
 		}

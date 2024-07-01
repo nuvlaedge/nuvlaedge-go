@@ -1,10 +1,10 @@
 package nuvlaedge
 
 import (
+	"context"
 	log "github.com/sirupsen/logrus"
 	"nuvlaedge-go/nuvlaedge/common"
 	"nuvlaedge-go/nuvlaedge/orchestrator"
-	"os"
 	"time"
 )
 
@@ -15,6 +15,7 @@ func init() {
 }
 
 type NuvlaEdge struct {
+	ctx          context.Context  // ctx: Context
 	coe          orchestrator.Coe // coe: Orchestration engine to control deployments
 	settings     *Settings        // settings:
 	agent        *Agent           // Agent: Nuvla-NuvlaEdge interface manager
@@ -22,7 +23,7 @@ type NuvlaEdge struct {
 	telemetry    *Telemetry       // telemetry: Reads the local telemetry and exposes it. We provide two options, local NuvlaEdge telemetry or Prometheus exporter.
 }
 
-func NewNuvlaEdge(settings *Settings) *NuvlaEdge {
+func NewNuvlaEdge(ctx context.Context, settings *Settings) *NuvlaEdge {
 	// Set global data location
 	DataLocation = settings.DataLocation
 	log.Infof("Setting global data location to: %s", DataLocation)
@@ -41,13 +42,33 @@ func NewNuvlaEdge(settings *Settings) *NuvlaEdge {
 	jobChan := make(chan string, 10)
 
 	return &NuvlaEdge{
+		ctx:      ctx,
 		coe:      coeClient,
 		settings: settings,
-		agent:    NewAgent(&settings.Agent, coeClient, telemetry, jobChan),
+		agent:    NewAgent(ctx, &settings.Agent, coeClient, telemetry, jobChan),
 		// Job engine needs a pointer to Nuvla Client which is created by the agent depending on input s
 		// and previous installations so, we defer the creation of the jobProcessor to the start method
 		telemetry: telemetry,
 	}
+}
+
+// Initialise initialises the NuvlaEdge.
+// The initialisation process consists in the creation of all the components and the execution
+// of the first required operations as follows:
+// - Check minimum settings
+//   - This should consider the local nuvlaedge-session file
+//
+// - Agent: Initialises the agent
+//   - Activate if required
+//   - Commission if not done already
+//   - Send first heartbeat
+//
+// - Run first telemetry sweep
+// - Send first telemetry
+// None of these steps are executed in a routine, they should be blocking operations to ensure the correct
+// initialisation of the system.
+func (ne *NuvlaEdge) Initialise() error {
+	return nil
 }
 
 // Start starts the NuvlaEdge, initialising all the components by calling their Start() method. Each component is responsible for its own initialisation.
@@ -98,11 +119,39 @@ func (ne *NuvlaEdge) Start() error {
 	return nil
 }
 
-func (ne *NuvlaEdge) Run() (os.Signal, error) {
+func (ne *NuvlaEdge) Run(errChan chan error) {
 	log.Infof("Running NuvlaEdge...")
-	go ne.agent.Run()
+	go func() {
+		waitTime := 5
+		for {
+			err := ne.agent.Run()
+			if err == nil {
+				log.Warn("Agent has been stopped, exiting")
+				return
+			}
+			// Wait 5 seconds before restarting the agent
+			log.Warnf("Agent has been stopped due to an error, restarting in %d seconds", waitTime)
+			errChan <- err
+			time.Sleep(time.Duration(waitTime) * time.Second)
+			waitTime += waitTime
+		}
+	}()
+
 	_ = ne.jobProcessor.Run()
-	for {
-		time.Sleep(1 * time.Second)
+
+	select {
+	case <-ne.ctx.Done():
+		log.Info("NuvlaEdge has been stopped")
 	}
+}
+
+func (ne *NuvlaEdge) CheckMinimumSettings() error {
+	log.Info("Checking NuvlaEdge minimum settings...")
+	// Check if session file exists, if so, load it
+	if common.FileExists(DataLocation + "nuvlaedge-session.json") {
+		log.Info("Session file exists, loading it...")
+
+	}
+
+	return nil
 }
