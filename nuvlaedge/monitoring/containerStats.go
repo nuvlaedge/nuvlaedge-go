@@ -1,7 +1,9 @@
 package monitoring
 
 import (
+	"errors"
 	log "github.com/sirupsen/logrus"
+	"io"
 	"nuvlaedge-go/nuvlaedge/orchestrator"
 	"time"
 )
@@ -53,9 +55,14 @@ func (cs *ContainerStats) getContainerStats() error {
 		err := cs.Coe.GetContainerStats(id, &containerInfo)
 		if err != nil {
 			log.Errorf("Error getting container stats: %s", err)
+			if errors.Is(err, io.EOF) {
+				// This could happen if the container is stopped while we are reading the stats
+				// or due to network issues.
+				log.Errorf("EOF encountered while reading container stats")
+				continue
+			}
 			return nil
 		}
-
 		cs.stats = append(cs.stats, containerInfo)
 	}
 	return nil
