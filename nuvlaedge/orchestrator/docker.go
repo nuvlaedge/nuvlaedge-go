@@ -606,10 +606,13 @@ func (dc *DockerCoe) GetContainerStats(containerId string, statMap *map[string]i
 
 	(*statMap)["mem-usage"] = stat.MemoryStats.Usage
 	(*statMap)["mem-limit"] = stat.MemoryStats.Limit
+	cpuUsage := stat.CPUStats.CPUUsage.TotalUsage - stat.PreCPUStats.CPUUsage.TotalUsage
+	systemUsage := stat.CPUStats.SystemUsage - stat.PreCPUStats.SystemUsage
 
 	if runtime.GOOS == "windows" {
 		(*statMap)["disk-in"] = stat.StorageStats.ReadSizeBytes
 		(*statMap)["disk-out"] = stat.StorageStats.WriteSizeBytes
+		cpuUsage *= 100
 	} else {
 		var blkIn, blkOut uint64 = 0, 0
 		for _, blkStat := range stat.BlkioStats.IoServiceBytesRecursive {
@@ -639,9 +642,6 @@ func (dc *DockerCoe) GetContainerStats(containerId string, statMap *map[string]i
 	}
 	(*statMap)["restart-count"] = inspect.RestartCount
 	(*statMap)["cpu-limit"] = float64(inspect.HostConfig.NanoCPUs) / 1_000_000_000
-
-	cpuUsage := stat.CPUStats.CPUUsage.TotalUsage - stat.PreCPUStats.CPUUsage.TotalUsage
-	systemUsage := stat.CPUStats.SystemUsage - stat.PreCPUStats.SystemUsage
 
 	cpuPercent := 0.0
 	if systemUsage != 0 {
