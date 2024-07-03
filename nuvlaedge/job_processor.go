@@ -18,8 +18,7 @@ type JobProcessor struct {
 	enableLegacy   bool
 	legacyJobImage string
 
-	runningJobs map[string]RunningJob
-	jobsLock    *sync.Mutex
+	runningJobs JobRegistry
 }
 
 func NewJobProcessor(
@@ -36,8 +35,7 @@ func NewJobProcessor(
 		coe:            coe,
 		enableLegacy:   enableLegacy,
 		legacyJobImage: legacyImage,
-		runningJobs:    make(map[string]RunningJob),
-		jobsLock:       &sync.Mutex{},
+		runningJobs:    NewRunningJobs(),
 	}
 }
 
@@ -70,10 +68,8 @@ func (p *JobProcessor) Run() error {
 }
 
 func (p *JobProcessor) processJob(j string) {
-	p.jobsLock.Lock()
-	defer p.jobsLock.Unlock()
 
-	if _, ok := p.runningJobs[j]; ok {
+	if p.runningJobs.Exists(j) {
 		log.Infof("NativeJob %s is already running", j)
 		return
 	}
@@ -86,18 +82,12 @@ func (p *JobProcessor) processJob(j string) {
 		log.Errorf("Error creating job %s: %s", j, err)
 		return
 	}
-	p.runningJobs[j] = RunningJob{
+	p.runningJobs.Add(&RunningJob{
 		jobId:   j,
 		jobType: job.GetJobType(),
 		running: true,
-	}
-	p.jobsLock.Unlock()
-
-	defer func() {
-		p.jobsLock.Lock()
-		delete(p.runningJobs, j)
-		p.jobsLock.Unlock()
-	}()
+	})
+	defer p.runningJobs.Remove(j)
 
 	// 2. Run the jobs
 	log.Infof("Running jobs %s...", j)
@@ -114,4 +104,50 @@ type RunningJob struct {
 	jobId   string
 	jobType string
 	running bool
+}
+
+type JobRegistry struct {
+	jobs map[string]*RunningJob
+	lock *sync.Mutex
+}
+
+func NewRunningJobs() JobRegistry {
+	return JobRegistry{
+		jobs: make(map[string]*RunningJob),
+		lock: &sync.Mutex{},
+	}
+}
+
+func (r *JobRegistry) Add(job *RunningJob) bool {
+	r.lock.Lock()
+	defer r.lock.Unlock()
+	if r.Exists(job.jobId) {
+		return false
+	}
+	r.jobs[job.jobId] = job
+	return true
+}
+
+func (r *JobRegistry) Remove(jobId string) bool {
+	r.lock.Lock()
+	defer r.lock.Unlock()
+	if !r.Exists(jobId) {
+		return false
+	}
+	delete(r.jobs, jobId)
+	return true
+}
+
+func (r *JobRegistry) Get(jobId string) (*RunningJob, bool) {
+	r.lock.Lock()
+	defer r.lock.Unlock()
+	job, ok := r.jobs[jobId]
+	return job, ok
+}
+
+func (r *JobRegistry) Exists(jobId string) bool {
+	r.lock.Lock()
+	defer r.lock.Unlock()
+	_, ok := r.jobs[jobId]
+	return ok
 }
