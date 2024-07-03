@@ -20,7 +20,7 @@ RUN GOOS=$TARGETOS GOARCH=$TARGETARCH CGO_ENABLED=0 \
     -gcflags=all="-l -B" \
     -o out/nuvlaedge \
     -tags "$GO_BUILD_TAGS" \
-    ./cmd/cli.go
+    ./cmd/nuvlaedge/
 
 
 
@@ -37,4 +37,4 @@ COPY --from=build /build/config/template.toml /etc/nuvlaedge/nuvlaedge.toml
 # NuvlaEdge binary previously built
 COPY --from=build /build/out/nuvlaedge /bin/nuvlaedge
 
-ENTRYPOINT ["nuvlaedge", "run"]
+ENTRYPOINT ["nuvlaedge"]
