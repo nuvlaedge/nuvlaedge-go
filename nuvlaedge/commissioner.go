@@ -1,6 +1,7 @@
 package nuvlaedge
 
 import (
+	"context"
 	"encoding/json"
 	nuvla "github.com/nuvla/api-client-go/clients"
 	log "github.com/sirupsen/logrus"
@@ -13,6 +14,7 @@ import (
 )
 
 type Commissioner struct {
+	ctx         context.Context
 	nuvlaClient *nuvla.NuvlaEdgeClient
 	coeClient   orchestrator.Coe
 
@@ -20,8 +22,9 @@ type Commissioner struct {
 	currentData *types.CommissioningAttributes
 }
 
-func NewCommissioner(nuvlaClient *nuvla.NuvlaEdgeClient, coeClient orchestrator.Coe) *Commissioner {
+func NewCommissioner(ctx context.Context, nuvlaClient *nuvla.NuvlaEdgeClient, coeClient orchestrator.Coe) *Commissioner {
 	return &Commissioner{
+		ctx:         ctx,
 		nuvlaClient: nuvlaClient,
 		coeClient:   coeClient,
 	}
@@ -105,25 +108,31 @@ func (c *Commissioner) needsCommission() bool {
 	return !reflect.DeepEqual(c.currentData, c.lastPayload)
 }
 
+func (c *Commissioner) SingleIteration() {
+	c.updateData()
+
+	if c.needsCommission() {
+		log.Infof("Commissioning %s", c.currentData)
+		if err := c.commission(); err != nil {
+			log.Errorf("Error commissining with data %v: %s", c.currentData, err)
+		} else {
+			copied := *c.currentData
+			c.lastPayload = &copied
+		}
+	}
+}
+
 func (c *Commissioner) Run() {
 	log.Infof("Commissioner running...")
+	tick := time.NewTicker(60 * time.Second)
+	defer tick.Stop()
 	for {
-		startTime := time.Now()
-		c.updateData()
-
-		if c.needsCommission() {
-			log.Infof("Commissioning %s", c.currentData)
-			if err := c.commission(); err != nil {
-				log.Errorf("Error commissining with data %v: %s", c.currentData, err)
-			} else {
-				copied := *c.currentData
-				c.lastPayload = &copied
-			}
-		}
-
-		err := common.WaitPeriodicAction(startTime, 60, "Commissioner")
-		if err != nil {
-			log.Errorf("Error waiting for commissioner: %s", err)
+		select {
+		case <-tick.C:
+			c.SingleIteration()
+		case <-c.ctx.Done():
+			log.Infof("Exiting Commissioner...")
+			return
 		}
 	}
 }

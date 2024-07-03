@@ -1,6 +1,7 @@
 package nuvlaedge
 
 import (
+	"context"
 	"encoding/json"
 	nuvla "github.com/nuvla/api-client-go"
 	"github.com/nuvla/api-client-go/clients"
@@ -12,7 +13,7 @@ import (
 	"nuvlaedge-go/nuvlaedge/common"
 	"nuvlaedge-go/nuvlaedge/common/resources"
 	"nuvlaedge-go/nuvlaedge/orchestrator"
-	neTypes "nuvlaedge-go/nuvlaedge/types"
+	"path"
 	"path/filepath"
 	"time"
 )
@@ -22,12 +23,12 @@ const (
 	MinHeartbeatPeriod     = 10
 	DefaultTelemetryPeriod = 60
 	MinTelemetryPeriod     = 30
-	NuvlaSessionDataFile   = "nuvla-session.json"
-	LegacySessionDataFile  = "nuvlaedge_session.json"
+	NuvlaSessionDataFile   = "nuvlaedge_session.json"
 )
 
 type Agent struct {
 	settings *AgentSettings
+	ctx      context.Context
 
 	client       *clients.NuvlaEdgeClient // client: Http client library to interact with Nuvla
 	coeClient    orchestrator.Coe
@@ -45,74 +46,19 @@ type Agent struct {
 }
 
 // NewNuvlaEdgeClient tries to create a new Nuvla client first from the local files if available, else from the s
-func NewNuvlaEdgeClient(settings *AgentSettings) *clients.NuvlaEdgeClient {
+func NewNuvlaEdgeClient(settings *AgentSettings) (*clients.NuvlaEdgeClient, error) {
 
-	clientFile := filepath.Join(DataLocation, NuvlaSessionDataFile)
-	legacyFile := filepath.Join(DataLocation, LegacySessionDataFile)
-
-	var client *clients.NuvlaEdgeClient
-
-	// Try to load the client from the freeze file of Golang version
-	if common.FileExists(clientFile) {
-		log.Infof("Loading NuvlaEdge client from freeze file: %s", clientFile)
-		client = NewNuvlaEdgeClientFromSessionFile(clientFile)
-		// Try to load the client from the freeze file of Python version
-	} else if common.FileExists(legacyFile) {
-		log.Infof("Loading NuvlaEdge client from legacy freeze file: %s", legacyFile)
-		client = NewNuvlaEdgeClientFromLegacySession(legacyFile)
-	}
-
-	if client != nil {
-		log.Infof("Successfully created NuvlaEdge client from freeze file")
-		return client
-	}
-	// If the freeze file does not exist, create a new client from the settings
-	return NewNuvlaEdgeClientFromSettings(settings)
-}
-
-// NewNuvlaEdgeClientFromSessionFile creates a new Nuvla client from a freeze file.
-func NewNuvlaEdgeClientFromSessionFile(file string) *clients.NuvlaEdgeClient {
-	// Check if the file exists
-	if !common.FileExists(file) {
-		log.Infof("Freeze file does not exist: %s", file)
-		return nil
-	}
-	log.Infof("Restoring NuvlaEdge client from file: %s", file)
-
-	f := &clients.NuvlaEdgeSessionFreeze{}
-	err := f.Load(file)
+	sessionFile := path.Join(DataLocation, NuvlaSessionDataFile)
+	err := settings.CheckMinimumSettings(sessionFile)
 	if err != nil {
-		log.Warnf("Error loading NuvlaEdge session freeze file: %s", err)
-		return nil
+		log.Errorf("Error checking minimum settings: %s", err)
+		return nil, err
 	}
-	return clients.NewNuvlaEdgeClientFromSessionFreeze(f)
-}
-
-// NewNuvlaEdgeClientFromLegacySession creates a new Nuvla client from a legacy freeze file.
-// It first converts the legacy freeze file to the new freeze file format and then creates the client.
-func NewNuvlaEdgeClientFromLegacySession(file string) *clients.NuvlaEdgeClient {
-	if file == "" {
-		file = filepath.Join(DataLocation, LegacySessionDataFile)
-	}
-
-	if !common.FileExists(file) {
-		log.Infof("Legacy freeze file does not exist: %s", file)
-		return nil
-	}
-
-	l := &neTypes.LegacySession{}
-	if err := l.Load(file); err != nil {
-		log.Errorf("Error loading legacy session freeze file: %s", err)
-		return nil
-	}
-
-	f := l.ConvertToNuvlaSession()
-	sessionFile := filepath.Join(DataLocation, NuvlaSessionDataFile)
-	if err := f.Save(sessionFile); err != nil {
-		log.Errorf("Error saving Nuvla session freeze file: %s", err)
-		return nil
-	}
-	return NewNuvlaEdgeClientFromSessionFile(sessionFile)
+	// Print settings
+	log.Infof("Settings: %+v", settings)
+	log.Infof("Creating NuvlaEdge with ID %s", settings.NuvlaEdgeUUID)
+	// If the freeze file does not exist, create a new client from the settings
+	return NewNuvlaEdgeClientFromSettings(settings), nil
 }
 
 func NewNuvlaEdgeClientFromSettings(settings *AgentSettings) *clients.NuvlaEdgeClient {
@@ -121,7 +67,6 @@ func NewNuvlaEdgeClientFromSettings(settings *AgentSettings) *clients.NuvlaEdgeC
 		credentials = types.NewApiKeyLogInParams(settings.ApiKey, settings.ApiSecret)
 	}
 
-	log.Infof("Creating NuvlaEdge client with options: %v", settings)
 	client := clients.NewNuvlaEdgeClient(
 		settings.NuvlaEdgeUUID,
 		credentials,
@@ -132,6 +77,7 @@ func NewNuvlaEdgeClientFromSettings(settings *AgentSettings) *clients.NuvlaEdgeC
 }
 
 func NewAgent(
+	ctx context.Context,
 	settings *AgentSettings,
 	coeClient orchestrator.Coe,
 	telemetry *Telemetry,
@@ -139,6 +85,7 @@ func NewAgent(
 
 	// Set default values
 	return &Agent{
+		ctx:             ctx,
 		settings:        settings,
 		coeClient:       coeClient,
 		jobChan:         jobChan,
@@ -150,14 +97,28 @@ func NewAgent(
 
 /* ------------------  NuvlaEdge worker Interface implementation ------------------------------- */
 
+// Start initialises the NuvlaEdge.
+// The initialisation executes the following steps:
+// - Check minimum settings
+//   - This should consider the local nuvlaedge-session file
+//
+// - Agent: Initialises the agent
+//   - Activate if required
+//   - Commission if not done already
+//   - Send first heartbeat
+//
+// - Run first telemetry sweep
+// - Send first telemetry
 func (a *Agent) Start() error {
-	// Start the Agent
-	// Find
-	// TODO: Write a default function to generate Client opts from NuvlaEdge s
-	a.client = NewNuvlaEdgeClient(a.settings)
+	c, err := NewNuvlaEdgeClient(a.settings)
+	if err != nil {
+		log.Errorf("Error creating NuvlaEdge client: %s", err)
+		return err
+	}
+	a.client = c
 
 	// We assume the client is not activated if credentials are not set in the client
-	if a.client.Credentials == nil {
+	if a.client.Credentials == nil || a.client.Credentials.Key == "" || a.client.Credentials.Secret == "" {
 		err := a.client.Activate()
 		if err != nil {
 			log.Errorf("Error activating client: %s", err)
@@ -167,7 +128,7 @@ func (a *Agent) Start() error {
 	}
 
 	// Log in with the activation credentials
-	err := a.client.LogIn()
+	err = a.client.LogIn()
 	if err != nil {
 		log.Panicf("Error logging in with activation credentials: %s", err)
 	}
@@ -184,7 +145,23 @@ func (a *Agent) Start() error {
 	err = a.client.Freeze(freezeFile)
 
 	// Create commissioner
-	a.commissioner = NewCommissioner(a.client, a.coeClient)
+	a.commissioner = NewCommissioner(a.ctx, a.client, a.coeClient)
+	// Run first iteration for the commissioner
+	a.commissioner.SingleIteration()
+
+	// Run a heart beat
+	err = a.sendHeartBeat()
+	if err != nil {
+		log.Errorf("Error sending heartbeat: %s", err)
+		return err
+	}
+
+	// Run a telemetry
+	err = a.sendTelemetry()
+	if err != nil {
+		log.Errorf("Error sending telemetry: %s", err)
+		return err
+	}
 
 	return nil
 }
@@ -293,13 +270,6 @@ func (a *Agent) processResponseWithJobs(res *http.Response, action string) error
 	return nil
 }
 
-func (a *Agent) Stop() error {
-	// Stop the Agent
-	log.Warnf("Stopping agent...")
-	a.exitChan <- true
-	return nil
-}
-
 func (a *Agent) Run() error {
 	// Start workers
 	go a.commissioner.Run()
@@ -335,7 +305,7 @@ func (a *Agent) Run() error {
 			if err != nil {
 				log.Errorf("Error updating refresh periods: %s", err)
 			}
-		case <-a.exitChan:
+		case <-a.ctx.Done():
 			log.Infof("Exiting agent...")
 			return nil
 		}
