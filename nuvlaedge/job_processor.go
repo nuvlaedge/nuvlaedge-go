@@ -18,7 +18,7 @@ type JobProcessor struct {
 	enableLegacy   bool
 	legacyJobImage string
 
-	runningJobs JobRegistry
+	runningJobs *JobRegistry
 }
 
 func NewJobProcessor(
@@ -82,15 +82,20 @@ func (p *JobProcessor) processJob(j string) {
 		log.Errorf("Error creating job %s: %s", j, err)
 		return
 	}
-	p.runningJobs.Add(&RunningJob{
+
+	ok := p.runningJobs.Add(&RunningJob{
 		jobId:   j,
 		jobType: job.GetJobType(),
 		running: true,
 	})
+	if !ok {
+		log.Errorf("Job %s is already running...", j)
+		return
+	}
+	log.Infof("Currently running jobs: \n %s", p.runningJobs)
 	defer p.runningJobs.Remove(j)
 
 	// 2. Run the jobs
-	log.Infof("Running jobs %s...", j)
 	err = job.RunJob()
 	if err != nil {
 		log.Errorf("Error running job %s: %s", j, err)
@@ -111,29 +116,31 @@ type JobRegistry struct {
 	lock *sync.Mutex
 }
 
-func NewRunningJobs() JobRegistry {
-	return JobRegistry{
+func NewRunningJobs() *JobRegistry {
+	return &JobRegistry{
 		jobs: make(map[string]*RunningJob),
 		lock: &sync.Mutex{},
 	}
 }
 
 func (r *JobRegistry) Add(job *RunningJob) bool {
-	r.lock.Lock()
-	defer r.lock.Unlock()
 	if r.Exists(job.jobId) {
 		return false
 	}
+	r.lock.Lock()
+	defer r.lock.Unlock()
+
 	r.jobs[job.jobId] = job
 	return true
 }
 
 func (r *JobRegistry) Remove(jobId string) bool {
-	r.lock.Lock()
-	defer r.lock.Unlock()
 	if !r.Exists(jobId) {
 		return false
 	}
+	r.lock.Lock()
+	defer r.lock.Unlock()
+
 	delete(r.jobs, jobId)
 	return true
 }
@@ -150,4 +157,14 @@ func (r *JobRegistry) Exists(jobId string) bool {
 	defer r.lock.Unlock()
 	_, ok := r.jobs[jobId]
 	return ok
+}
+
+func (r *JobRegistry) String() string {
+	r.lock.Lock()
+	defer r.lock.Unlock()
+	var jobSummary string
+	for _, job := range r.jobs {
+		jobSummary += "ID: " + job.jobId + " Type: " + job.jobType + "\n"
+	}
+	return jobSummary
 }
