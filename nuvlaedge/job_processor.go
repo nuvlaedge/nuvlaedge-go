@@ -71,6 +71,8 @@ func (p *JobProcessor) Run() error {
 
 func (p *JobProcessor) processJob(j string) {
 	p.jobsLock.Lock()
+	defer p.jobsLock.Unlock()
+
 	if _, ok := p.runningJobs[j]; ok {
 		log.Infof("NativeJob %s is already running", j)
 		return
