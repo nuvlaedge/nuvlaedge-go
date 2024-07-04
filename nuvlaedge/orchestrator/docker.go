@@ -36,7 +36,7 @@ type ClusterData struct {
 	ClusterManagers    []string
 	ClusterWorkers     []string
 	ClusterNodes       []string
-	ClusterNodeLabels  []string
+	ClusterNodeLabels  []map[string]string
 	ClusterJoinAddress string
 
 	DockerServerVersion     string
@@ -248,15 +248,25 @@ func (dc *DockerCoe) updateClusterData() error {
 	var workerIds []string
 	for _, node := range nodes {
 		nodeIds = append(nodeIds, node.ID)
+
 		if node.Spec.Role == "worker" {
 			workerIds = append(workerIds, node.ID)
+		}
+		if node.ID == info.Swarm.NodeID {
+			// TODO: Probably best to assign node role like this
+			dc.clusterData.NodeRole = string(node.Spec.Role)
+
+			dc.clusterData.ClusterNodeLabels = make([]map[string]string, 0)
+			for key, label := range node.Spec.Labels {
+				dc.clusterData.ClusterNodeLabels =
+					append(dc.clusterData.ClusterNodeLabels,
+						map[string]string{"name": key, "value": label})
+			}
 		}
 	}
 	dc.clusterData.ClusterNodes = nodeIds
 	dc.clusterData.ClusterWorkers = workerIds
 
-	// Gather cluster node labels
-	dc.clusterData.ClusterNodeLabels = info.Labels
 	// Gather node role
 	if info.Swarm.ControlAvailable {
 		dc.clusterData.NodeRole = "manager"
