@@ -3,15 +3,15 @@ package resources
 type NuvlaEdgeStatus struct {
 	// Clustering configuration
 	// Either Swarm or Kubernetes
-	Orchestrator            string   `json:"orchestrator,omitempty"`
-	NodeId                  string   `json:"node-id,omitempty"`
-	ClusterId               string   `json:"cluster-id,omitempty"`
-	ClusterManagers         []string `json:"cluster-managers,omitempty"`
-	ClusterNodes            []string `json:"cluster-nodes,omitempty"`
-	ClusterNodeLabels       []string `json:"cluster-node-labels,omitempty"`
-	ClusterNodeRole         string   `json:"cluster-node-role,omitempty"`
-	ClusterJoinAddress      string   `json:"cluster-join-address,omitempty"`
-	SwarmNodeCertExpiryDate string   `json:"swarm-node-cert-expiry-date,omitempty"`
+	Orchestrator            string              `json:"orchestrator,omitempty"`
+	NodeId                  string              `json:"node-id,omitempty"`
+	ClusterId               string              `json:"cluster-id,omitempty"`
+	ClusterManagers         []string            `json:"cluster-managers,omitempty"`
+	ClusterNodes            []string            `json:"cluster-nodes,omitempty"`
+	ClusterNodeLabels       []map[string]string `json:"cluster-node-labels,omitempty"`
+	ClusterNodeRole         string              `json:"cluster-node-role,omitempty"`
+	ClusterJoinAddress      string              `json:"cluster-join-address,omitempty"`
+	SwarmNodeCertExpiryDate string              `json:"swarm-node-cert-expiry-date,omitempty"`
 
 	// Host System Settings
 	Architecture        string `json:"architecture,omitempty"`
