@@ -86,7 +86,7 @@ func runNuvlaEdge(settings *nuvlaedge.Settings) error {
 	}
 	log.Infof("NuvlaEdge started successfully")
 
-	_, err := ne.Run()
+	err := ne.Run()
 	if err != nil {
 		log.Errorf("Error running NuvlaEdge: %s", err)
 		return err

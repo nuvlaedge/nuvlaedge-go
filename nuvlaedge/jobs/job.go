@@ -21,6 +21,7 @@ type Job interface {
 	RunJob() error
 	Init(coe orchestrator.Coe, enableLegacy bool, legacyImage string) (Job, error)
 	GetId() string
+	GetJobType() string
 }
 
 func NewJob(jobId string, c *nuvla.NuvlaClient, coe orchestrator.Coe, enableLegacy bool, legacyImage string) (Job, error) {
@@ -37,8 +38,13 @@ func NewJob(jobId string, c *nuvla.NuvlaClient, coe orchestrator.Coe, enableLega
 
 type JobBase struct {
 	JobId       string
+	JobType     string
 	Client      *clients.NuvlaJobClient
 	JobResource *resources.JobResource
+}
+
+func (j *JobBase) GetJobType() string {
+	return j.JobType
 }
 
 func isNotSupportedActionError(err error) bool {
@@ -53,7 +59,7 @@ func (j *JobBase) Init(coe orchestrator.Coe, enableLegacy bool, legacyImage stri
 		return nil, err
 	}
 	j.JobResource = j.Client.GetResource()
-
+	j.JobType = j.JobResource.Action
 	// Looks for the action in the implemented interface Action in the actions package
 	a, err := actions.GetAction(j.JobResource.Action)
 
