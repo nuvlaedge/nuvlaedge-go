@@ -100,6 +100,7 @@ func (a *AgentSettings) CheckMinimumSettings(sessionFile string) error {
 	}
 
 	if f == nil {
+		a.NuvlaEdgeUUID = common.SanitiseUUID(a.NuvlaEdgeUUID, "nuvlabox")
 		// If the session file does not exist, just return and assume settings
 		log.Infof("Session file does not exist, assuming settings. Probably first run")
 		return nil
