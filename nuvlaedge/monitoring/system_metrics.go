@@ -1,116 +1,15 @@
 package monitoring
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/disk"
 	"github.com/shirou/gopsutil/v3/mem"
 	log "github.com/sirupsen/logrus"
-	"nuvlaedge-go/nuvlaedge/common"
 	"strings"
 	"sync"
 	"time"
 )
-
-type CpuMetrics struct {
-	Load  float64 `json:"load"`
-	Load1 float64 `json:"load-1"`
-	Load5 float64 `json:"load-5"`
-	//SystemCalls        int64   `json:"system-calls"`
-	Capacity int `json:"capacity"`
-	//Interrupts         int64   `json:"interrupts"`
-	Topic string `json:"topic"`
-	//SoftwareInterrupts int64   `json:"software-interrupts"`
-	//ContextSwitches    int64   `json:"context-switches"`
-
-	cpuUsageAccumulator *common.CircularBuffer
-	ctx                 context.Context
-	cancel              context.CancelFunc
-	once                *sync.Once
-}
-
-func NewCpuMetrics() *CpuMetrics {
-	ctx, cancel := context.WithCancel(context.Background())
-	c := &CpuMetrics{
-		Topic:               "cpu",
-		cpuUsageAccumulator: common.NewCircularBuffer(15 * 60),
-		once:                &sync.Once{},
-		ctx:                 ctx,
-		cancel:              cancel,
-	}
-	c.once.Do(c.Run)
-	return c
-}
-
-// Run starts the CPU metrics gathering for load, load-1 and load-5. Load represent a 15-min average
-func (c *CpuMetrics) Run() {
-	go func() {
-		for {
-			select {
-			case <-c.ctx.Done():
-				return
-			default:
-				percent, err := cpu.Percent(time.Second, false)
-				if err != nil {
-					log.Errorf("Error getting CPU percentage: %s", err)
-					c.cancel()
-					return
-				}
-				c.cpuUsageAccumulator.Add(percent[0])
-			}
-		}
-	}()
-}
-
-// healIfNeeded checks if the CPU metrics gathering is still running and restarts it if needed
-func (c *CpuMetrics) healIfNeeded() {
-	if c.ctx.Err() != nil {
-		log.Info("CPU metrics gathering is not running. Restarting...")
-		c.once = &sync.Once{}
-		c.ctx, c.cancel = context.WithCancel(context.Background())
-		c.once.Do(c.Run)
-	}
-}
-
-func (c *CpuMetrics) Update() error {
-	c.healIfNeeded()
-
-	// Get CPU load
-	loads1, err := c.cpuUsageAccumulator.GetLatestAvg(1 * 60)
-	if err != nil {
-		log.Errorf("Error getting CPU load-1: %s", err)
-		//return err
-	}
-	c.Load1 = loads1
-
-	loads5, err := c.cpuUsageAccumulator.GetLatestAvg(5 * 60)
-	if err != nil {
-		log.Errorf("Error getting CPU load-5: %s", err)
-		//return err
-	}
-	c.Load5 = loads5
-
-	loads15, err := c.cpuUsageAccumulator.GetLatestAvg(15 * 60)
-	if err != nil {
-		log.Errorf("Error getting CPU load-15: %s", err)
-		//return err
-	}
-	c.Load = loads15
-
-	// Get CPU count
-	cpuCount, err := cpu.Counts(false)
-	if err != nil {
-		return err
-	}
-	c.Capacity = cpuCount
-
-	// Get CPU interrupts
-	t, _ := cpu.Times(false)
-	log.Infof("CPU Times: %s", t[0])
-	return nil
-}
 
 type RamMetrics struct {
 	Used     uint64 `json:"used"`
@@ -175,7 +74,7 @@ func gatherDiskMetrics() ([]DiskMetrics, error) {
 
 type ResourceMetrics struct {
 	ContainerStats []any           `json:"container-stats,omitempty"`
-	Cpu            *CpuMetrics     `json:"cpu,omitempty"`
+	Cpu            *CPUMetrics     `json:"cpu,omitempty"`
 	Ram            *RamMetrics     `json:"ram,omitempty"`
 	Disks          []DiskMetrics   `json:"disks,omitempty"`
 	NetStats       []IfaceNetStats `json:"net-stats,omitempty"`
@@ -184,8 +83,10 @@ type ResourceMetrics struct {
 }
 
 func NewResourceMetrics(info *NetworkMetricsUpdater) *ResourceMetrics {
+	cpuMetrics := NewCPUMetrics()
+	cpuMetrics.Run()
 	return &ResourceMetrics{
-		Cpu:         NewCpuMetrics(),
+		Cpu:         cpuMetrics,
 		Ram:         NewRamMetrics(),
 		networkInfo: info,
 	}
