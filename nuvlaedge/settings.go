@@ -109,6 +109,7 @@ func (a *AgentSettings) CheckMinimumSettings(sessionFile string) error {
 		log.Warnf("NuvlaEdge UUID in session file does not match the one in the settings, ingonring settings")
 		a.NuvlaEdgeUUID = f.NuvlaEdgeId
 	}
+	a.NuvlaEdgeUUID = common.SanitiseUUID(a.NuvlaEdgeUUID, "nuvlabox")
 
 	if f.Credentials.Key != a.ApiKey {
 		log.Warnf("API Key in session file does not match the one in the settings, ignoring settings")
