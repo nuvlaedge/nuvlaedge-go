@@ -572,7 +572,7 @@ func (dc *DockerCoe) GetContainers() ([]map[string]interface{}, error) {
 	for _, containerInfo := range containers {
 		var containerMap = make(map[string]interface{})
 		containerMap["id"] = containerInfo.ID
-		containerMap["name"] = containerInfo.Names[0]
+		containerMap["name"] = strings.TrimPrefix(containerInfo.Names[0], "/")
 		containerMap["image"] = containerInfo.Image
 		containerMap["state"] = containerInfo.State
 		containerMap["status"] = containerInfo.Status
