@@ -357,6 +357,7 @@ func (t *MetricsMonitor) UpdaterStatus(errChan chan<- error) {
 }
 
 func (t *MetricsMonitor) UpdaterStatusNotes(errChan chan<- error) {
+	t.nuvlaEdgeStatus.StatusNotes = []string{}
 	errChan <- nil
 }
 

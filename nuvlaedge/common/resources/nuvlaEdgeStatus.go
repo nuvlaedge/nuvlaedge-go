@@ -32,7 +32,7 @@ type NuvlaEdgeStatus struct {
 
 	// NuvlaEdge report
 	Status      string   `json:"status,omitempty"`
-	StatusNotes []string `json:"status-notes,omitempty"`
+	StatusNotes []string `json:"status-notes"`
 
 	// Telemetry
 	Network   map[string]any `json:"network,omitempty"`
