@@ -75,6 +75,7 @@ func (j *JobBase) Init(coe orchestrator.Coe, enableLegacy bool, legacyImage stri
 			j.Client.SetStatusMessage(
 				fmt.Sprintf("NuvlaEdge-Go doesn't support action %s. "+
 					"Set env JOB_LEGACY_ENABLE=true to run unsopported actions in a separated container", j.JobResource.Action))
+			j.Client.SetState(resources.StateFailed)
 			return nil, err
 		}
 		return NewContainerEngineJobFromBase(j, coe, legacyImage), nil
