@@ -137,7 +137,6 @@ func (s *Stack) remove() error {
 func (s *Stack) setUpStackOpts() {
 	s.stackOpts = &options.Deploy{
 		Composefiles: []string{s.composeFile},
-		Namespace:    s.projectName,
 		Prune:        true,
 		Detach:       true,
 		Quiet:        true,
