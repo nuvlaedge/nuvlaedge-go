@@ -37,8 +37,8 @@ func (r *RamMetrics) Update() error {
 type DiskMetrics struct {
 	Topic    string `json:"topic"`
 	Device   string `json:"device"`
-	Used     uint64 `json:"used"`
-	Capacity uint64 `json:"capacity"`
+	Used     int32  `json:"used"`
+	Capacity int32  `json:"capacity"`
 }
 
 func gatherDiskMetrics() ([]DiskMetrics, error) {
@@ -71,8 +71,13 @@ func gatherDiskMetrics() ([]DiskMetrics, error) {
 		if err != nil {
 			return nil, err
 		}
-		itDisk.Used = usage.Used / 1024 / 1024 / 1024
-		itDisk.Capacity = usage.Total / 1024 / 1024 / 1024
+		itDisk.Used = int32(usage.Used / 1024 / 1024 / 1024)
+		itDisk.Capacity = int32(usage.Total / 1024 / 1024 / 1024)
+		if itDisk.Capacity <= 0 || itDisk.Used <= 0 {
+			log.Debugf("Skipping disk %s. Total disk space is 0", partition.Device)
+			continue
+		}
+
 		diskMap[partition.Device] = itDisk
 		diskArr = append(diskArr, itDisk)
 	}
