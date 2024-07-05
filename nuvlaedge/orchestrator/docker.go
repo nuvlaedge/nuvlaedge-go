@@ -3,7 +3,6 @@ package orchestrator
 import (
 	"bufio"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/docker/docker/api/types"
@@ -30,14 +29,15 @@ const (
 )
 
 type ClusterData struct {
-	NodeId             string
-	NodeRole           string
-	ClusterId          string
-	ClusterManagers    []string
-	ClusterWorkers     []string
-	ClusterNodes       []string
-	ClusterNodeLabels  []map[string]string
-	ClusterJoinAddress string
+	NodeId              string
+	NodeRole            string
+	ClusterId           string
+	ClusterManagers     []string
+	ClusterWorkers      []string
+	ClusterNodes        []string
+	ClusterOrchestrator string
+	ClusterNodeLabels   []map[string]string
+	ClusterJoinAddress  string
 
 	DockerServerVersion     string
 	SwarmNodeCertExpiryDate string
@@ -110,6 +110,7 @@ func (sw *SwarmData) UpdateSwarmTokenManager() error {
 	ctx := context.Background()
 	swarm, err := sw.client.SwarmInspect(ctx)
 	if err != nil {
+		sw.SwarmTokenManager = ""
 		return err
 	}
 	sw.SwarmTokenManager = swarm.JoinTokens.Manager
@@ -121,6 +122,7 @@ func (sw *SwarmData) UpdateSwarmTokenWorker() error {
 	ctx := context.Background()
 	swarm, err := sw.client.SwarmInspect(ctx)
 	if err != nil {
+		sw.SwarmTokenWorker = ""
 		return err
 	}
 	sw.SwarmTokenWorker = swarm.JoinTokens.Worker
@@ -217,10 +219,12 @@ func (dc *DockerCoe) updateClusterData() error {
 	}
 	// TODO: Check if Swarm is active
 	if info.Swarm.LocalNodeState != "active" {
-		log.Debugf("Swarm is not active: %s", info.Swarm.LocalNodeState)
+		log.Infof("Swarm is not active: %s", info.Swarm.LocalNodeState)
+		dc.clusterData = &ClusterData{}
 		dc.clusterData.updated = time.Now()
 		return nil
 	}
+	dc.clusterData.ClusterOrchestrator = string(dc.GetCoeType())
 
 	// Gather node ID
 	dc.clusterData.NodeId = info.Swarm.NodeID
@@ -316,8 +320,6 @@ func (dc *DockerCoe) GetOrchestratorCredentials(attrs *neTypes.CommissioningAttr
 	log.Debugf("Retrieving orchestrator credentials...")
 	dc.swarmData.UpdateSwarmData()
 
-	b, _ := json.MarshalIndent(dc.swarmData, "", "  ")
-	log.Debugf("Swarm data: %s", string(b))
 	attrs.SwarmEndPoint = "local"
 	attrs.SwarmTokenManager = dc.swarmData.SwarmTokenManager
 	attrs.SwarmTokenWorker = dc.swarmData.SwarmTokenWorker
