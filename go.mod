@@ -11,7 +11,7 @@ require (
 	github.com/docker/docker v27.0.1-rc.1+incompatible
 	github.com/jackpal/gateway v1.0.14
 	github.com/msaf1980/go-stringutils v0.1.6
-	github.com/nuvla/api-client-go v0.7.9
+	github.com/nuvla/api-client-go v0.7.10
 	github.com/shirou/gopsutil/v3 v3.24.3
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.1
