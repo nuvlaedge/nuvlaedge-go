@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"errors"
+	"fmt"
 	nuvla "github.com/nuvla/api-client-go"
 	"github.com/nuvla/api-client-go/clients"
 	"github.com/nuvla/api-client-go/clients/resources"
@@ -71,6 +72,9 @@ func (j *JobBase) Init(coe orchestrator.Coe, enableLegacy bool, legacyImage stri
 	if isNotSupportedActionError(err) {
 		if !enableLegacy {
 			log.Infof("Legacy actions are disabled, cannot run unsupported job %s", j.JobId)
+			j.Client.SetStatusMessage(
+				fmt.Sprintf("NuvlaEdge-Go doesn't support action %s. "+
+					"Set env JOB_LEGACY_ENABLE=true to run unsopported actions in a separated container", j.JobResource.Action))
 			return nil, err
 		}
 		return NewContainerEngineJobFromBase(j, coe, legacyImage), nil
