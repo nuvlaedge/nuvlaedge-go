@@ -448,7 +448,7 @@ func (dc *DockerCoe) RunJobEngineContainer(conf *neTypes.LegacyJobConf) (string,
 	}
 
 	hostConf := &container.HostConfig{
-		AutoRemove: false,
+		AutoRemove: true,
 		Binds: []string{
 			"/var/run/docker.sock:/var/run/docker.sock:rw", // Bind mount Docker socket
 		},
