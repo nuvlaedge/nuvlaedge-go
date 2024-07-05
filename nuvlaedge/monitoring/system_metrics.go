@@ -48,8 +48,14 @@ func gatherDiskMetrics() ([]DiskMetrics, error) {
 		return nil, err
 	}
 	var diskArr []DiskMetrics
+	diskMap := make(map[string]DiskMetrics)
+
 	for _, partition := range partitions {
 		if !strings.HasPrefix(partition.Device, "/dev/") {
+			log.Debugf("Skipping partition %s", partition.Device)
+			continue
+		}
+		if _, ok := diskMap[partition.Device]; ok {
 			log.Debugf("Skipping partition %s", partition.Device)
 			continue
 		}
@@ -67,6 +73,7 @@ func gatherDiskMetrics() ([]DiskMetrics, error) {
 		}
 		itDisk.Used = usage.Used / 1024 / 1024
 		itDisk.Capacity = usage.Total / 1024 / 1024
+		diskMap[partition.Device] = itDisk
 		diskArr = append(diskArr, itDisk)
 	}
 	return diskArr, nil
