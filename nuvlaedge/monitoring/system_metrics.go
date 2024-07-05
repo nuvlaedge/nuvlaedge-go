@@ -71,8 +71,8 @@ func gatherDiskMetrics() ([]DiskMetrics, error) {
 		if err != nil {
 			return nil, err
 		}
-		itDisk.Used = usage.Used / 1024 / 1024
-		itDisk.Capacity = usage.Total / 1024 / 1024
+		itDisk.Used = usage.Used / 1024 / 1024 / 1024
+		itDisk.Capacity = usage.Total / 1024 / 1024 / 1024
 		diskMap[partition.Device] = itDisk
 		diskArr = append(diskArr, itDisk)
 	}
