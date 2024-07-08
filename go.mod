@@ -6,18 +6,18 @@ toolchain go1.22.2
 
 require (
 	github.com/compose-spec/compose-go/v2 v2.1.3
-	github.com/docker/cli v27.0.1-rc.1+incompatible
+	github.com/docker/cli v27.0.3+incompatible
 	github.com/docker/compose/v2 v2.28.1
-	github.com/docker/docker v27.0.1-rc.1+incompatible
-	github.com/jackpal/gateway v1.0.14
+	github.com/docker/docker v27.0.3+incompatible
+	github.com/jackpal/gateway v1.0.15
 	github.com/msaf1980/go-stringutils v0.1.6
 	github.com/nuvla/api-client-go v0.7.10
-	github.com/shirou/gopsutil/v3 v3.24.3
+	github.com/shirou/gopsutil/v3 v3.24.5
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
-	golang.org/x/sys v0.21.0
+	golang.org/x/sys v0.22.0
 )
 
 require (
@@ -188,13 +188,13 @@ require (
 	go.opentelemetry.io/proto/otlp v1.0.0 // indirect
 	go.uber.org/mock v0.4.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/crypto v0.22.0 // indirect
+	golang.org/x/crypto v0.23.0 // indirect
 	golang.org/x/exp v0.0.0-20240112132812-db7319d0e0e3 // indirect
-	golang.org/x/net v0.24.0 // indirect
+	golang.org/x/net v0.25.0 // indirect
 	golang.org/x/oauth2 v0.18.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
-	golang.org/x/term v0.19.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/term v0.20.0 // indirect
+	golang.org/x/text v0.15.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	google.golang.org/appengine v1.6.8 // indirect
 	google.golang.org/genproto v0.0.0-20240213162025-012b6fc9bca9 // indirect
