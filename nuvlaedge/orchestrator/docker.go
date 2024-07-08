@@ -407,7 +407,6 @@ func (dc *DockerCoe) GetInstallationParameters(parameters *resources.Installatio
 		if err != nil {
 			return err
 		}
-		log.Infof("Inspecting container: %v", inspect.Config.Labels)
 		parameters.ConfigFiles = strings.Split(inspect.Config.Labels["com.docker.compose.project.config_files"], ",")
 		parameters.ProjectName = inspect.Config.Labels["com.docker.compose.project"]
 		parameters.WorkingDir = inspect.Config.Labels["com.docker.compose.project.working_dir"]
