@@ -82,11 +82,11 @@ func (sw *SwarmData) UpdateSwarmData() {
 
 	wg.Add(len(sw.updaters))
 
-	for _, updater := range sw.updaters {
+	for k, updater := range sw.updaters {
 		go func(updater func() error) {
 			defer wg.Done()
 			if err := updater(); err != nil {
-				log.Errorf("Error updating swarm data: %s", err)
+				log.Errorf("[%s] Error updating swarm data: %s", k, err)
 			}
 		}(updater)
 	}
@@ -111,6 +111,10 @@ func (sw *SwarmData) UpdateSwarmTokenManager() error {
 	swarm, err := sw.client.SwarmInspect(ctx)
 	if err != nil {
 		sw.SwarmTokenManager = ""
+		if strings.Contains(err.Error(), "This node is not a swarm manager.") {
+			log.Infof("This node is not a swarm manager or swarm is disabled")
+			return nil
+		}
 		return err
 	}
 	sw.SwarmTokenManager = swarm.JoinTokens.Manager
@@ -123,6 +127,10 @@ func (sw *SwarmData) UpdateSwarmTokenWorker() error {
 	swarm, err := sw.client.SwarmInspect(ctx)
 	if err != nil {
 		sw.SwarmTokenWorker = ""
+		if strings.Contains(err.Error(), "This node is not a swarm manager.") {
+			log.Infof("This node is not a swarm manager or swarm is disabled")
+			return nil
+		}
 		return err
 	}
 	sw.SwarmTokenWorker = swarm.JoinTokens.Worker
