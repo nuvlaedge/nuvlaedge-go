@@ -12,6 +12,7 @@ import (
 	"github.com/nuvla/api-client-go/clients/resources"
 	log "github.com/sirupsen/logrus"
 	"nuvlaedge-go/nuvlaedge/common"
+	jobTypes "nuvlaedge-go/nuvlaedge/jobs/types"
 	"strings"
 )
 
@@ -29,6 +30,10 @@ type Compose struct {
 	composeProject *types.Project
 	composeService composeAPI.Service
 	dockerCli      *command.DockerCli
+}
+
+func (c *Compose) UpdateEngine(updatePayload *jobTypes.UpdateJobPayload) error {
+	return nil
 }
 
 func (c *Compose) StartDeployment() error {

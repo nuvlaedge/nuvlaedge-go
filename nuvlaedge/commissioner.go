@@ -116,7 +116,7 @@ func (c *Commissioner) SingleIteration() {
 }
 
 func (c *Commissioner) Run() {
-	log.Infof("Commissioner running...")
+	log.Infof("Commissioner started...")
 	tick := time.NewTicker(60 * time.Second)
 	defer tick.Stop()
 	for {

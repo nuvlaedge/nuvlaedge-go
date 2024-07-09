@@ -101,7 +101,7 @@ func (p *JobProcessor) processJob(j string) {
 		log.Errorf("Error running job %s: %s", j, err)
 		return
 	}
-	log.Infof("Running jobs %s... Success.", j)
+	log.Infof("Running job %s... Success.", j)
 
 }
 
