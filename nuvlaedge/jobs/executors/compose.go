@@ -33,6 +33,7 @@ type Compose struct {
 }
 
 func (c *Compose) UpdateEngine(updatePayload *jobTypes.UpdateJobPayload) error {
+
 	return nil
 }
 
