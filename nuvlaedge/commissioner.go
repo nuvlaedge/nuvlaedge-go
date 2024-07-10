@@ -2,13 +2,10 @@ package nuvlaedge
 
 import (
 	"context"
-	"encoding/json"
 	nuvla "github.com/nuvla/api-client-go/clients"
 	log "github.com/sirupsen/logrus"
 	"nuvlaedge-go/nuvlaedge/common"
 	"nuvlaedge-go/nuvlaedge/orchestrator"
-	"reflect"
-
 	"nuvlaedge-go/nuvlaedge/types"
 	"time"
 )
@@ -30,24 +27,13 @@ func NewCommissioner(ctx context.Context, nuvlaClient *nuvla.NuvlaEdgeClient, co
 	}
 }
 
-func (c *Commissioner) commission() error {
-	var mapData map[string]interface{}
-	d, err := json.Marshal(c.currentData)
-	if err != nil {
-		log.Errorf("Error marshaling commissioning data: %s", err)
-		return err
-	}
-	if err = json.Unmarshal(d, &mapData); err != nil {
-		log.Errorf("Error generating map commissioning data: %s", err)
-		return err
-	}
-	common.CleanMap(mapData)
-	if err = c.nuvlaClient.Commission(mapData); err != nil {
+func (c *Commissioner) commission(commissionData map[string]interface{}) error {
+	log.Infof("Commissioning with data: %v", commissionData)
+	if err := c.nuvlaClient.Commission(commissionData); err != nil {
 		log.Errorf("Error commissioning: %s", err)
 		return err
 	}
-	b, _ := json.MarshalIndent(mapData, "", "  ")
-	log.Infof("Commissioning successful with data %s", string(b))
+	log.Infof("Commissioned successfully")
 	return nil
 }
 
@@ -56,7 +42,8 @@ func (c *Commissioner) getClusterIdFromStatus() string {
 		log.Infof("NuvlaEdge status not available, cannot get cluster id")
 		return ""
 	}
-	resource, err := c.nuvlaClient.Get(c.nuvlaClient.NuvlaEdgeStatusId.String(), nil)
+	resource, err := c.nuvlaClient.Get(c.nuvlaClient.NuvlaEdgeStatusId.String(), []string{"node-id"})
+
 	if err != nil {
 		log.Errorf("Error getting NuvlaEdge status: %s", err)
 	}
@@ -71,6 +58,7 @@ func (c *Commissioner) updateData() {
 	if c.currentData == nil {
 		c.currentData = &types.CommissioningAttributes{}
 	}
+
 	// Updating cluster data from COE
 	clusterData, err := c.coeClient.GetClusterData()
 	if err != nil {
@@ -97,28 +85,33 @@ func (c *Commissioner) updateData() {
 	c.currentData.Capabilities = []string{"NUVLA_JOB_PULL", "NUVLA_HEARTBEAT"}
 }
 
-func (c *Commissioner) diffCommissioningAttributes() bool {
-	return true
-}
-
-func (c *Commissioner) needsCommission() bool {
+func (c *Commissioner) needsCommission() (map[string]interface{}, bool) {
 	if c.lastPayload == nil {
-		return true
+		c.lastPayload = &types.CommissioningAttributes{}
 	}
-	return !reflect.DeepEqual(c.currentData, c.lastPayload)
+
+	diff, del := common.GetStructDiff(*c.lastPayload, *c.currentData)
+	if len(del) > 0 {
+		diff["removed"] = del
+	}
+	if len(diff) == 0 {
+		return nil, false
+	}
+	return diff, true
 }
 
 func (c *Commissioner) SingleIteration() {
 	c.updateData()
 
-	if c.needsCommission() {
-		log.Infof("Commissioning %s", c.currentData)
-		if err := c.commission(); err != nil {
+	if data, ok := c.needsCommission(); ok {
+		if err := c.commission(data); err != nil {
 			log.Errorf("Error commissining with data %v: %s", c.currentData, err)
 		} else {
 			copied := *c.currentData
 			c.lastPayload = &copied
 		}
+	} else {
+		log.Infof("No need to commission")
 	}
 }
 

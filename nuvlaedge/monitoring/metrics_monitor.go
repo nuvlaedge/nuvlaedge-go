@@ -77,26 +77,13 @@ func (t *MetricsMonitor) GetStatus() string {
 	return string(j)
 }
 
-func (t *MetricsMonitor) GetNewFullStatus(status *resources.NuvlaEdgeStatus) error {
+func (t *MetricsMonitor) GetNewFullStatus() resources.NuvlaEdgeStatus {
 	// For debugging purposes, lets time the execution of this function
 	defer common.ExecutionTime(time.Now(), "GetNewStatus")
 	t.updateMutex.Lock()
 	defer t.updateMutex.Unlock()
 
-	b, err := json.Marshal(t.nuvlaEdgeStatus)
-	if err != nil {
-		log.Warnf("Error marshalling nuvlaEdgeStatus: %s", err)
-		log.Errorf("Cannot update status monitoring")
-		return err
-	}
-
-	err = json.Unmarshal(b, status)
-	if err != nil {
-		log.Warnf("Error unmarshalling nuvlaEdgeStatus: %s", err)
-		log.Errorf("Cannot update status monitoring")
-		return err
-	}
-	return nil
+	return *t.nuvlaEdgeStatus
 }
 
 func (t *MetricsMonitor) update() error {
@@ -162,7 +149,14 @@ func (t *MetricsMonitor) SetRefreshRate(newRate int) {
 
 func (t *MetricsMonitor) UpdaterOrchestrator(errChan chan<- error) {
 	log.Debug("Updating orchestrator")
-	t.nuvlaEdgeStatus.Orchestrator = string(t.coeClient.GetCoeType())
+	clusterData, err := t.coeClient.GetClusterData()
+	if err != nil {
+		t.nuvlaEdgeStatus.Orchestrator = ""
+		errChan <- err
+		return
+	}
+
+	t.nuvlaEdgeStatus.Orchestrator = clusterData.ClusterOrchestrator
 
 	errChan <- nil
 
@@ -359,6 +353,7 @@ func (t *MetricsMonitor) UpdaterStatus(errChan chan<- error) {
 }
 
 func (t *MetricsMonitor) UpdaterStatusNotes(errChan chan<- error) {
+	t.nuvlaEdgeStatus.StatusNotes = []string{}
 	errChan <- nil
 }
 

@@ -10,7 +10,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
-	"nuvlaedge-go/nuvlaedge/common"
 	"nuvlaedge-go/nuvlaedge/common/resources"
 	"nuvlaedge-go/nuvlaedge/orchestrator"
 	"path"
@@ -215,16 +214,16 @@ func (a *Agent) sendHeartBeat() error {
 func (a *Agent) sendTelemetry() error {
 	// Run the Agent
 	log.Infof("Preparing telemetry...")
-	status, err := a.telemetry.GetStatusToSend()
-	if err != nil {
-		log.Errorf("Error getting status to send: %s", err)
-		return err
-	}
+	status, del := a.telemetry.GetStatusToSend()
 	log.Infof("Preparing telemetry... Success.")
 
+	if len(del) == 0 {
+		del = nil
+	}
 	log.Infof("Sending telemetry...")
-	common.CleanMap(status)
-	res, err := a.client.Telemetry(status, nil)
+	log.Debugf("Sending a total of %d metrics", len(status))
+	log.Debugf("Deleting a total of %d metrics", len(del))
+	res, err := a.client.Telemetry(status, del)
 	if err != nil {
 		log.Errorf("Error sending telemetry: %s", err)
 		return err

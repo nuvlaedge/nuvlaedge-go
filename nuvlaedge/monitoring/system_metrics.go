@@ -1,116 +1,15 @@
 package monitoring
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/shirou/gopsutil/v3/cpu"
 	"github.com/shirou/gopsutil/v3/disk"
 	"github.com/shirou/gopsutil/v3/mem"
 	log "github.com/sirupsen/logrus"
-	"nuvlaedge-go/nuvlaedge/common"
 	"strings"
 	"sync"
 	"time"
 )
-
-type CpuMetrics struct {
-	Load  float64 `json:"load"`
-	Load1 float64 `json:"load-1"`
-	Load5 float64 `json:"load-5"`
-	//SystemCalls        int64   `json:"system-calls"`
-	Capacity int `json:"capacity"`
-	//Interrupts         int64   `json:"interrupts"`
-	Topic string `json:"topic"`
-	//SoftwareInterrupts int64   `json:"software-interrupts"`
-	//ContextSwitches    int64   `json:"context-switches"`
-
-	cpuUsageAccumulator *common.CircularBuffer
-	ctx                 context.Context
-	cancel              context.CancelFunc
-	once                *sync.Once
-}
-
-func NewCpuMetrics() *CpuMetrics {
-	ctx, cancel := context.WithCancel(context.Background())
-	c := &CpuMetrics{
-		Topic:               "cpu",
-		cpuUsageAccumulator: common.NewCircularBuffer(15 * 60),
-		once:                &sync.Once{},
-		ctx:                 ctx,
-		cancel:              cancel,
-	}
-	c.once.Do(c.Run)
-	return c
-}
-
-// Run starts the CPU metrics gathering for load, load-1 and load-5. Load represent a 15-min average
-func (c *CpuMetrics) Run() {
-	go func() {
-		for {
-			select {
-			case <-c.ctx.Done():
-				return
-			default:
-				percent, err := cpu.Percent(time.Second, false)
-				if err != nil {
-					log.Errorf("Error getting CPU percentage: %s", err)
-					c.cancel()
-					return
-				}
-				c.cpuUsageAccumulator.Add(percent[0])
-			}
-		}
-	}()
-}
-
-// healIfNeeded checks if the CPU metrics gathering is still running and restarts it if needed
-func (c *CpuMetrics) healIfNeeded() {
-	if c.ctx.Err() != nil {
-		log.Info("CPU metrics gathering is not running. Restarting...")
-		c.once = &sync.Once{}
-		c.ctx, c.cancel = context.WithCancel(context.Background())
-		c.once.Do(c.Run)
-	}
-}
-
-func (c *CpuMetrics) Update() error {
-	c.healIfNeeded()
-
-	// Get CPU load
-	loads1, err := c.cpuUsageAccumulator.GetLatestAvg(1 * 60)
-	if err != nil {
-		log.Errorf("Error getting CPU load-1: %s", err)
-		//return err
-	}
-	c.Load1 = loads1
-
-	loads5, err := c.cpuUsageAccumulator.GetLatestAvg(5 * 60)
-	if err != nil {
-		log.Errorf("Error getting CPU load-5: %s", err)
-		//return err
-	}
-	c.Load5 = loads5
-
-	loads15, err := c.cpuUsageAccumulator.GetLatestAvg(15 * 60)
-	if err != nil {
-		log.Errorf("Error getting CPU load-15: %s", err)
-		//return err
-	}
-	c.Load = loads15
-
-	// Get CPU count
-	cpuCount, err := cpu.Counts(false)
-	if err != nil {
-		return err
-	}
-	c.Capacity = cpuCount
-
-	// Get CPU interrupts
-	t, _ := cpu.Times(false)
-	log.Infof("CPU Times: %s", t[0])
-	return nil
-}
 
 type RamMetrics struct {
 	Used     uint64 `json:"used"`
@@ -138,8 +37,8 @@ func (r *RamMetrics) Update() error {
 type DiskMetrics struct {
 	Topic    string `json:"topic"`
 	Device   string `json:"device"`
-	Used     uint64 `json:"used"`
-	Capacity uint64 `json:"capacity"`
+	Used     int32  `json:"used"`
+	Capacity int32  `json:"capacity"`
 }
 
 func gatherDiskMetrics() ([]DiskMetrics, error) {
@@ -149,8 +48,14 @@ func gatherDiskMetrics() ([]DiskMetrics, error) {
 		return nil, err
 	}
 	var diskArr []DiskMetrics
+	diskMap := make(map[string]DiskMetrics)
+
 	for _, partition := range partitions {
 		if !strings.HasPrefix(partition.Device, "/dev/") {
+			log.Debugf("Skipping partition %s", partition.Device)
+			continue
+		}
+		if _, ok := diskMap[partition.Device]; ok {
 			log.Debugf("Skipping partition %s", partition.Device)
 			continue
 		}
@@ -166,8 +71,14 @@ func gatherDiskMetrics() ([]DiskMetrics, error) {
 		if err != nil {
 			return nil, err
 		}
-		itDisk.Used = usage.Used / 1024 / 1024
-		itDisk.Capacity = usage.Total / 1024 / 1024
+		itDisk.Used = int32(usage.Used / 1024 / 1024 / 1024)
+		itDisk.Capacity = int32(usage.Total / 1024 / 1024 / 1024)
+		if itDisk.Capacity <= 0 || itDisk.Used <= 0 {
+			log.Debugf("Skipping disk %s. Total disk space is 0", partition.Device)
+			continue
+		}
+
+		diskMap[partition.Device] = itDisk
 		diskArr = append(diskArr, itDisk)
 	}
 	return diskArr, nil
@@ -185,8 +96,10 @@ type ResourceMetrics struct {
 }
 
 func NewResourceMetrics(network *NetworkMetricsUpdater, containers *ContainerStats) *ResourceMetrics {
+	cpuMetrics := NewCPUMetrics()
+	cpuMetrics.Run()
 	return &ResourceMetrics{
-		Cpu:         NewCpuMetrics(),
+		Cpu:         cpuMetrics,
 		Ram:         NewRamMetrics(),
 		networkInfo: network,
 		containers:  containers,

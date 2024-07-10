@@ -3,7 +3,6 @@ package orchestrator
 import (
 	"bufio"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/docker/docker/api/types"
@@ -31,14 +30,15 @@ const (
 )
 
 type ClusterData struct {
-	NodeId             string
-	NodeRole           string
-	ClusterId          string
-	ClusterManagers    []string
-	ClusterWorkers     []string
-	ClusterNodes       []string
-	ClusterNodeLabels  []string
-	ClusterJoinAddress string
+	NodeId              string
+	NodeRole            string
+	ClusterId           string
+	ClusterManagers     []string
+	ClusterWorkers      []string
+	ClusterNodes        []string
+	ClusterOrchestrator string
+	ClusterNodeLabels   []map[string]string
+	ClusterJoinAddress  string
 
 	DockerServerVersion     string
 	SwarmNodeCertExpiryDate string
@@ -83,11 +83,11 @@ func (sw *SwarmData) UpdateSwarmData() {
 
 	wg.Add(len(sw.updaters))
 
-	for _, updater := range sw.updaters {
+	for k, updater := range sw.updaters {
 		go func(updater func() error) {
 			defer wg.Done()
 			if err := updater(); err != nil {
-				log.Errorf("Error updating swarm data: %s", err)
+				log.Errorf("[%s] Error updating swarm data: %s", k, err)
 			}
 		}(updater)
 	}
@@ -111,6 +111,11 @@ func (sw *SwarmData) UpdateSwarmTokenManager() error {
 	ctx := context.Background()
 	swarm, err := sw.client.SwarmInspect(ctx)
 	if err != nil {
+		sw.SwarmTokenManager = ""
+		if strings.Contains(err.Error(), "This node is not a swarm manager.") {
+			log.Infof("This node is not a swarm manager or swarm is disabled")
+			return nil
+		}
 		return err
 	}
 	sw.SwarmTokenManager = swarm.JoinTokens.Manager
@@ -122,6 +127,11 @@ func (sw *SwarmData) UpdateSwarmTokenWorker() error {
 	ctx := context.Background()
 	swarm, err := sw.client.SwarmInspect(ctx)
 	if err != nil {
+		sw.SwarmTokenWorker = ""
+		if strings.Contains(err.Error(), "This node is not a swarm manager.") {
+			log.Infof("This node is not a swarm manager or swarm is disabled")
+			return nil
+		}
 		return err
 	}
 	sw.SwarmTokenWorker = swarm.JoinTokens.Worker
@@ -218,10 +228,12 @@ func (dc *DockerCoe) updateClusterData() error {
 	}
 	// TODO: Check if Swarm is active
 	if info.Swarm.LocalNodeState != "active" {
-		log.Debugf("Swarm is not active: %s", info.Swarm.LocalNodeState)
+		log.Infof("Swarm is not active: %s", info.Swarm.LocalNodeState)
+		dc.clusterData = &ClusterData{}
 		dc.clusterData.updated = time.Now()
 		return nil
 	}
+	dc.clusterData.ClusterOrchestrator = string(dc.GetCoeType())
 
 	// Gather node ID
 	dc.clusterData.NodeId = info.Swarm.NodeID
@@ -249,15 +261,25 @@ func (dc *DockerCoe) updateClusterData() error {
 	var workerIds []string
 	for _, node := range nodes {
 		nodeIds = append(nodeIds, node.ID)
+
 		if node.Spec.Role == "worker" {
 			workerIds = append(workerIds, node.ID)
+		}
+		if node.ID == info.Swarm.NodeID {
+			// TODO: Probably best to assign node role like this
+			dc.clusterData.NodeRole = string(node.Spec.Role)
+
+			dc.clusterData.ClusterNodeLabels = make([]map[string]string, 0)
+			for key, label := range node.Spec.Labels {
+				dc.clusterData.ClusterNodeLabels =
+					append(dc.clusterData.ClusterNodeLabels,
+						map[string]string{"name": key, "value": label})
+			}
 		}
 	}
 	dc.clusterData.ClusterNodes = nodeIds
 	dc.clusterData.ClusterWorkers = workerIds
 
-	// Gather cluster node labels
-	dc.clusterData.ClusterNodeLabels = info.Labels
 	// Gather node role
 	if info.Swarm.ControlAvailable {
 		dc.clusterData.NodeRole = "manager"
@@ -307,8 +329,6 @@ func (dc *DockerCoe) GetOrchestratorCredentials(attrs *neTypes.CommissioningAttr
 	log.Debugf("Retrieving orchestrator credentials...")
 	dc.swarmData.UpdateSwarmData()
 
-	b, _ := json.MarshalIndent(dc.swarmData, "", "  ")
-	log.Debugf("Swarm data: %s", string(b))
 	attrs.SwarmEndPoint = "local"
 	attrs.SwarmTokenManager = dc.swarmData.SwarmTokenManager
 	attrs.SwarmTokenWorker = dc.swarmData.SwarmTokenWorker
@@ -396,7 +416,6 @@ func (dc *DockerCoe) GetInstallationParameters(parameters *resources.Installatio
 		if err != nil {
 			return err
 		}
-		log.Infof("Inspecting container: %v", inspect.Config.Labels)
 		parameters.ConfigFiles = strings.Split(inspect.Config.Labels["com.docker.compose.project.config_files"], ",")
 		parameters.ProjectName = inspect.Config.Labels["com.docker.compose.project"]
 		parameters.WorkingDir = inspect.Config.Labels["com.docker.compose.project.working_dir"]
@@ -439,7 +458,7 @@ func (dc *DockerCoe) RunJobEngineContainer(conf *neTypes.LegacyJobConf) (string,
 	}
 
 	hostConf := &container.HostConfig{
-		AutoRemove: false,
+		AutoRemove: true,
 		Binds: []string{
 			"/var/run/docker.sock:/var/run/docker.sock:rw", // Bind mount Docker socket
 		},

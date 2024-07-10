@@ -171,7 +171,7 @@ func NewDeploymentStackServiceFromServiceSummary(s swarm.Service) *DeploymentSta
 	}
 
 	// Extract Node ID from Service Name
-	if strings.HasPrefix(s.Spec.Name, "deployment-") && strings.Contains(s.Spec.Name, "_") {
+	if strings.Contains(s.Spec.Name, "_") {
 		dService.NodeID = strings.Split(s.Spec.Name, "_")[1]
 	} else {
 		dService.NodeID = s.Spec.Name
