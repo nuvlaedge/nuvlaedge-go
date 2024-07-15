@@ -685,6 +685,7 @@ func (dc *DockerCoe) GetContainerStats(containerId string, statMap *interface{})
 		containerStats.MemPercent = memPercent
 		containerStats.NetInOut = fmt.Sprintf(FormatUsageLimit, rxBytes, txBytes)
 		containerStats.BulkInOut = fmt.Sprintf(FormatUsageLimit, diskIn, diskOut)
+		*statMap = containerStats
 	case resources.ContainerStatsNew:
 		containerStats.RestartCount = inspect.RestartCount
 		containerStats.CpuPercent = cpuPercent
@@ -695,6 +696,7 @@ func (dc *DockerCoe) GetContainerStats(containerId string, statMap *interface{})
 		containerStats.NetOut = txBytes
 		containerStats.DiskIn = diskIn
 		containerStats.DiskOut = diskOut
+		*statMap = containerStats
 	default:
 		return fmt.Errorf("unknown container stats type: %T", containerStats)
 	}
