@@ -85,11 +85,11 @@ func gatherDiskMetrics() ([]DiskMetrics, error) {
 }
 
 type ResourceMetrics struct {
-	ContainerStats []map[string]any `json:"container-stats,omitempty"`
-	Cpu            *CPUMetrics      `json:"cpu,omitempty"`
-	Ram            *RamMetrics      `json:"ram,omitempty"`
-	Disks          []DiskMetrics    `json:"disks,omitempty"`
-	NetStats       []IfaceNetStats  `json:"net-stats,omitempty"`
+	ContainerStats []interface{}   `json:"container-stats,omitempty"`
+	Cpu            *CPUMetrics     `json:"cpu,omitempty"`
+	Ram            *RamMetrics     `json:"ram,omitempty"`
+	Disks          []DiskMetrics   `json:"disks,omitempty"`
+	NetStats       []IfaceNetStats `json:"net-stats,omitempty"`
 
 	networkInfo *NetworkMetricsUpdater
 	containers  *ContainerStats

@@ -36,7 +36,7 @@ func NewNuvlaEdge(ctx context.Context, settings *Settings) *NuvlaEdge {
 	// MetricsMonitor
 	log.Infof("Creating MetricsMonitor with period %d", settings.Agent.TelemetryPeriod)
 
-	telemetry := NewTelemetry(coeClient, settings.Agent.TelemetryPeriod)
+	telemetry := NewTelemetry(coeClient, settings.Agent.TelemetryPeriod, settings.Agent.NuvlaEndpoint)
 
 	// jobChan: Agent -> JobProcessor
 	jobChan := make(chan string, 10)

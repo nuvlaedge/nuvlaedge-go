@@ -583,27 +583,35 @@ func (dc *DockerCoe) WaitContainerFinish(containerId string, timeout time.Durati
 	return -1, nil
 }
 
-func (dc *DockerCoe) GetContainers() ([]map[string]interface{}, error) {
+func (dc *DockerCoe) GetContainers(oldVersion bool) ([]interface{}, error) {
 	containers, err := dc.client.ContainerList(context.Background(), container.ListOptions{All: true})
 	if err != nil {
 		return nil, err
 	}
-	var containerInfos []map[string]interface{}
+	var containerInfos []interface{}
 	for _, containerInfo := range containers {
-		var containerMap = make(map[string]interface{})
-		containerMap["id"] = containerInfo.ID
-		containerMap["name"] = strings.TrimPrefix(containerInfo.Names[0], "/")
-		containerMap["image"] = containerInfo.Image
-		containerMap["state"] = containerInfo.State
-		containerMap["status"] = containerInfo.Status
-		containerMap["created-at"] = time.Unix(containerInfo.Created, 0).Format(time.RFC3339)
-		containerInfos = append(containerInfos, containerMap)
+		if oldVersion {
+			var containerOldStat resources.ContainerStatsOld
+			containerOldStat.ContainerId = containerInfo.ID
+			containerOldStat.Name = strings.TrimPrefix(containerInfo.Names[0], "/")
+			containerOldStat.ContainerStatus = containerInfo.Status
+			containerInfos = append(containerInfos, containerOldStat)
+		} else {
+			var containerNewStat resources.ContainerStatsNew
+			containerNewStat.ContainerId = containerInfo.ID
+			containerNewStat.Name = strings.TrimPrefix(containerInfo.Names[0], "/")
+			containerNewStat.Image = containerInfo.Image
+			containerNewStat.State = containerInfo.State
+			containerNewStat.ContainerStatus = containerInfo.Status
+			containerNewStat.CreatedAt = time.Unix(containerInfo.Created, 0).Format(time.RFC3339)
+			containerInfos = append(containerInfos, containerNewStat)
+		}
 	}
 	log.Debugf("Got the Containers %v", containerInfos)
 	return containerInfos, nil
 }
 
-func (dc *DockerCoe) GetContainerStats(containerId string, statMap *map[string]interface{}) error {
+func (dc *DockerCoe) GetContainerStats(containerId string, statMap *interface{}) error {
 	stats, err := dc.client.ContainerStats(context.Background(), containerId, false)
 	if err != nil {
 		return fmt.Errorf("error getting container stats from docker: %s", err)
@@ -621,17 +629,26 @@ func (dc *DockerCoe) GetContainerStats(containerId string, statMap *map[string]i
 		return err
 	}
 
-	// Not in the server spec (yet)
-	// (*statMap)["cpu-capacity"] = stat.CPUStats.OnlineCPUs
+	inspect, err := dc.client.ContainerInspect(context.Background(), containerId)
+	if err != nil {
+		return fmt.Errorf("error inspecting container: %s", err)
+	}
 
-	(*statMap)["mem-usage"] = stat.MemoryStats.Usage
-	(*statMap)["mem-limit"] = stat.MemoryStats.Limit
 	cpuUsage := stat.CPUStats.CPUUsage.TotalUsage - stat.PreCPUStats.CPUUsage.TotalUsage
 	systemUsage := stat.CPUStats.SystemUsage - stat.PreCPUStats.SystemUsage
 
+	cpuPercent := 0.0
+	cpulimit := int(float64(inspect.HostConfig.NanoCPUs) / 1_000_000_000)
+	if systemUsage != 0 {
+		cpuPercent = (float64(cpuUsage) / float64(systemUsage)) * 100
+	}
+
+	var diskIn uint64 = 0
+	var diskOut uint64 = 0
+
 	if runtime.GOOS == "windows" {
-		(*statMap)["disk-in"] = stat.StorageStats.ReadSizeBytes
-		(*statMap)["disk-out"] = stat.StorageStats.WriteSizeBytes
+		diskIn = stat.StorageStats.ReadSizeBytes
+		diskOut = stat.StorageStats.WriteSizeBytes
 		cpuUsage *= 100
 	} else {
 		var blkIn, blkOut uint64 = 0, 0
@@ -642,8 +659,8 @@ func (dc *DockerCoe) GetContainerStats(containerId string, statMap *map[string]i
 				blkOut += blkStat.Value
 			}
 		}
-		(*statMap)["disk-in"] = blkIn
-		(*statMap)["disk-out"] = blkOut
+		diskIn = blkIn
+		diskOut = blkOut
 	}
 
 	var rxBytes uint64 = 0
@@ -653,22 +670,34 @@ func (dc *DockerCoe) GetContainerStats(containerId string, statMap *map[string]i
 		rxBytes += netStat.RxBytes
 		txBytes += netStat.TxBytes
 	}
-	(*statMap)["net-in"] = rxBytes
-	(*statMap)["net-out"] = txBytes
 
-	inspect, err := dc.client.ContainerInspect(context.Background(), containerId)
-	if err != nil {
-		return fmt.Errorf("error inspecting container: %s", err)
-	}
-	(*statMap)["restart-count"] = inspect.RestartCount
-	(*statMap)["cpu-limit"] = float64(inspect.HostConfig.NanoCPUs) / 1_000_000_000
-
-	cpuPercent := 0.0
-	if systemUsage != 0 {
-		cpuPercent = (float64(cpuUsage) / float64(systemUsage)) * 100
+	var memPercent float64 = 0.0
+	if stat.MemoryStats.Limit != 0 {
+		memPercent = (float64(stat.MemoryStats.Usage) / float64(stat.MemoryStats.Limit)) * 100
 	}
 
-	(*statMap)["cpu-usage"] = cpuPercent
+	const FormatUsageLimit = "%d / %d"
+	switch containerStats := (*statMap).(type) {
+	case *resources.ContainerStatsOld:
+		containerStats.RestartCount = inspect.RestartCount
+		containerStats.CpuPercent = cpuPercent
+		containerStats.MemUsageLimit = fmt.Sprintf(FormatUsageLimit, stat.MemoryStats.Usage, stat.MemoryStats.Limit)
+		containerStats.MemPercent = memPercent
+		containerStats.NetInOut = fmt.Sprintf(FormatUsageLimit, rxBytes, txBytes)
+		containerStats.BulkInOut = fmt.Sprintf(FormatUsageLimit, diskIn, diskOut)
+	case *resources.ContainerStatsNew:
+		containerStats.RestartCount = inspect.RestartCount
+		containerStats.CpuPercent = cpuPercent
+		containerStats.CpuCapacity = cpulimit
+		containerStats.MemUsage = stat.MemoryStats.Usage
+		containerStats.MemLimit = stat.MemoryStats.Limit
+		containerStats.NetIn = rxBytes
+		containerStats.NetOut = txBytes
+		containerStats.DiskIn = diskIn
+		containerStats.DiskOut = diskOut
+	default:
+		return fmt.Errorf("unknown container stats type: %T", containerStats)
+	}
 
 	return nil
 }

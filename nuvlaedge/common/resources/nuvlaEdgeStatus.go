@@ -39,7 +39,7 @@ type NuvlaEdgeStatus struct {
 	Resources map[string]any `json:"resources,omitempty"`
 
 	// Container Stats
-	ContainerStats []map[string]any `json:"container-stats,omitempty"`
+	ContainerStats []any `json:"container-stats,omitempty"`
 }
 
 type Vulnerabilities struct {
@@ -52,4 +52,35 @@ type InstallationParameters struct {
 	Environment []string `json:"environment,omitempty"`
 	WorkingDir  string   `json:"working-dir,omitempty"`
 	ConfigFiles []string `json:"config-files,omitempty"`
+}
+
+type ContainerStatsOld struct {
+	ContainerId     string  `json:"id,omitempty"`
+	Name            string  `json:"name,omitempty"`
+	ContainerStatus string  `json:"container-status,omitempty"`
+	CpuPercent      float64 `json:"cpu-percent,omitempty"`
+	MemUsageLimit   string  `json:"mem-usage-limit,omitempty"`
+	MemPercent      float64 `json:"mem-percent,omitempty"`
+	NetInOut        string  `json:"net-in-out,omitempty"`
+	BulkInOut       string  `json:"bulk-in-out,omitempty"`
+	RestartCount    int     `json:"restart-count,omitempty"`
+}
+
+type ContainerStatsNew struct {
+	ContainerId     string  `json:"id,omitempty"`
+	Name            string  `json:"name,omitempty"`
+	ContainerStatus string  `json:"status,omitempty"`
+	CpuPercent      float64 `json:"cpu-percent,omitempty"`
+	CpuCapacity     int     `json:"cpu-capacity,omitempty"`
+	MemUsage        uint64  `json:"mem-usage,omitempty"`
+	MemLimit        uint64  `json:"mem-limit,omitempty"`
+	NetIn           uint64  `json:"net-in,omitempty"`
+	NetOut          uint64  `json:"net-out,omitempty"`
+	DiskIn          uint64  `json:"disk-in,omitempty"`
+	DiskOut         uint64  `json:"disk-out,omitempty"`
+	BulkInOut       string  `json:"bulk-in-out,omitempty"`
+	RestartCount    int     `json:"restart-count,omitempty"`
+	State           string  `json:"state,omitempty"`
+	CreatedAt       string  `json:"created-at,omitempty"`
+	Image           string  `json:"image,omitempty"`
 }

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/shirou/gopsutil/v3/host"
 	log "github.com/sirupsen/logrus"
+	"io"
+	"net/http"
 	"nuvlaedge-go/nuvlaedge/common"
 	"nuvlaedge-go/nuvlaedge/common/resources"
 	"nuvlaedge-go/nuvlaedge/orchestrator"
@@ -12,6 +14,7 @@ import (
 	"os"
 	"reflect"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 )
@@ -44,12 +47,51 @@ type MetricsMonitor struct {
 	refreshRate int
 }
 
+func checkOldOrNewNuvlaStatus(nuvlaEndPoint *string) int {
+	// Get the version of the NuvlaEdgeStatus
+	// Return whether old (1) or new version (2)
+	// Default is old version (1)
+	resp, err := http.Get(*nuvlaEndPoint + "/api/resource-metadata/nuvlabox-status-2")
+	if err != nil {
+		log.Errorf("Error getting NuvlaEdgeStatus metadata: %s", err)
+		return 1
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Errorf("Error closing response body: %s", err)
+		}
+	}(resp.Body)
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Errorf("Error reading response body: %s", err)
+		return 1
+	}
+
+	bodyString := string(bodyBytes)
+	var oldNetInKey bool = strings.Contains(bodyString, "net-in-out")
+	var newNetInKey bool = strings.Contains(bodyString, "net-in")
+	var newNetOutKey bool = strings.Contains(bodyString, "net-out")
+
+	if !oldNetInKey {
+		if newNetInKey && newNetOutKey {
+			return 2
+		}
+		return 1
+	} else {
+		return 1
+	}
+}
+
 func NewMetricsMonitor(
 	coeClient orchestrator.Coe,
-	refreshRate int) *MetricsMonitor {
+	refreshRate int,
+	endPoint string) *MetricsMonitor {
 
 	networkUpdater := NewNetworkMetricsUpdater()
-	containerUpdater := NewContainerStats(&coeClient, refreshRate)
+
+	containerUpdater := NewContainerStats(&coeClient, refreshRate, checkOldOrNewNuvlaStatus(&endPoint) == 1)
 
 	t := &MetricsMonitor{
 		nuvlaEdgeStatus:         &resources.NuvlaEdgeStatus{},
