@@ -678,14 +678,14 @@ func (dc *DockerCoe) GetContainerStats(containerId string, statMap *interface{})
 
 	const FormatUsageLimit = "%d / %d"
 	switch containerStats := (*statMap).(type) {
-	case *resources.ContainerStatsOld:
+	case resources.ContainerStatsOld:
 		containerStats.RestartCount = inspect.RestartCount
 		containerStats.CpuPercent = cpuPercent
 		containerStats.MemUsageLimit = fmt.Sprintf(FormatUsageLimit, stat.MemoryStats.Usage, stat.MemoryStats.Limit)
 		containerStats.MemPercent = memPercent
 		containerStats.NetInOut = fmt.Sprintf(FormatUsageLimit, rxBytes, txBytes)
 		containerStats.BulkInOut = fmt.Sprintf(FormatUsageLimit, diskIn, diskOut)
-	case *resources.ContainerStatsNew:
+	case resources.ContainerStatsNew:
 		containerStats.RestartCount = inspect.RestartCount
 		containerStats.CpuPercent = cpuPercent
 		containerStats.CpuCapacity = cpulimit
