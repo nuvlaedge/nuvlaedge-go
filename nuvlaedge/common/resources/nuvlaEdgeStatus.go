@@ -58,11 +58,11 @@ type ContainerStatsOld struct {
 	ContainerId     string  `json:"id,omitempty"`
 	Name            string  `json:"name,omitempty"`
 	ContainerStatus string  `json:"container-status,omitempty"`
-	CpuPercent      float64 `json:"cpu-percent,omitempty"`
+	CpuPercent      string  `json:"cpu-percent,omitempty"`
 	MemUsageLimit   string  `json:"mem-usage-limit,omitempty"`
-	MemPercent      float64 `json:"mem-percent,omitempty"`
+	MemPercent      string  `json:"mem-percent,omitempty"`
 	NetInOut        string  `json:"net-in-out,omitempty"`
-	BulkInOut       string  `json:"bulk-in-out,omitempty"`
+	BlkInOut        string  `json:"blk-in-out,omitempty"`
 	RestartCount    int     `json:"restart-count,omitempty"`
 }
 
@@ -70,15 +70,14 @@ type ContainerStatsNew struct {
 	ContainerId     string  `json:"id,omitempty"`
 	Name            string  `json:"name,omitempty"`
 	ContainerStatus string  `json:"status,omitempty"`
-	CpuPercent      float64 `json:"cpu-percent,omitempty"`
-	CpuCapacity     int     `json:"cpu-capacity,omitempty"`
+	CpuUsage        float64 `json:"cpu-usage,omitempty"`
+	CpuLimit        float64 `json:"cpu-limit,omitempty"`
 	MemUsage        uint64  `json:"mem-usage,omitempty"`
 	MemLimit        uint64  `json:"mem-limit,omitempty"`
 	NetIn           uint64  `json:"net-in,omitempty"`
 	NetOut          uint64  `json:"net-out,omitempty"`
 	DiskIn          uint64  `json:"disk-in,omitempty"`
 	DiskOut         uint64  `json:"disk-out,omitempty"`
-	BulkInOut       string  `json:"bulk-in-out,omitempty"`
 	RestartCount    int     `json:"restart-count,omitempty"`
 	State           string  `json:"state,omitempty"`
 	CreatedAt       string  `json:"created-at,omitempty"`

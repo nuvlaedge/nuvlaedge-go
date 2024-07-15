@@ -638,7 +638,7 @@ func (dc *DockerCoe) GetContainerStats(containerId string, statMap *interface{})
 	systemUsage := stat.CPUStats.SystemUsage - stat.PreCPUStats.SystemUsage
 
 	cpuPercent := 0.0
-	cpulimit := int(float64(inspect.HostConfig.NanoCPUs) / 1_000_000_000)
+	cpulimit := float64(inspect.HostConfig.NanoCPUs) / 1_000_000_000
 	if systemUsage != 0 {
 		cpuPercent = (float64(cpuUsage) / float64(systemUsage)) * 100
 	}
@@ -680,16 +680,16 @@ func (dc *DockerCoe) GetContainerStats(containerId string, statMap *interface{})
 	switch containerStats := (*statMap).(type) {
 	case resources.ContainerStatsOld:
 		containerStats.RestartCount = inspect.RestartCount
-		containerStats.CpuPercent = cpuPercent
+		containerStats.CpuPercent = fmt.Sprintf("%.2f", cpuPercent)
 		containerStats.MemUsageLimit = fmt.Sprintf(FormatUsageLimit, stat.MemoryStats.Usage, stat.MemoryStats.Limit)
-		containerStats.MemPercent = memPercent
+		containerStats.MemPercent = fmt.Sprintf("%.2f", memPercent)
 		containerStats.NetInOut = fmt.Sprintf(FormatUsageLimit, rxBytes, txBytes)
-		containerStats.BulkInOut = fmt.Sprintf(FormatUsageLimit, diskIn, diskOut)
+		containerStats.BlkInOut = fmt.Sprintf(FormatUsageLimit, diskIn, diskOut)
 		*statMap = containerStats
 	case resources.ContainerStatsNew:
 		containerStats.RestartCount = inspect.RestartCount
-		containerStats.CpuPercent = cpuPercent
-		containerStats.CpuCapacity = cpulimit
+		containerStats.CpuUsage = cpuPercent
+		containerStats.CpuLimit = cpulimit
 		containerStats.MemUsage = stat.MemoryStats.Usage
 		containerStats.MemLimit = stat.MemoryStats.Limit
 		containerStats.NetIn = rxBytes
