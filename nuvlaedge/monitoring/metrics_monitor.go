@@ -47,14 +47,14 @@ type MetricsMonitor struct {
 	refreshRate int
 }
 
-func checkOldOrNewNuvlaStatus(nuvlaEndPoint *string) int {
+func checkSupportNewContainerStats(nuvlaEndPoint *string) bool {
 	// Get the version of the NuvlaEdgeStatus
 	// Return whether old (1) or new version (2)
 	// Default is old version (1)
 	resp, err := http.Get(*nuvlaEndPoint + "/api/resource-metadata/nuvlabox-status-2")
 	if err != nil {
 		log.Errorf("Error getting NuvlaEdgeStatus metadata: %s", err)
-		return 1
+		return true
 	}
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
@@ -66,22 +66,11 @@ func checkOldOrNewNuvlaStatus(nuvlaEndPoint *string) int {
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Errorf("Error reading response body: %s", err)
-		return 1
+		return true
 	}
-
 	bodyString := string(bodyBytes)
-	var oldNetInKey bool = strings.Contains(bodyString, "net-in-out")
-	var newNetInKey bool = strings.Contains(bodyString, "net-in")
-	var newNetOutKey bool = strings.Contains(bodyString, "net-out")
 
-	if !oldNetInKey {
-		if newNetInKey && newNetOutKey {
-			return 2
-		}
-		return 1
-	} else {
-		return 1
-	}
+	return strings.Contains(bodyString, "cpu-usage")
 }
 
 func NewMetricsMonitor(
@@ -91,7 +80,7 @@ func NewMetricsMonitor(
 
 	networkUpdater := NewNetworkMetricsUpdater()
 
-	containerUpdater := NewContainerStats(&coeClient, refreshRate, checkOldOrNewNuvlaStatus(&endPoint) == 1)
+	containerUpdater := NewContainerStats(&coeClient, refreshRate, !checkSupportNewContainerStats(&endPoint))
 
 	t := &MetricsMonitor{
 		nuvlaEdgeStatus:         &resources.NuvlaEdgeStatus{},
