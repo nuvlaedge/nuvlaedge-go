@@ -54,6 +54,7 @@ func (cs *ContainerStats) getContainerStats() error {
 			log.Errorf("Error getting container information")
 			continue
 		}
+		log.Debugf("Getting stats for container: %v", containerInfo)
 		containerId, err := GetContainerId(&containerInfo)
 		if err != nil {
 			log.Errorf("Error getting container id: %s", err)
@@ -70,6 +71,7 @@ func (cs *ContainerStats) getContainerStats() error {
 			}
 			return nil
 		}
+		log.Debugf("Container Stats Got for GetContainerStats: %v", containerInfo)
 		cs.stats = append(cs.stats, containerInfo)
 	}
 	return nil
