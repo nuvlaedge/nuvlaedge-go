@@ -3,6 +3,7 @@ package monitoring
 import (
 	"encoding/json"
 	"fmt"
+	nuvla "github.com/nuvla/api-client-go"
 	"github.com/shirou/gopsutil/v3/host"
 	log "github.com/sirupsen/logrus"
 	"io"
@@ -51,7 +52,7 @@ func checkSupportNewContainerStats(nuvlaEndPoint *string) bool {
 	// Get the version of the NuvlaEdgeStatus
 	// Return whether old (1) or new version (2)
 	// Default is old version (1)
-	resp, err := http.Get(*nuvlaEndPoint + "/api/resource-metadata/nuvlabox-status-2")
+	resp, err := http.Get(nuvla.SanitiseEndpoint(*nuvlaEndPoint) + "/api/resource-metadata/nuvlabox-status-2")
 	if err != nil {
 		log.Errorf("Error getting NuvlaEdgeStatus metadata: %s", err)
 		return true
