@@ -5,7 +5,7 @@ go 1.22.0
 toolchain go1.22.2
 
 require (
-	github.com/compose-spec/compose-go/v2 v2.1.3
+	github.com/compose-spec/compose-go/v2 v2.1.4-0.20240708103555-327323ea44d4
 	github.com/docker/cli v27.0.3+incompatible
 	github.com/docker/compose/v2 v2.28.1
 	github.com/docker/docker v27.0.3+incompatible
@@ -19,6 +19,8 @@ require (
 	github.com/spf13/viper v1.19.0
 	golang.org/x/sys v0.22.0
 )
+
+replace github.com/docker/compose/v2 => github.com/SixSq/docker-compose/v2 v2.0.0-20240716115452-c08e5c845d89
 
 require (
 	dario.cat/mergo v1.0.0 // indirect
