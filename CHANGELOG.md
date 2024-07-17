@@ -1,5 +1,36 @@
 # Changelog
 
+
+## [2.1.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/2.0.0...2.1.0) (2024-07-16)
+
+
+### Features
+
+* Adds diff computation to both Telemetry and Commissioning attributes. Also adds the capacity of removing attributes for both operations. ([#73](https://github.com/nuvlaedge/nuvlaedge-go/issues/73)) ([ac7a2b6](https://github.com/nuvlaedge/nuvlaedge-go/commit/ac7a2b6949610466572b50f11f4979b1bfe35116))
+* Isolate nuvlaedge bin entrypoint ([#65](https://github.com/nuvlaedge/nuvlaedge-go/issues/65)) ([9faa4c3](https://github.com/nuvlaedge/nuvlaedge-go/commit/9faa4c37eac827551d87ed8582b50e5fbf52d6af))
+
+
+### Bug Fixes
+
+* Allow telemetry report to clean previous status notes ([#68](https://github.com/nuvlaedge/nuvlaedge-go/issues/68)) ([8f2fc2c](https://github.com/nuvlaedge/nuvlaedge-go/commit/8f2fc2c3c6be8eef720619c218e95ba87dc2b995))
+* AutoRemove job containers after executing job legacy ([#70](https://github.com/nuvlaedge/nuvlaedge-go/issues/70)) ([962de16](https://github.com/nuvlaedge/nuvlaedge-go/commit/962de16019091347f23617b1c2783b6f81c80c76))
+* **docker-compose:** add NE_IMAGE_* env vars and nuvlaedge.type=go label ([d366a52](https://github.com/nuvlaedge/nuvlaedge-go/commit/d366a5239246e22e6fa38bf104c35d27d876fcb3))
+* Fix binary release build ([c8293ce](https://github.com/nuvlaedge/nuvlaedge-go/commit/c8293ced01e896ba2f64bbe91381f4d44208bd90))
+* Fix deployment parameter names for stack deployments ([#71](https://github.com/nuvlaedge/nuvlaedge-go/issues/71)) ([662e242](https://github.com/nuvlaedge/nuvlaedge-go/commit/662e242f237ee7d5393acdc906108a47ea7b49c4))
+* Fix memory and Goroutine leaks from unclosed clients and response bodies. Add pprof debugging and listener server of dev builds.  ([#63](https://github.com/nuvlaedge/nuvlaedge-go/issues/63)) ([69cfbff](https://github.com/nuvlaedge/nuvlaedge-go/commit/69cfbff4dd73b6cce6c03a1b973936adeca3951b))
+* Fix memory leaks on telemetry ([#66](https://github.com/nuvlaedge/nuvlaedge-go/issues/66)) ([5a75d7b](https://github.com/nuvlaedge/nuvlaedge-go/commit/5a75d7b9f252a4467b64abe760fe018dcc9b2ae4))
+* Fix nuvlabox uuid/id input parameter to accept both cases ([#67](https://github.com/nuvlaedge/nuvlaedge-go/issues/67)) ([16bd8be](https://github.com/nuvlaedge/nuvlaedge-go/commit/16bd8be23f159fdc0b83a8c5e9302443a4f0e9c9))
+* Job processor lock nil pointer exception ([613051e](https://github.com/nuvlaedge/nuvlaedge-go/commit/613051ee0d3df55a55bfcb1f5494d5d746c9d922))
+* Jobs GoRoutines growing indefenetyly ([321338c](https://github.com/nuvlaedge/nuvlaedge-go/commit/321338c339079a3612e4cf983e96b39b6df22ff7))
+* Make disk metric report unique by device name ([#69](https://github.com/nuvlaedge/nuvlaedge-go/issues/69)) ([59ec19f](https://github.com/nuvlaedge/nuvlaedge-go/commit/59ec19fceabbfcbb191e5199bc5f11d8fbe989ad))
+
+
+### Minor Changes
+
+* Add custom sync Map for job processing ([483685d](https://github.com/nuvlaedge/nuvlaedge-go/commit/483685d86b68997a031c2ca39c4b7f5f4b73502f))
+* Add job message report when failed ([#72](https://github.com/nuvlaedge/nuvlaedge-go/issues/72)) ([2b20d04](https://github.com/nuvlaedge/nuvlaedge-go/commit/2b20d04eca75020057d00696e631f261f2bd51ee))
+* **docker-compose.yml:** add memory limits ([8f1ed1b](https://github.com/nuvlaedge/nuvlaedge-go/commit/8f1ed1b8162837fe86618050d40c4267c19a428c))
+
 ## [2.0.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/v0.10.0...2.0.0) (2024-06-13)
 
 
