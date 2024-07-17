@@ -3,8 +3,11 @@ package monitoring
 import (
 	"encoding/json"
 	"fmt"
+	nuvla "github.com/nuvla/api-client-go"
 	"github.com/shirou/gopsutil/v3/host"
 	log "github.com/sirupsen/logrus"
+	"io"
+	"net/http"
 	"nuvlaedge-go/nuvlaedge/common"
 	"nuvlaedge-go/nuvlaedge/common/resources"
 	"nuvlaedge-go/nuvlaedge/orchestrator"
@@ -12,6 +15,7 @@ import (
 	"os"
 	"reflect"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 )
@@ -44,16 +48,46 @@ type MetricsMonitor struct {
 	refreshRate int
 }
 
+func checkSupportNewContainerStats(nuvlaEndPoint *string) bool {
+	// Get the version of the NuvlaEdgeStatus
+	// Return whether old (1) or new version (2)
+	// Default is old version (1)
+	resp, err := http.Get(nuvla.SanitiseEndpoint(*nuvlaEndPoint) + "/api/resource-metadata/nuvlabox-status-2")
+	if err != nil {
+		log.Errorf("Error getting NuvlaEdgeStatus metadata: %s", err)
+		return true
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Errorf("Error closing response body: %s", err)
+		}
+	}(resp.Body)
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Errorf("Error reading response body: %s", err)
+		return true
+	}
+	bodyString := string(bodyBytes)
+
+	return strings.Contains(bodyString, "cpu-usage")
+}
+
 func NewMetricsMonitor(
 	coeClient orchestrator.Coe,
-	refreshRate int) *MetricsMonitor {
+	refreshRate int,
+	endPoint string) *MetricsMonitor {
 
 	networkUpdater := NewNetworkMetricsUpdater()
+
+	containerUpdater := NewContainerStats(&coeClient, refreshRate, !checkSupportNewContainerStats(&endPoint))
+
 	t := &MetricsMonitor{
 		nuvlaEdgeStatus:         &resources.NuvlaEdgeStatus{},
 		updateFuncs:             make(map[string]UpdaterFunction),
 		coeClient:               coeClient,
-		resourcesMetricsUpdater: NewResourceMetricsUpdater(networkUpdater),
+		resourcesMetricsUpdater: NewResourceMetricsUpdater(networkUpdater, containerUpdater),
 		networkMetricsUpdater:   networkUpdater,
 		refreshRate:             refreshRate,
 		updateMutex:             &sync.Mutex{},

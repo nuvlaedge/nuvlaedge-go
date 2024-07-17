@@ -12,8 +12,8 @@ type Telemetry struct {
 	metricsMonitor      *monitoring.MetricsMonitor
 }
 
-func NewTelemetry(coeClient orchestrator.Coe, updatePeriod int) *Telemetry {
-	metricsMonitor := monitoring.NewMetricsMonitor(coeClient, updatePeriod)
+func NewTelemetry(coeClient orchestrator.Coe, updatePeriod int, endpoint string) *Telemetry {
+	metricsMonitor := monitoring.NewMetricsMonitor(coeClient, updatePeriod, endpoint)
 
 	return &Telemetry{
 		metricsMonitor: metricsMonitor,

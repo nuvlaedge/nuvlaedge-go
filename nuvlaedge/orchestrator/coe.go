@@ -30,6 +30,8 @@ type Coe interface {
 
 	GetClusterData() (*ClusterData, error)
 	GetOrchestratorCredentials(*types.CommissioningAttributes) error
+	GetContainers(oldVersion bool) ([]interface{}, error)
+	GetContainerStats(containerId string, statMap *interface{}) error
 
 	GetInstallationParameters(parameters *resources.InstallationParameters) error
 	TelemetryStart() error
