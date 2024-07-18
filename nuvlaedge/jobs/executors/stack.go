@@ -49,9 +49,7 @@ func (s *Stack) StartDeployment() error {
 	if err := s.setUpFiles(); err != nil {
 		return err
 	}
-	for _, s := range s.stackConfig.Services {
-		log.Infof("Starting Stack service %s", s.Name)
-	}
+
 	defer s.CleanUp()
 
 	// Start deployment
