@@ -73,9 +73,6 @@ func (c *Compose) GetServices() ([]DeploymentService, error) {
 	containers, err := c.composeService.Ps(context.Background(), c.projectName, composeAPI.PsOptions{
 		All: true,
 	})
-	for _, container := range containers {
-		log.Infof("Container: %s", container.Name)
-	}
 
 	if err != nil {
 		log.Infof("Error getting services: %s", err)
