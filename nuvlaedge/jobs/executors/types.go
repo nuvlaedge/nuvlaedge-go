@@ -7,7 +7,8 @@ import (
 	"github.com/docker/compose/v2/pkg/api"
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/nuvla/api-client-go/clients/resources"
-	"nuvlaedge-go/nuvlaedge/errors"
+	neerrors "nuvlaedge-go/nuvlaedge/errors"
+	"nuvlaedge-go/nuvlaedge/jobs/types"
 	"strconv"
 	"strings"
 )
@@ -28,7 +29,7 @@ func GetRebooter(needsRoot bool) (Rebooter, error) {
 		return &Kubernetes{}, nil
 	case HostMode:
 		if needsRoot && !IsSuperUser() {
-			return nil, errors.NewActionRequiresSudoError("reboot")
+			return nil, neerrors.NewActionRequiresSudoError("reboot")
 		}
 		return &Host{}, nil
 	}
@@ -67,12 +68,12 @@ func GetDeployer(resource *resources.DeploymentResource) (Deployer, error) {
 				context:            context.Background(),
 			}, nil
 		default:
-			return nil, errors.NewNotImplementedActionError(compatibility)
+			return nil, neerrors.NewNotImplementedActionError(compatibility)
 		}
 	case "application_kubernetes":
-		return nil, errors.NewNotImplementedActionError("kubernetes deployment")
+		return nil, neerrors.NewNotImplementedActionError("kubernetes deployment")
 	default:
-		return nil, errors.NewNotImplementedActionError(subType)
+		return nil, neerrors.NewNotImplementedActionError(subType)
 	}
 }
 
@@ -192,4 +193,22 @@ func NewDeploymentStackServiceFromServiceSummary(s swarm.Service) *DeploymentSta
 type SSHKeyManager interface {
 	InstallSSHKey(sshPub, user string) error
 	RevokeSSKKey(sshkey string) error
+}
+
+type EngineUpdater interface {
+	Executor
+	UpdateEngine(updatePayload *types.UpdateJobPayload) error
+}
+
+func GetEngineUpdater() (EngineUpdater, error) {
+	switch WhereAmI() {
+	case DockerMode:
+		return &Compose{}, nil
+	//case KubernetesMode:
+	//	return &Kubernetes{}, nil
+	//case HostMode:
+	//	return &Host{}, nil
+	default:
+		return nil, fmt.Errorf("no executor found for mode %s", WhereAmI())
+	}
 }

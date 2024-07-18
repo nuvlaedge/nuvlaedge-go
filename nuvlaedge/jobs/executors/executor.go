@@ -18,4 +18,5 @@ const (
 	ComposeExecutorName ExecutorName = "compose"
 	HostExecutorName    ExecutorName = "host"
 	StackExecutorName   ExecutorName = "stack"
+	DockerExecutorName  ExecutorName = "docker"
 )

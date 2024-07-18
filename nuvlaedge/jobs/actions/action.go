@@ -39,6 +39,7 @@ const (
 	StartDeploymentActionName  ActionName = "start_deployment"
 	StateDeploymentActionName  ActionName = "deployment_state"
 	UpdateDeploymentActionName ActionName = "update_deployment"
+	UpdateNuvlaEdge            ActionName = "nuvlabox_update"
 	UnknownActionName          ActionName = "unknown"
 )
 
@@ -49,6 +50,7 @@ var ActionNameMap = map[ActionName]ActionName{
 	"deployment_state_10": StateDeploymentActionName,
 	"deployment_state_60": StateDeploymentActionName,
 	"update_deployment":   UpdateDeploymentActionName,
+	"nuvlabox_update":     UpdateNuvlaEdge,
 }
 
 func getActionNameFromString(action string) ActionName {
@@ -71,6 +73,8 @@ func GetAction(actionName string) (Action, error) {
 		return &DeploymentState{}, nil
 	case UpdateDeploymentActionName:
 		return &DeploymentUpdate{}, nil
+	case UpdateNuvlaEdge:
+		return &Update{}, nil
 	default:
 		return nil, errors.NewNotImplementedActionError(actionName)
 	}
