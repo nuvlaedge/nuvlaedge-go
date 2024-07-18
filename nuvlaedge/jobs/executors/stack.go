@@ -3,6 +3,7 @@ package executors
 import (
 	"context"
 	"fmt"
+	"github.com/compose-spec/compose-go/v2/types"
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/cli/cli/command/stack/loader"
 	"github.com/docker/cli/cli/command/stack/options"
@@ -45,13 +46,15 @@ func (s *Stack) StartDeployment() error {
 		return err
 	}
 
+	// Set up environment
+	envMap := getDefaultDeploymentEnvs(s.deploymentResource)
+	getEnvironmentMappingFromContent(envMap, s.deploymentResource.Module.Content)
+
 	// Prepare config files. Cannot fail
-	if err := s.setUpFiles(); err != nil {
+	if err := s.setUpFiles(envMap); err != nil {
 		return err
 	}
-	for _, s := range s.stackConfig.Services {
-		log.Infof("Starting Stack service %s", s.Name)
-	}
+
 	defer s.CleanUp()
 
 	// Start deployment
@@ -145,7 +148,7 @@ func (s *Stack) setUpStackOpts() {
 	}
 }
 
-func (s *Stack) setUpFiles() error {
+func (s *Stack) setUpFiles(envs types.Mapping) error {
 	if s.deploymentResource.Module.Content.DockerCompose == "" {
 		return fmt.Errorf("no docker-compose file provided")
 	}
@@ -157,9 +160,8 @@ func (s *Stack) setUpFiles() error {
 
 	s.composeFile = filepath.Join(s.tempDir, "docker-compose.yml")
 
-	contentWithEnv := ExpandEnvMapWithDefaults(
-		s.deploymentResource.Module.Content.DockerCompose,
-		getEnvironmentMappingFromContent(s.deploymentResource.Module.Content))
+	contentWithEnv := ExpandEnvMapWithDefaults(s.deploymentResource.Module.Content.DockerCompose, envs)
+
 	log.Infof("Writing docker-compose file to %s", contentWithEnv)
 	err := common.WriteContentToFile(contentWithEnv, s.composeFile)
 	if err != nil {

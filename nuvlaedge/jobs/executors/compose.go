@@ -12,7 +12,9 @@ import (
 	"github.com/nuvla/api-client-go/clients/resources"
 	log "github.com/sirupsen/logrus"
 	"nuvlaedge-go/nuvlaedge/common"
+	"strconv"
 	"strings"
+	"time"
 )
 
 type Compose struct {
@@ -125,18 +127,50 @@ func (c *Compose) setUpProjectConfig() error {
 	}
 
 	if c.deploymentResource.Module.Content.EnvironmentVariables != nil {
-		c.composeConfig.Environment = getEnvironmentMappingFromContent(c.deploymentResource.Module.Content)
+		envMap := getDefaultDeploymentEnvs(c.deploymentResource)
+		getEnvironmentMappingFromContent(envMap, c.deploymentResource.Module.Content)
+		c.composeConfig.Environment = envMap
 	}
 	return nil
 }
 
-func getEnvironmentMappingFromContent(content *resources.ModuleApplicationResource) types.Mapping {
-	envMap := make(types.Mapping)
+func getEnvironmentMappingFromContent(envMap types.Mapping, content *resources.ModuleApplicationResource) {
+
 	for _, e := range content.EnvironmentVariables {
 		if e.Value != "" {
 			envMap[e.Name] = e.Value
 		}
 	}
+}
+
+func getDefaultDeploymentEnvs(resource *resources.DeploymentResource) types.Mapping {
+	envMap := make(types.Mapping)
+	uuid := strings.Split(resource.Id, "/")
+	if len(uuid) == 2 {
+		envMap["NUVLA_DEPLOYMENT_ID"] = uuid[1]
+	} else {
+		log.Warnf("Invalid Nuvla ID: %s", resource.Id)
+	}
+
+	envMap["NUVLA_DEPLOYMENT_ID"] = resource.Id
+	envMap["NUVLA_API_KEY"] = resource.ApiCredentials.ApiKey
+	envMap["NUVLA_API_SECRET"] = resource.ApiCredentials.ApiSecret
+	envMap["NUVLA_ENDPOINT"] = resource.ApiEndpoint
+
+	// Time vars
+	currentTime := time.Now()
+	envMap["TIMESTAMP"] = strconv.FormatInt(currentTime.Unix(), 10)
+	envMap["DATE_TIME"] = currentTime.Format("20060102150405") // With format: %y%m%d%H%M%S
+	// TODO: Update deployment resource to have DeploymentSet field and uncomment
+	//if resource.deploymentResource.DeploymentSet != "" {
+	//	envMap["NUVLA_DEPLOYMENT_GROUP_ID"] = resource.deploymentResource.DeploymentSet
+	//	gUUID := strings.Split(resource.deploymentResource.DeploymentSet, "/")
+	//	if len(gUUID) == 2 {
+	//		envMap["NUVLA_DEPLOYMENT_GROUP_ID"] = gUUID[1]
+	//	} else {
+	//		log.Warnf("Invalid Nuvla ID: %s", resource.deploymentResource.DeploymentSet)
+	//	}
+	//}
 	return envMap
 }
 
