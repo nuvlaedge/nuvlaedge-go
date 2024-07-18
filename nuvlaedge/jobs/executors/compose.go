@@ -12,6 +12,7 @@ import (
 	"github.com/nuvla/api-client-go/clients/resources"
 	log "github.com/sirupsen/logrus"
 	"nuvlaedge-go/nuvlaedge/common"
+	"path/filepath"
 	"strings"
 )
 
@@ -126,6 +127,16 @@ func (c *Compose) setUpProjectConfig() error {
 
 	if c.deploymentResource.Module.Content.EnvironmentVariables != nil {
 		c.composeConfig.Environment = getEnvironmentMappingFromContent(c.deploymentResource.Module.Content)
+	}
+
+	if c.deploymentResource.Module.Content.Files != nil {
+		log.Infof("Processing config files")
+		for _, f := range c.deploymentResource.Module.Content.Files {
+			err = common.WriteContentToFile(f.FileContent, filepath.Join(c.tempDir, f.FileName))
+			if err != nil {
+				log.Errorf("Error writing file %s: %s", f.FileName, err)
+			}
+		}
 	}
 	return nil
 }
