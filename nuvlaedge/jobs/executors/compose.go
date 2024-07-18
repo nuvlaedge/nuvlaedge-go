@@ -70,7 +70,7 @@ func (c *Compose) GetServices() ([]DeploymentService, error) {
 	}
 	defer c.dockerCli.Client().Close()
 
-	containers, err := c.composeService.Ps(c.ctx, c.projectName, composeAPI.PsOptions{
+	containers, err := c.composeService.Ps(context.Background(), c.projectName, composeAPI.PsOptions{
 		All: true,
 	})
 	for _, container := range containers {
