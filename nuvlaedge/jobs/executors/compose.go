@@ -13,6 +13,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"nuvlaedge-go/nuvlaedge/common"
 	"strconv"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -71,12 +72,9 @@ func (c *Compose) GetServices() ([]DeploymentService, error) {
 	}
 	defer c.dockerCli.Client().Close()
 
-	containers, err := c.composeService.Ps(c.ctx, c.projectName, composeAPI.PsOptions{
+	containers, err := c.composeService.Ps(context.Background(), c.projectName, composeAPI.PsOptions{
 		All: true,
 	})
-	for _, container := range containers {
-		log.Infof("Container: %s", container.Name)
-	}
 
 	if err != nil {
 		log.Infof("Error getting services: %s", err)
@@ -130,6 +128,16 @@ func (c *Compose) setUpProjectConfig() error {
 		envMap := getDefaultDeploymentEnvs(c.deploymentResource)
 		getEnvironmentMappingFromContent(envMap, c.deploymentResource.Module.Content)
 		c.composeConfig.Environment = envMap
+	}
+
+	if c.deploymentResource.Module.Content.Files != nil {
+		log.Infof("Processing config files")
+		for _, f := range c.deploymentResource.Module.Content.Files {
+			err = common.WriteContentToFile(f.FileContent, filepath.Join(c.tempDir, f.FileName))
+			if err != nil {
+				log.Errorf("Error writing file %s: %s", f.FileName, err)
+			}
+		}
 	}
 	return nil
 }
