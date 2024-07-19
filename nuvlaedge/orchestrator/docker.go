@@ -690,6 +690,7 @@ func (dc *DockerCoe) GetContainerStats(containerId string, statMap *interface{})
 		containerStats.RestartCount = inspect.RestartCount
 		containerStats.CpuUsage = cpuPercent
 		containerStats.CpuLimit = cpulimit
+		containerStats.CpuCapacity = stat.CPUStats.OnlineCPUs
 		containerStats.MemUsage = stat.MemoryStats.Usage
 		containerStats.MemLimit = stat.MemoryStats.Limit
 		containerStats.NetIn = rxBytes

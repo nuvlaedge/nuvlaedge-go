@@ -72,6 +72,7 @@ type ContainerStatsNew struct {
 	ContainerStatus string  `json:"status,omitempty"`
 	CpuUsage        float64 `json:"cpu-usage"`
 	CpuLimit        float64 `json:"cpu-limit,omitempty"`
+	CpuCapacity     uint32  `json:"cpu-capacity,omitempty"`
 	MemUsage        uint64  `json:"mem-usage"`
 	MemLimit        uint64  `json:"mem-limit"`
 	NetIn           uint64  `json:"net-in"`
