@@ -1,6 +1,26 @@
 # Changelog
 
 
+## [2.2.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/2.1.0...2.2.0) (2024-07-19)
+
+
+### Features
+
+* **compose:** Add config file support to docker compose executor ([#79](https://github.com/nuvlaedge/nuvlaedge-go/issues/79)) ([1d4ca3a](https://github.com/nuvlaedge/nuvlaedge-go/commit/1d4ca3a43277618d94e047d77db89ffc7dd0e248))
+* **telemetry:** add cpu-capacity to container-stats ([a190b62](https://github.com/nuvlaedge/nuvlaedge-go/commit/a190b628b9670d30faaf7c610c430476a9ce8da9))
+* **telemetry:** container stats ([#64](https://github.com/nuvlaedge/nuvlaedge-go/issues/64)) ([db5da34](https://github.com/nuvlaedge/nuvlaedge-go/commit/db5da34777776005b6915c59731459bd07de329d))
+
+
+### Dependencies
+
+* **docker-compose:** use our fork of docker compose ([#75](https://github.com/nuvlaedge/nuvlaedge-go/issues/75)) ([2bdda75](https://github.com/nuvlaedge/nuvlaedge-go/commit/2bdda7535147b7304b05fee36e51a7832ff0f0e8))
+
+
+### Minor Changes
+
+* **deployment:** Add default envs to deployments (Including TIMESTAMP and DATE_TIME) ([#80](https://github.com/nuvlaedge/nuvlaedge-go/issues/80)) ([69eab1a](https://github.com/nuvlaedge/nuvlaedge-go/commit/69eab1a05eb357794385bbe6e5dfb11bc8bebb2e))
+* **telemetry:** add "omitempty" for cpu-limit ([b48a916](https://github.com/nuvlaedge/nuvlaedge-go/commit/b48a916d430650824a349cd03939fedddc563093))
+
 ## [2.1.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/2.0.0...2.1.0) (2024-07-16)
 
 
