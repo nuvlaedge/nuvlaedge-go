@@ -49,3 +49,20 @@ test:
 test/cover:
 	go test -tags=coverage -v -race -buildvcs -coverprofile=/tmp/coverage.out $(shell go list ./... | grep -v -e testutils -e cmd/tests)
 	go tool cover -html=/tmp/coverage.out
+
+
+# ==================================================================================== #
+# CI/CD
+# ==================================================================================== #
+.PHONY: ci/test/cover
+ci/test/cover:
+	go test -tags=coverage -v -race -buildvcs -coverprofile=/coverage.out $(shell go list ./... | grep -v -e testutils -e cmd/tests)
+
+
+.PHONY: ci/lint
+ci/lint:
+	golangci-lint run --build-tags coverage --exclude-dirs cmd/tests/* ./...
+
+.PHONY: ci/sec
+ci/sec:
+	gosec -fmt=sonarqube -out report.json ./...
