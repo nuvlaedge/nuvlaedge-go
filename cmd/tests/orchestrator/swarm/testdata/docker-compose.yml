@@ -1,0 +1,15 @@
+version: '3.5'
+
+services:
+  socat:
+    image: sixsq/socat:latest
+    command: "tcp-l:1234,fork,reuseaddr tcp:${DESTINATION}"
+    ports:
+      - "${EXPOSED_PORT}:1234"
+    environment:
+      - DESTINATION=${DESTINATION}
+      - EXPOSED_PORT=${EXPOSED_PORT}
+    deploy:
+      restart_policy:
+        condition: any
+        delay: 5s
