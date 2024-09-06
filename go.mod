@@ -9,14 +9,16 @@ require (
 	github.com/docker/cli v27.1.1+incompatible
 	github.com/docker/compose/v2 v2.29.1
 	github.com/docker/docker v27.1.1+incompatible
+	github.com/google/uuid v1.6.0
 	github.com/jackpal/gateway v1.0.15
-	github.com/nuvla/api-client-go v0.7.11
+	github.com/nuvla/api-client-go v0.7.12
 	github.com/shirou/gopsutil/v3 v3.24.5
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
+	golang.org/x/sys v0.21.0
 )
 
 require (
@@ -85,7 +87,6 @@ require (
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.20.0 // indirect
@@ -192,7 +193,6 @@ require (
 	golang.org/x/net v0.26.0 // indirect
 	golang.org/x/oauth2 v0.21.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
-	golang.org/x/sys v0.21.0 // indirect
 	golang.org/x/term v0.21.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
@@ -217,3 +217,7 @@ require (
 	sigs.k8s.io/yaml v1.3.0 // indirect
 	tags.cncf.io/container-device-interface v0.7.2 // indirect
 )
+
+//replace (
+//	github.com/nuvla/api-client-go => /Users/nacho/GolandProjects/temp/api-client-go
+//)

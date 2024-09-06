@@ -21,6 +21,13 @@ type Compose struct {
 }
 
 func NewComposeOrchestrator(dClient client.APIClient) (*Compose, error) {
+	if dClient == nil {
+		dockerClient, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+		if err != nil {
+			return nil, err
+		}
+		dClient = dockerClient
+	}
 	dCli, err := command.NewDockerCli(command.WithAPIClient(dClient))
 	if err != nil {
 		return nil, err

@@ -6,9 +6,10 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/nuvla/api-client-go/clients"
 	nuvlaTypes "github.com/nuvla/api-client-go/types"
-	"nuvlaedge-go/commissioner"
-	"nuvlaedge-go/telemetry"
+	"nuvlaedge-go/cmd/tests/util"
 	"nuvlaedge-go/types"
+	"nuvlaedge-go/workers"
+	"nuvlaedge-go/workers/telemetry"
 	"time"
 )
 
@@ -23,11 +24,15 @@ func (c *CustomNuvlaClient) GetEndpoint() string {
 func main() {
 	fmt.Println("Running commissioning tests")
 	// Requires a commissioned NuvlaEdge credentials
-	creds := &nuvlaTypes.ApiKeyLogInParams{
-		Key:    "credential/8718ba5e-7000-4862-b27d-8791c63d73e1",
-		Secret: "aRDCvP.Nrzp2k.vpU3sv.SmcEnR.SDmGLS",
+	neInfo, err := util.GetNuvlaEdgeInfo("")
+	if err != nil {
+		panic(err)
 	}
-	nuvlaedgeUuid := "nuvlabox/2cf4bff8-3e1b-411e-be50-f01310d8f884"
+	creds := &nuvlaTypes.ApiKeyLogInParams{
+		Key:    neInfo.ApiKey,
+		Secret: neInfo.ApiSecret,
+	}
+	nuvlaedgeUuid := neInfo.NuvlaEdgeUUID
 	nuvlaClient := clients.NewNuvlaEdgeClient(nuvlaedgeUuid, creds)
 	nuvla := &CustomNuvlaClient{
 		NuvlaEdgeClient: nuvlaClient,
@@ -49,7 +54,7 @@ func main() {
 		NuvlaEdgeClient: nuvlaClient,
 	}
 
-	com := commissioner.NewCommissioner(15, &comClient, commissionerCh)
+	com := workers.NewCommissioner(15, &comClient, commissionerCh)
 	go com.Run(ctx)
 	<-ctx.Done()
 }

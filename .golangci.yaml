@@ -1,0 +1,26 @@
+run:
+  build-tags:
+    - coverage
+
+linters:
+  enable-all: true
+  disable:
+    # Deprecated linters
+    - execinquery
+    - gomnd
+
+issues:
+  exclude-dirs:
+    # Exclude generated code and tests
+    - cmd/tests
+    - vendor
+    - testdata
+    - examples
+    - internal
+    - .git
+    - .idea
+    - .github
+    - .golangci.yaml
+    - .gitignore
+    - .gitmodules
+    - .gitattributes

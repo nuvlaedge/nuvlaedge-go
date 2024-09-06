@@ -62,7 +62,6 @@ func (s *Swarm) Start(ctx context.Context, opts *types.StartOpts) error {
 			env[parts[0]] = parts[1]
 		}
 	}
-
 	return s.start(ctx, dOpts, env)
 }
 

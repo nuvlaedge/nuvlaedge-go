@@ -18,6 +18,7 @@ import (
 func ValidateSettings(settings *settings.NuvlaEdgeSettings) (*clients.NuvlaEdgeClient, error) {
 	oldSession, ok := findOldSession(settings.DBPPath)
 	if ok {
+		log.Infof("Found stored NuvlaEdge session")
 		mergeSessionIntoSettings(settings, oldSession)
 	}
 
@@ -44,13 +45,25 @@ func findOldSession(dbpPath string) (*clients.NuvlaEdgeSessionFreeze, bool) {
 }
 
 func mergeSessionIntoSettings(settings *settings.NuvlaEdgeSettings, session *clients.NuvlaEdgeSessionFreeze) {
+	sessionId := SanitiseUUID(session.NuvlaEdgeId, "nuvlabox")
+	settId := SanitiseUUID(settings.NuvlaEdgeUUID, "nuvlabox")
+	if settId != sessionId {
+		log.Warnf("NuvlaEdge UUID in settings (%s) is different from stored session (%s)", settId, sessionId)
+		log.Warnf("NuvlaEdge will try to use the stored session, if you are trying to start a new NuvlaEdge, " +
+			"please remove the stored session")
+	}
 
+	settings.NuvlaEdgeUUID = sessionId
+
+	if session.Credentials != nil {
+		settings.ApiKey = session.Credentials.Key
+		settings.ApiSecret = session.Credentials.Secret
+	}
 }
 
 // newClientFromSettings creates a new NuvlaEdge client from the settings. Settings must be validated before calling this function
 func newClientFromSettings(settings *settings.NuvlaEdgeSettings) *clients.NuvlaEdgeClient {
 	var creds *nuvlaTypes.ApiKeyLogInParams
-	creds = nil
 
 	if isRestoreNuvlaEdge(settings) {
 		creds = &nuvlaTypes.ApiKeyLogInParams{
@@ -59,12 +72,14 @@ func newClientFromSettings(settings *settings.NuvlaEdgeSettings) *clients.NuvlaE
 		}
 	}
 
-	return clients.NewNuvlaEdgeClient(
+	cli := clients.NewNuvlaEdgeClient(
 		settings.NuvlaEdgeUUID,
 		creds,
 		nuvlaApi.WithEndpoint(settings.NuvlaEndpoint),
-		nuvlaApi.WithInsecureSession(settings.NuvlaInsecure))
+		nuvlaApi.WithInsecureSession(settings.NuvlaInsecure),
+		nuvlaApi.ReAuthenticateSession)
 
+	return cli
 }
 
 func isRestoreNuvlaEdge(settings *settings.NuvlaEdgeSettings) bool {
@@ -87,6 +102,11 @@ func minSettings(settings *settings.NuvlaEdgeSettings) error {
 		}
 		settings.NuvlaEdgeUUID = remoteId
 	}
+
+	if settings.NuvlaEdgeUUID == "" {
+		return errors.New("missing NuvlaEdge UUID, cannot start NuvlaEdge")
+	}
+
 	settings.NuvlaEdgeUUID = SanitiseUUID(settings.NuvlaEdgeUUID, "nuvlabox")
 	return nil
 }
@@ -95,7 +115,7 @@ func minSettings(settings *settings.NuvlaEdgeSettings) error {
 // Else, we need to add the resource name to the UUID.
 func SanitiseUUID(uuid, resourceName string) string {
 	if uuid == "" {
-		log.Infof("UUID for resource %s is empty", resourceName)
+		log.Debugf("UUID for resource %s is empty", resourceName)
 		return uuid
 	}
 

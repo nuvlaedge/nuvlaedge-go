@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"nuvlaedge-go/telemetry/monitor"
 	"nuvlaedge-go/types/metrics"
+	"nuvlaedge-go/workers/telemetry/monitor"
 	"time"
 )
 

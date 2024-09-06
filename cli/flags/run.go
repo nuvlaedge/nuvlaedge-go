@@ -8,6 +8,12 @@ import (
 	"nuvlaedge-go/types/settings"
 )
 
+var OnError = func(err error, msg string) {
+	if err != nil {
+		log.Warnf("%s: %s", msg, err)
+	}
+}
+
 // AddRunFlags defines and adds flags related to the NuvlaEdge runtime configuration to a given flag set.
 // This function is used to configure the command-line interface of the NuvlaEdge agent, allowing users
 // to specify various operational parameters such as database path, NuvlaEdge ID, API keys, and more.
@@ -78,24 +84,21 @@ func setDefaultRunFlags() {
 // binding of a flag to a Viper key, using the provided onError callback function for error handling.
 func bindViperRunFlags(flags *pflag.FlagSet) {
 	// Bind viper run flags
-	onError := func(err error) {
-		if err != nil {
-			log.Warnf("Error binding flag to viper var: %s", err)
-		}
-	}
-	onError(viper.BindPFlag("db-path", flags.Lookup("db-path")))
-	onError(viper.BindPFlag("nuvla-endpoint", flags.Lookup("nuvla-endpoint")))
-	onError(viper.BindPFlag("nuvla-insecure", flags.Lookup("nuvla-insecure")))
-	onError(viper.BindPFlag("nuvlaedge-uuid", flags.Lookup("uuid")))
-	onError(viper.BindPFlag("api-key", flags.Lookup("api-key")))
-	onError(viper.BindPFlag("api-secret", flags.Lookup("api-secret")))
-	onError(viper.BindPFlag("heartbeat-period", flags.Lookup("heartbeat-period")))
-	onError(viper.BindPFlag("telemetry-period", flags.Lookup("telemetry-period")))
-	onError(viper.BindPFlag("remote-sync-period", flags.Lookup("remote-sync-period")))
-	onError(viper.BindPFlag("vpn-enabled", flags.Lookup("vpn-enabled")))
-	onError(viper.BindPFlag("vpn-extra-config", flags.Lookup("vpn-extra-config")))
-	onError(viper.BindPFlag("job-engine-image", flags.Lookup("job-image")))
-	onError(viper.BindPFlag("enable-legacy-job", flags.Lookup("enable-legacy-job")))
+	errMsg := "Error binding flag to viper var"
+
+	OnError(viper.BindPFlag("db-path", flags.Lookup("db-path")), errMsg)
+	OnError(viper.BindPFlag("nuvla-endpoint", flags.Lookup("nuvla-endpoint")), errMsg)
+	OnError(viper.BindPFlag("nuvla-insecure", flags.Lookup("nuvla-insecure")), errMsg)
+	OnError(viper.BindPFlag("nuvlaedge-uuid", flags.Lookup("uuid")), errMsg)
+	OnError(viper.BindPFlag("api-key", flags.Lookup("api-key")), errMsg)
+	OnError(viper.BindPFlag("api-secret", flags.Lookup("api-secret")), errMsg)
+	OnError(viper.BindPFlag("heartbeat-period", flags.Lookup("heartbeat-period")), errMsg)
+	OnError(viper.BindPFlag("telemetry-period", flags.Lookup("telemetry-period")), errMsg)
+	OnError(viper.BindPFlag("remote-sync-period", flags.Lookup("remote-sync-period")), errMsg)
+	OnError(viper.BindPFlag("vpn-enabled", flags.Lookup("vpn-enabled")), errMsg)
+	OnError(viper.BindPFlag("vpn-extra-config", flags.Lookup("vpn-extra-config")), errMsg)
+	OnError(viper.BindPFlag("job-engine-image", flags.Lookup("job-image")), errMsg)
+	OnError(viper.BindPFlag("enable-legacy-job", flags.Lookup("enable-legacy-job")), errMsg)
 }
 
 // setEnvBindings binds environment variables to their corresponding Viper configuration keys.
@@ -110,24 +113,21 @@ func bindViperRunFlags(flags *pflag.FlagSet) {
 // onError callback function for error handling.
 func setEnvBindings() {
 	// Env run flags
-	onError := func(err error) {
-		if err != nil {
-			log.Warnf("Error binding flag to viper var: %s", err)
-		}
-	}
-	onError(viper.BindEnv("db-path", "DB_PATH"))
-	onError(viper.BindEnv("nuvla-endpoint", "NUVLA_ENDPOINT"))
-	onError(viper.BindEnv("nuvla-insecure", "NUVLA_INSECURE"))
-	onError(viper.BindEnv("nuvlaedge-uuid", "NUVLAEDGE_UUID"))
-	onError(viper.BindEnv("api-key", "NUVLAEDGE_API_KEY"))
-	onError(viper.BindEnv("api-secret", "NUVLAEDGE_API_SECRET"))
-	onError(viper.BindEnv("heartbeat-period", "HEARTBEAT_PERIOD"))
-	onError(viper.BindEnv("telemetry-period", "TELEMETRY_PERIOD"))
-	onError(viper.BindEnv("remote-sync-period", "REMOTE_SYNC_PERIOD"))
-	onError(viper.BindEnv("job-engine-image", "NUVLAEDGE_JOB_ENGINE_LITE_IMAGE", "JOB_LEGACY_IMAGE"))
-	onError(viper.BindEnv("enable-legacy-job", "ENABLE_LEGACY_JOB", "JOB_LEGACY_ENABLE"))
-	onError(viper.BindEnv("vpn-enabled", "VPN_ENABLED"))
-	onError(viper.BindEnv("vpn-extra-config", "VPN_EXTRA_CONFIG"))
+	errMsg := "Error binding env var to viper var"
+
+	OnError(viper.BindEnv("db-path", "DB_PATH", "DATA_LOCATION"), errMsg)
+	OnError(viper.BindEnv("nuvla-endpoint", "NUVLA_ENDPOINT"), errMsg)
+	OnError(viper.BindEnv("nuvla-insecure", "NUVLA_INSECURE"), errMsg)
+	OnError(viper.BindEnv("nuvlaedge-uuid", "NUVLAEDGE_UUID"), errMsg)
+	OnError(viper.BindEnv("api-key", "NUVLAEDGE_API_KEY"), errMsg)
+	OnError(viper.BindEnv("api-secret", "NUVLAEDGE_API_SECRET"), errMsg)
+	OnError(viper.BindEnv("heartbeat-period", "HEARTBEAT_PERIOD"), errMsg)
+	OnError(viper.BindEnv("telemetry-period", "TELEMETRY_PERIOD"), errMsg)
+	OnError(viper.BindEnv("remote-sync-period", "REMOTE_SYNC_PERIOD"), errMsg)
+	OnError(viper.BindEnv("job-engine-image", "NUVLAEDGE_JOB_ENGINE_LITE_IMAGE", "JOB_LEGACY_IMAGE"), errMsg)
+	OnError(viper.BindEnv("enable-legacy-job", "ENABLE_LEGACY_JOB", "JOB_LEGACY_ENABLE"), errMsg)
+	OnError(viper.BindEnv("vpn-enabled", "VPN_ENABLED"), errMsg)
+	OnError(viper.BindEnv("vpn-extra-config", "VPN_EXTRA_CONFIG"), errMsg)
 }
 
 // ParseSettings initializes and applies configuration settings for the NuvlaEdge application.

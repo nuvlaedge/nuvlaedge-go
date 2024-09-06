@@ -2,7 +2,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  qgate:
+  gate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,6 +21,3 @@ jobs:
           make ci/test
           make ci/lint
           make ci/sec
-      
-      
-        

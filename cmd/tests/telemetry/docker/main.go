@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	client "github.com/docker/docker/client"
-	"nuvlaedge-go/telemetry/monitor"
 	"nuvlaedge-go/types"
 	"nuvlaedge-go/types/metrics"
+	"nuvlaedge-go/workers/telemetry/monitor"
 	"time"
 )
 

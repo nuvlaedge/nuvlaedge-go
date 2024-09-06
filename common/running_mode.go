@@ -1,6 +1,9 @@
 package common
 
-import "os"
+import (
+	log "github.com/sirupsen/logrus"
+	"os"
+)
 
 type RunningMode int
 
@@ -16,6 +19,7 @@ func WhereAmI(dFile ...string) RunningMode {
 		f = dFile[0]
 	}
 	if _, err := os.Stat(f); err == nil {
+		log.Info("Running in Docker")
 		return Docker
 	}
 

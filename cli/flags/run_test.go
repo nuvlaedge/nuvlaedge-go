@@ -118,14 +118,14 @@ var envs = map[string]string{
 	"ENABLE_LEGACY_JOB":    "true",
 }
 
-func setEnvs() {
-	for k, v := range envs {
+func setEnvs(e map[string]string) {
+	for k, v := range e {
 		_ = os.Setenv(k, v)
 	}
 }
 
-func unSetEnvs() {
-	for k := range envs {
+func unSetEnvs(e map[string]string) {
+	for k := range e {
 		_ = os.Unsetenv(k)
 	}
 }
@@ -133,8 +133,8 @@ func unSetEnvs() {
 func TestSetEnvBindings(t *testing.T) {
 	setEnvBindings()
 	// Export Envs
-	setEnvs()
-	defer unSetEnvs()
+	setEnvs(envs)
+	defer unSetEnvs(envs)
 	defer viper.Reset()
 	viper.AutomaticEnv()
 
@@ -155,8 +155,8 @@ func TestSetEnvBindings(t *testing.T) {
 
 func TestParseSettings(t *testing.T) {
 	// Export Envs
-	setEnvs()
-	defer unSetEnvs()
+	setEnvs(envs)
+	defer unSetEnvs(envs)
 	defer viper.Reset()
 	flags := &pflag.FlagSet{}
 	AddRunFlags(flags)

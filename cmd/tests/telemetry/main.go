@@ -6,8 +6,8 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/nuvla/api-client-go/clients"
 	"github.com/nuvla/api-client-go/types"
-	//_ "net/http/pprof"
-	"nuvlaedge-go/telemetry"
+	"nuvlaedge-go/cmd/tests/util"
+	"nuvlaedge-go/workers/telemetry"
 )
 
 //func init() {
@@ -40,11 +40,17 @@ func (c *CustomNuvlaClient) GetEndpoint() string {
 func main() {
 	fmt.Println("Running telemetry tests...")
 	// Requires a commissioned NuvlaEdge credentials
-	creds := &types.ApiKeyLogInParams{
-		Key:    "credential/8718ba5e-7000-4862-b27d-8791c63d73e1",
-		Secret: "aRDCvP.Nrzp2k.vpU3sv.SmcEnR.SDmGLS",
+	// Requires a commissioned NuvlaEdge credentials
+	neInfo, err := util.GetNuvlaEdgeInfo("")
+	if err != nil {
+		panic(err)
 	}
-	nuvlaedgeUuid := "nuvlabox/2cf4bff8-3e1b-411e-be50-f01310d8f884"
+	creds := &types.ApiKeyLogInParams{
+		Key:    neInfo.ApiKey,
+		Secret: neInfo.ApiSecret,
+	}
+	nuvlaedgeUuid := neInfo.NuvlaEdgeUUID
+
 	nuvla := &CustomNuvlaClient{
 		NuvlaEdgeClient: clients.NewNuvlaEdgeClient(nuvlaedgeUuid, creds),
 	}

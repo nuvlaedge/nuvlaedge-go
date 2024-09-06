@@ -33,7 +33,7 @@ audit:
 ## lint: Run linter on the Go source code
 .PHONY: lint
 lint:
-	golangci-lint run --build-tags coverage --exclude-dirs cmd/tests/* ./...
+	golangci-lint run
 
 # ==================================================================================== #
 # DEVELOPMENT
@@ -50,6 +50,16 @@ test/cover:
 	go test -tags=coverage -v -race -buildvcs -coverprofile=/tmp/coverage.out $(shell go list ./... | grep -v -e testutils -e cmd/tests)
 	go tool cover -html=/tmp/coverage.out
 
+# docker/build: build docker image
+.PHONY: docker/build
+docker/build:
+	docker build -t local/nuvlaedge:refactor .
+
+# docker/run: builds and runs the docker image using docker compose
+.PHONY: docker/run
+docker/run:
+	docker build -t local/nuvlaedge:refactor .
+	docker compose -p nuvlaedge -f docker-compose.yml up
 
 # ==================================================================================== #
 # CI/CD
@@ -61,8 +71,8 @@ ci/test/cover:
 
 .PHONY: ci/lint
 ci/lint:
-	golangci-lint run --build-tags coverage --exclude-dirs cmd/tests/* ./...
+	golangci-lint run ./...
 
 .PHONY: ci/sec
 ci/sec:
-	gosec -fmt=sonarqube -out report.json ./...
+	gosec -fmt=sonarqube -out report.json -exclude-dir cmd/tests ./...

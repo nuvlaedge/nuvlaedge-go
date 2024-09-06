@@ -2,77 +2,168 @@ package nuvlaedge
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"github.com/docker/docker/client"
 	"github.com/nuvla/api-client-go/clients"
 	"github.com/nuvla/api-client-go/clients/resources"
 	log "github.com/sirupsen/logrus"
+	"nuvlaedge-go/common/constants"
 	"nuvlaedge-go/types"
+	"nuvlaedge-go/types/jobs"
 	"nuvlaedge-go/types/settings"
+	"nuvlaedge-go/types/worker"
+	"nuvlaedge-go/workers"
+	"path"
 )
 
-type Workers map[types.WorkerType]types.Worker
+type Workers map[worker.WorkerType]worker.Worker
 
 type NuvlaEdge struct {
-	ctx  context.Context
-	conf *settings.NuvlaEdgeSettings
-
-	workers Workers
+	ctx  context.Context             // Parent context
+	conf *settings.NuvlaEdgeSettings // NuvlaEdge settings
 
 	// Channels
-	commissionerChan chan types.CommissionData // Connects Telemetry/EngineMonitor with Commissioner
-	jobChan          chan string               // Connects Agent and Telemetry with Job Processor
-	deploymentChan   chan string               // Connects Job Processor with Deployment handler
+	commissionerCh   chan types.CommissionData // Connects Telemetry/EngineMonitor with Commissioner
+	jobCh            chan string               // Connects Agent and Telemetry with Job Processor
+	deploymentCh     chan jobs.Job             // Connects Job Processor with Deployment handler
+	confLastUpdateCh chan string               // Connects Heartbeat and Telemetry responses with Configuration handler
 
-	// Agent types
-	heartBeatPeriod int
-	client          *clients.NuvlaEdgeClient
-	sessionOpts     *clients.NuvlaEdgeSessionFreeze
+	nuvla        *clients.NuvlaEdgeClient
+	dockerClient client.APIClient
 
-	currentState resources.NuvlaEdgeState
+	workerOpts *worker.WorkerOpts
+	workerConf *worker.WorkerConfig
+
+	workers Workers
 }
 
-func NewNuvlaEdge(conf *settings.NuvlaEdgeSettings) (*NuvlaEdge, error) {
-	ne := &NuvlaEdge{
-		conf:             conf,
-		workers:          make(Workers),
-		commissionerChan: make(chan types.CommissionData),
-		jobChan:          make(chan string),
-		deploymentChan:   make(chan string),
-		currentState:     resources.NuvlaEdgeStateNew,
-	}
+func NewNuvlaEdge(ctx context.Context, conf *settings.NuvlaEdgeSettings) (*NuvlaEdge, error) {
 
-	// Validate settings
-	cli, err := ValidateSettings(conf)
+	nuvla, err := ValidateSettings(conf)
+	if err != nil {
+		return nil, err
+	}
+	b, err := json.MarshalIndent(conf, "", "  ")
+	log.Infof("Starting NuvlaEdge with settings: %s", string(b))
+
+	// To add K8s, this will need to be converted into an interface
+	dockerCli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return nil, err
 	}
 
-	ne.client = cli
+	ne := &NuvlaEdge{
+		ctx:          ctx,
+		nuvla:        nuvla,
+		dockerClient: dockerCli,
+		conf:         conf,
+		workerConf:   worker.NewDefaultWorkersConfig(),
 
-	// Initialise NuvlaEdge:
-	// Activate and trigger commission if needed
-	// Trigger first telemetry
+		// Channels
+		commissionerCh:   make(chan types.CommissionData),
+		jobCh:            make(chan string),
+		deploymentCh:     make(chan jobs.Job),
+		confLastUpdateCh: make(chan string),
+	}
 
-	// Initialize workers
-	if err := ne.InitWorkers(); err != nil {
+	ne.workerOpts = &worker.WorkerOpts{
+		NuvlaClient:      nuvla,
+		DockerClient:     dockerCli,
+		CommissionCh:     ne.commissionerCh,
+		JobCh:            ne.jobCh,
+		DeploymentCh:     ne.deploymentCh,
+		ConfLastUpdateCh: ne.confLastUpdateCh,
+	}
+
+	ne.workers, err = WorkerGenerator(ne.workerOpts, ne.workerConf)
+	if err != nil {
 		return nil, err
 	}
 
 	return ne, nil
 }
 
-func (ne *NuvlaEdge) InitClient() error {
-	return nil
-}
+func (ne *NuvlaEdge) Start() error {
 
-func (ne *NuvlaEdge) InitWorkers() error {
+	// NuvlaEdge startup process...
+
+	if err := ne.startUpProcess(); err != nil {
+		return err
+	}
+
+	if err := ne.startWorkers(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (ne *NuvlaEdge) Run(ctx context.Context) error {
-	if err := ne.InitWorkers(); err != nil {
-		log.Errorf("Error initializing workers: %s", err)
+	<-ctx.Done()
+	return nil
+}
+
+func (ne *NuvlaEdge) startWorkers() error {
+	var errList []error
+	for _, w := range ne.workers {
+		if err := w.Start(ne.ctx); err != nil {
+			errList = append(errList, err)
+		}
+	}
+	return errors.Join(errList...)
+}
+
+func (ne *NuvlaEdge) startUpProcess() error {
+	// Start up process
+	// Get remote nuvlaedge state
+
+	if ne.nuvla.Credentials == nil {
+		// We need to assume that NuvlaEdge is new
+		err := ne.nuvla.Activate()
+		if err != nil {
+			return err
+		}
+
+		err = ne.nuvla.Freeze(path.Join(ne.conf.DBPPath, constants.NuvlaEdgeSessionFile))
+		if err != nil {
+			return err
+		}
+	}
+
+	if err := ne.nuvla.LogIn(); err != nil {
 		return err
 	}
 
+	// else, check state
+	err := ne.nuvla.UpdateResourceSelect([]string{"state"})
+	if err != nil {
+		return err
+	}
+
+	res := ne.nuvla.GetNuvlaEdgeResource()
+
+	if res.State == resources.NuvlaEdgeStateActivated {
+		// Trigger commission once
+		err := workers.TriggerBaseCommissioning(ne.workers[worker.Commissioner], ne.nuvla)
+		if err != nil {
+			return err
+		}
+	}
+
+	// else, check state
+	err = ne.nuvla.UpdateResourceSelect([]string{"state"})
+	if err != nil {
+		return err
+	}
+
+	res = ne.nuvla.GetNuvlaEdgeResource()
+
+	if res.State != resources.NuvlaEdgeStateCommissioned {
+		return fmt.Errorf("can't start a NuvlaEDge from state: %s", res.State)
+	}
+
+	log.Info("Start Up process completed, NuvlaEdge is ready")
 	return nil
 }
