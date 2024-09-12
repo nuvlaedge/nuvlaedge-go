@@ -218,4 +218,3 @@ require (
 	tags.cncf.io/container-device-interface v0.7.2 // indirect
 )
 
-replace github.com/nuvla/api-client-go => /Users/nacho/GolandProjects/temp/api-client-go
