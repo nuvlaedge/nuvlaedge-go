@@ -13,10 +13,10 @@ import (
 	"time"
 )
 
-func parseEnv(env string) ([]string, error) {
-	envs := strings.Split(env, ",")
+func parseEnv(env []string) ([]string, error) {
+
 	var cleanEnvs []string
-	for _, e := range envs {
+	for _, e := range env {
 		if strings.Contains(e, "=") {
 			cleanEnvs = append(cleanEnvs, e)
 		} else {
@@ -66,6 +66,7 @@ func UpdateWithCompose(opts *command.UpdateCmdOptions) error {
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 

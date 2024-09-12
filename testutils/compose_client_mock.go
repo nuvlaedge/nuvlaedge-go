@@ -23,6 +23,14 @@ type ComposeClientMock struct {
 	ListCnt    int
 	ListErr    error
 	ListReturn []api.Stack
+
+	LogsCnt int
+	LogsErr error
+}
+
+func (c *ComposeClientMock) Logs(ctx context.Context, projectName string, consumer api.LogConsumer, options api.LogOptions) error {
+	c.LogsCnt++
+	return c.LogsErr
 }
 
 func (c *ComposeClientMock) Up(_ context.Context, _ *types.Project, opts api.UpOptions) error {

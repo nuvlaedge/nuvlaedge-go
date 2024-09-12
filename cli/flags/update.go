@@ -19,7 +19,7 @@ func AddUpdateFlags(cmd *cobra.Command) {
 
 	flags.String("job-id", "", "Job ID")
 
-	flags.String("environment", "", "Environment")
+	flags.StringSlice("environment", []string{}, "Comma separated list of environments KEY=VALUE")
 	flags.String("project", "", "Project")
 	flags.String("working-dir", "", "Working directory")
 

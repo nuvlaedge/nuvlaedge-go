@@ -55,7 +55,6 @@ func (j *JobProcessor) Reconfigure(conf *worker.WorkerConfig) error {
 }
 
 func (j *JobProcessor) Run(ctx context.Context) error {
-
 	for {
 		select {
 		case <-ctx.Done():
@@ -90,21 +89,25 @@ func (j *JobProcessor) processJob(jobId string) {
 	job, err := jobs.NewJobBase(jobId, j.client.NuvlaClient)
 	if err != nil {
 		log.Errorf("Error creating jobId %s: %s", jobId, err)
-		j.runningJobs.Remove(jobId)
 		return
 	}
 
-	log.Infof("Job Processor starting new jobId with id %s", jobId)
+	j.runningJobs.Add(&jobs.RunningJob{
+		JobId:   jobId,
+		JobType: job.JobType,
+	})
+
+	log.Infof("Job Processor starting new jobId with id %s for action %s", jobId, job.JobType)
 	if jobs.IsDeployment(job.JobType) {
-		log.Infof("Job %s is a deployment action, sending to Deployment Handler", jobId)
 		j.deploymentJobChan <- job
 		return
 	}
 
+	defer j.runningJobs.Remove(jobId)
+
 	if !jobs.IsSupportedJob(job.JobType) {
 		// Run legacy container...
 		log.Infof("Job %s is not supported natively, running legacy container", jobId)
-		j.runningJobs.Remove(jobId)
 		return
 	}
 
@@ -119,5 +122,5 @@ func (j *JobProcessor) processJob(jobId string) {
 	if err := RunJob(ctx, jobOpts); err != nil {
 		log.Errorf("Error running job %s: %s", jobId, err)
 	}
-	j.runningJobs.Remove(jobId)
+
 }

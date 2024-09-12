@@ -2,16 +2,16 @@ package workers
 
 import (
 	"context"
-	"github.com/nuvla/api-client-go/clients"
 	log "github.com/sirupsen/logrus"
 	"nuvlaedge-go/common"
+	"nuvlaedge-go/types"
 	"nuvlaedge-go/types/worker"
 )
 
 type Heartbeat struct {
 	worker.TimedWorker
 
-	client         *clients.NuvlaEdgeClient
+	client         types.HeartbeatClient
 	jobChan        chan string
 	confUpdateChan chan string
 }

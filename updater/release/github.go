@@ -82,7 +82,5 @@ func ListGitHubReleases() ([]GitHubRelease, error) {
 	var r []GitHubRelease
 	err = json.NewDecoder(resp.Body).Decode(&r)
 
-	b, err := json.MarshalIndent(r, "", "  ")
-	fmt.Printf("Response body: %s\n", string(b))
-	return nil, nil
+	return r, nil
 }

@@ -36,7 +36,7 @@ func ProcessResponse(res *http.Response, jobChan chan string, confChan chan stri
 	}
 
 	if neRes.LastUpdate != "" {
-		log.Infof("Received last update: %s", neRes.LastUpdate)
+		log.Debugf("Received last update: %s", neRes.LastUpdate)
 		confChan <- neRes.LastUpdate
 	}
 

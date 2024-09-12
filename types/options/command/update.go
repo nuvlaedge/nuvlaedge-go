@@ -8,9 +8,9 @@ type UpdateCmdOptions struct {
 	JobId string `mapstructure:"job-id"`
 
 	// NuvlaEdge Configuration
-	Environment string `mapstructure:"environment"`
-	Project     string `mapstructure:"project"`
-	WorkingDir  string `mapstructure:"working-dir"`
+	Environment []string `mapstructure:"environment"`
+	Project     string   `mapstructure:"project"`
+	WorkingDir  string   `mapstructure:"working-dir"`
 
 	// Version tracking
 	TargetVersion  string `mapstructure:"target-version"`

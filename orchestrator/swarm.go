@@ -28,7 +28,7 @@ func NewSwarmOrchestrator(dClient client.APIClient) (*Swarm, error) {
 		return nil, err
 	}
 
-	opts := &flags.ClientOptions{Context: "default", LogLevel: "error"}
+	opts := &flags.ClientOptions{Context: "default", LogLevel: "info"}
 	err = dCli.Initialize(opts)
 	if err != nil {
 		return nil, err

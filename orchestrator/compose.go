@@ -7,7 +7,9 @@ import (
 	"github.com/docker/cli/cli/flags"
 	"github.com/docker/compose/v2/pkg/api"
 	"github.com/docker/compose/v2/pkg/compose"
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
+	log "github.com/sirupsen/logrus"
 	"nuvlaedge-go/types"
 	"strings"
 )
@@ -33,14 +35,15 @@ func NewComposeOrchestrator(dClient client.APIClient) (*Compose, error) {
 		return nil, err
 	}
 
-	opts := &flags.ClientOptions{Context: "default", LogLevel: "error"}
+	opts := &flags.ClientOptions{Context: "default", LogLevel: "info"}
 	err = dCli.Initialize(opts)
 	if err != nil {
 		return nil, err
 	}
 
+	cs := compose.NewComposeService(dCli)
 	c := &Compose{
-		service: compose.NewComposeService(dCli),
+		service: cs,
 		dCli:    dCli,
 	}
 	return c, nil
@@ -68,10 +71,11 @@ func (c *Compose) start(ctx context.Context, files []string,
 	}
 
 	project, err := pOptions.LoadProject(ctx)
-
 	if err != nil {
 		return err
 	}
+	log.Info("Project working directory: ", project.WorkingDir)
+
 	for i, s := range project.Services {
 		s.CustomLabels = map[string]string{
 			api.ProjectLabel:     pOptions.Name,
@@ -133,3 +137,30 @@ func (c *Compose) Remove(ctx context.Context) error {
 func (c *Compose) Close() error {
 	return c.dCli.Client().Close()
 }
+
+func (c *Compose) Logs(ctx context.Context, opts *types.LogOpts) error {
+	// First, get services from the project
+
+	contSum, err := c.service.Ps(ctx, opts.ProjectName, api.PsOptions{All: true})
+	if err != nil {
+		return err
+	}
+	for _, cont := range contSum {
+		log.Infof("Container: %s", cont.Name)
+		log.Infof("Service: %s", cont.Service)
+
+		reader, err := c.dCli.Client().ContainerLogs(ctx, cont.ID, container.LogsOptions{})
+		if err != nil {
+			return err
+		}
+		defer reader.Close()
+
+		// Read the logs
+		buf := make([]byte, 1024)
+		reader.Read(buf)
+	}
+
+	return c.service.Logs(ctx, opts.ProjectName, opts.LogConsumer, opts.LogOptions)
+}
+
+var _ Orchestrator = &Compose{}

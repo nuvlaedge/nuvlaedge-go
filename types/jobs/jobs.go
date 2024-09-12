@@ -61,13 +61,13 @@ func NewRunningJobs() JobRegistry {
 }
 
 func (r *JobRegistry) Add(job *RunningJob) bool {
-	if r.Exists(job.jobId) {
+	if r.Exists(job.JobId) {
 		return false
 	}
 	r.lock.Lock()
 	defer r.lock.Unlock()
 
-	r.jobs[job.jobId] = job
+	r.jobs[job.JobId] = job
 	return true
 }
 
@@ -101,15 +101,14 @@ func (r *JobRegistry) String() string {
 	defer r.lock.Unlock()
 	var jobSummary string
 	for _, job := range r.jobs {
-		jobSummary += "ID: " + job.jobId + " Type: " + string(job.string) + "\n"
+		jobSummary += "ID: " + job.JobId + " Type: " + job.JobType + "\n"
 	}
 	return jobSummary
 }
 
 type RunningJob struct {
-	jobId   string
-	string  string
-	running bool
+	JobId   string
+	JobType string
 }
 
 const (

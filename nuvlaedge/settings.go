@@ -70,6 +70,8 @@ func newClientFromSettings(settings *settings.NuvlaEdgeSettings) *clients.NuvlaE
 			Key:    settings.ApiKey,
 			Secret: settings.ApiSecret,
 		}
+	} else {
+		creds = nil
 	}
 
 	cli := clients.NewNuvlaEdgeClient(

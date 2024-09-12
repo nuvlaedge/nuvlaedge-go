@@ -30,6 +30,7 @@ func (c *ConfUpdater) Init(opts *worker.WorkerOpts, conf *worker.WorkerConfig) e
 
 	return nil
 }
+
 func (c *ConfUpdater) Start(ctx context.Context) error {
 	go c.Run(ctx)
 	return nil
@@ -46,12 +47,10 @@ func (c *ConfUpdater) Run(ctx context.Context) error {
 			}
 			return ctx.Err()
 		case lastUpdate := <-c.confChan:
-			log.Infof("Last update received at %s", lastUpdate)
 			if err := c.updateConfigIfNeeded(lastUpdate); err != nil {
 				log.Error("Failed to update config: ", err)
 			}
 		case <-c.ConfChan:
-			log.Info("Received configuration update in sync")
 			// We need to listen to configuration changes even if we don't use them to prevent the channel from blocking
 		}
 	}
@@ -86,7 +85,7 @@ func (c *ConfUpdater) updateConfigIfNeeded(lastUpdateDate string) error {
 	// Check if new update is needed
 	ok, remoteTime := c.needsUpdate(lastUpdateDate)
 	if !ok {
-		log.Info("No update needed")
+		log.Debugf("Local configuration is up to date")
 		return nil
 	}
 

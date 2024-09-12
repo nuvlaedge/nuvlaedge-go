@@ -5,7 +5,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"nuvlaedge-go/types/worker"
 	"nuvlaedge-go/workers"
-	"nuvlaedge-go/workers/jobs"
+	"nuvlaedge-go/workers/job_processor"
 	"nuvlaedge-go/workers/telemetry"
 )
 
@@ -43,8 +43,8 @@ func generateWorkers() Workers {
 		worker.Commissioner:    &workers.Commissioner{},
 
 		// Triggered
-		worker.JobProcessor: &jobs.JobProcessor{},
-		//worker.Deployments:  &deployments.DeploymentHandler{},
+		worker.JobProcessor: &job_processor.JobProcessor{},
+		//worker.Deployments:  &deployments.DeploymentProcessor{},
 		worker.ConfUpdater: &workers.ConfUpdater{},
 	}
 }
@@ -60,14 +60,14 @@ func WorkerGenerator(opts *worker.WorkerOpts, conf *worker.WorkerConfig) (Worker
 			// We need to initialise the conf updater last to provide it with the conf channels
 			continue
 		}
-
+		log.Infof("Initializing worker %s", n)
 		if err := w.Init(opts, conf); err != nil {
 			log.Errorf("Error initializing worker %s: %s", w.GetName(), err)
 			errList = append(errList, err)
 		}
 		confChannels = append(confChannels, w.GetConfChannel())
 	}
-
+	log.Infof("Initializing worker %s", worker.ConfUpdater)
 	// Init the conf updater last
 	opts.ConfigChannels = confChannels
 	if err := workerMap[worker.ConfUpdater].Init(opts, conf); err != nil {

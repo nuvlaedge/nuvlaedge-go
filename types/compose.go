@@ -12,6 +12,7 @@ type ComposeService interface {
 	Ps(ctx context.Context, p string, opts api.PsOptions) ([]api.ContainerSummary, error)
 	Pull(ctx context.Context, p *types.Project, opts api.PullOptions) error
 	List(ctx context.Context, opts api.ListOptions) ([]api.Stack, error)
+	Logs(ctx context.Context, projectName string, consumer api.LogConsumer, options api.LogOptions) error
 }
 
 // StartOpts are shared options for any orchestrator start operation, thus, each start will access its required fields
@@ -27,4 +28,10 @@ type StartOpts struct {
 type StopOpts struct {
 	// Compose Opts
 	ProjectName string
+}
+
+type LogOpts struct {
+	ProjectName string
+	LogConsumer api.LogConsumer
+	LogOptions  api.LogOptions
 }

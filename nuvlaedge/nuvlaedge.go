@@ -68,6 +68,7 @@ func NewNuvlaEdge(ctx context.Context, conf *settings.NuvlaEdgeSettings) (*Nuvla
 		confLastUpdateCh: make(chan string),
 	}
 
+	jobRegistry := jobs.NewRunningJobs()
 	ne.workerOpts = &worker.WorkerOpts{
 		NuvlaClient:      nuvla,
 		DockerClient:     dockerCli,
@@ -75,6 +76,7 @@ func NewNuvlaEdge(ctx context.Context, conf *settings.NuvlaEdgeSettings) (*Nuvla
 		JobCh:            ne.jobCh,
 		DeploymentCh:     ne.deploymentCh,
 		ConfLastUpdateCh: ne.confLastUpdateCh,
+		Jobs:             &jobRegistry,
 	}
 
 	ne.workers, err = WorkerGenerator(ne.workerOpts, ne.workerConf)

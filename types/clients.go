@@ -47,3 +47,8 @@ type ConfUpdaterClient interface {
 	UpdateResourceSelect(selects []string) error
 	GetNuvlaEdgeResource() resources.NuvlaEdgeResource
 }
+
+//go:generate mockery --name HeartbeatClient
+type HeartbeatClient interface {
+	Heartbeat() (*http.Response, error)
+}

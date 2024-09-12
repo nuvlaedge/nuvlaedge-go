@@ -16,7 +16,7 @@ func Test_NewRunningJobs(t *testing.T) {
 func Test_JobRegistry_Add(t *testing.T) {
 	// Test code here
 	js := NewRunningJobs()
-	j := &RunningJob{jobId: "1", running: true}
+	j := &RunningJob{JobId: "1"}
 	assert.True(t, js.Add(j), "Job should be added")
 	assert.False(t, js.Add(j), "Job should not be added")
 
@@ -27,7 +27,7 @@ func Test_JobRegistry_Add(t *testing.T) {
 func Test_JobRegistry_Remove(t *testing.T) {
 	// Test code here
 	js := NewRunningJobs()
-	j := &RunningJob{jobId: "1", running: true}
+	j := &RunningJob{JobId: "1"}
 	js.Add(j)
 
 	assert.True(t, js.Remove("1"), "Job should be removed")
@@ -40,7 +40,7 @@ func Test_JobRegistry_Remove(t *testing.T) {
 func Test_JobRegistry_Get(t *testing.T) {
 	// Test code here
 	js := NewRunningJobs()
-	j := &RunningJob{jobId: "1", running: true}
+	j := &RunningJob{JobId: "1"}
 	js.Add(j)
 
 	j2, ok := js.Get("1")
@@ -55,7 +55,7 @@ func Test_JobRegistry_Get(t *testing.T) {
 func Test_JobRegistry_Exists(t *testing.T) {
 	// Test code here
 	js := NewRunningJobs()
-	j := &RunningJob{jobId: "1", running: true}
+	j := &RunningJob{JobId: "1"}
 	js.Add(j)
 
 	assert.True(t, js.Exists("1"), "Job should exist")
@@ -65,7 +65,7 @@ func Test_JobRegistry_Exists(t *testing.T) {
 func Test_JobRegistry_String(t *testing.T) {
 	// Test code here
 	js := NewRunningJobs()
-	j := &RunningJob{jobId: "1", running: true}
+	j := &RunningJob{JobId: "1"}
 	js.Add(j)
 
 	assert.NotEmpty(t, js.String(), "String should not be empty")
