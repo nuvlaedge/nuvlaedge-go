@@ -1,3 +1,5 @@
+name: "CI Static Analysis"
+
 on:
   push:
     branches:
