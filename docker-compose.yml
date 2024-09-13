@@ -12,7 +12,7 @@ services:
     stop_grace_period: 5s
     mem_limit: ${MEMORY_LIMIT:-50m}
     mem_reservation: ${MEMORY_RESERVATION:-30m}
-    memswap_limit: ${MEMORY_SWAP_LIMIT:-30m}
+    memswap_limit: ${MEMORY_SWAP_LIMIT:-50m}
     environment:
       - COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME:-nuvlaedge}
       - NUVLAEDGE_UUID=${NUVLAEDGE_UUID}

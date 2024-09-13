@@ -87,10 +87,7 @@ func (ce *ComposeExecutor) GetServices() ([]DeploymentService, error) {
 
 func (ce *ComposeExecutor) StateDeployment() error {
 	ce.projectName = GetProjectNameFromDeploymentId(ce.deploymentResource.Id)
-	_, err := ce.GetServices()
-	if err != nil {
-		log.Warnf("Error getting services for deployment %s: %s", ce.deploymentResource.Id, err)
-	}
+
 	return nil
 }
 

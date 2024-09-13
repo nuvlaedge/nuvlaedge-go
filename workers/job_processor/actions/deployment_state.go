@@ -15,8 +15,8 @@ func (d *DeploymentState) ExecuteAction() error {
 
 	log.Infof("Deployment state action for deployment %s", d.deploymentId)
 	log.Debugf("Deployment executor: %s", d.executor.GetName())
-	s, err := d.executor.GetServices()
 
+	s, err := d.executor.GetServices()
 	if err != nil {
 		log.Infof("Error getting services for deployment %s: %s", d.deploymentId, err)
 		return err
