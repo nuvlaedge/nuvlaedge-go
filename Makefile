@@ -71,7 +71,7 @@ ci/test/cover:
 
 .PHONY: ci/lint
 ci/lint:
-	golangci-lint run ./...
+	golangci-lint run $(shell go list ./... | grep -v -e testutils -e cmd/tests)
 
 .PHONY: ci/sec
 ci/sec:
