@@ -112,7 +112,7 @@ func (c *Compose) stop(ctx context.Context, projectName string) error {
 	return nil
 }
 
-func (c *Compose) GetProjectStatus(ctx context.Context, projectName string) (interface{}, error) {
+func (c *Compose) GetProjectStatus(ctx context.Context, projectName string) ([]api.ContainerSummary, error) {
 
 	containers, err := c.service.Ps(ctx, projectName, api.PsOptions{})
 	if err != nil {

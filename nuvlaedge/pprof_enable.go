@@ -1,6 +1,6 @@
 //go:build pprof
 
-package main
+package nuvlaedge
 
 import (
 	log "github.com/sirupsen/logrus"

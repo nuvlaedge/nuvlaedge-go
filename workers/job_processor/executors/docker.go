@@ -45,3 +45,8 @@ func (d *Docker) InstallSSHKey(sshPub, user string) error {
 func (d *Docker) RevokeSSKKey(sshkey string) error {
 	return nil
 }
+
+func (d *Docker) UpdateNuvlaEdge() error {
+
+	return nil
+}

@@ -194,3 +194,21 @@ type SSHKeyManager interface {
 	InstallSSHKey(sshPub, user string) error
 	RevokeSSKKey(sshkey string) error
 }
+
+type Updater interface {
+	Executor
+	UpdateNuvlaEdge() error
+}
+
+// GetUpdater returns the appropriate Updater for the current environment.
+func GetUpdater() Updater {
+	switch WhereAmI() {
+	case DockerMode:
+		return &Docker{}
+	//case KubernetesMode:
+	//	return &Kubernetes{}
+	case HostMode:
+		return &Docker{}
+	}
+	return nil
+}

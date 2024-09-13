@@ -1,10 +1,6 @@
 package jobs
 
 import (
-	nuvla "github.com/nuvla/api-client-go"
-	"github.com/nuvla/api-client-go/clients"
-	"github.com/nuvla/api-client-go/clients/resources"
-	log "github.com/sirupsen/logrus"
 	"slices"
 	"strings"
 	"sync"
@@ -13,39 +9,6 @@ import (
 type Job interface {
 	GetId() string
 	GetJobType() string
-}
-
-type JobBase struct {
-	JobId    string
-	JobType  string
-	Client   *clients.NuvlaJobClient
-	Resource *resources.JobResource
-}
-
-func NewJobBase(jobId string, client *nuvla.NuvlaClient) (*JobBase, error) {
-	jobClient := clients.NewJobClient(jobId, client)
-	err := jobClient.UpdateResource()
-	if err != nil {
-		return nil, err
-	}
-
-	res := jobClient.GetResource()
-	log.Info("New job for action: ", res.Action)
-
-	return &JobBase{
-		JobId:    jobId,
-		JobType:  res.Action,
-		Client:   jobClient,
-		Resource: res,
-	}, nil
-}
-
-func (j *JobBase) GetJobType() string {
-	return j.JobType
-}
-
-func (j *JobBase) GetId() string {
-	return j.JobId
 }
 
 type JobRegistry struct {
@@ -140,11 +103,4 @@ func IsSupportedJob(jobType string) bool {
 
 func IsDeployment(jobType string) bool {
 	return strings.Contains(jobType, "deployment")
-}
-
-type JobOpts struct {
-	Job *JobBase
-
-	ContainerEx JobExecutor
-	HostEx      JobExecutor
 }

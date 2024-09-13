@@ -195,7 +195,7 @@ func (dm *DockerMonitor) updateClusterData() error {
 }
 
 func (dm *DockerMonitor) updateContainersData() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	containers, err := dm.client.ContainerList(ctx, container.ListOptions{All: true})
@@ -207,28 +207,28 @@ func (dm *DockerMonitor) updateContainersData() error {
 	dm.containersData = make([]metrics.ContainerData, 0)
 	for _, c := range containers {
 		// Retrieve container stats
-		stats, err := dm.client.ContainerStats(ctx, c.ID, false)
-		if err != nil {
-			log.Infof("Error getting container stats for %s: %s", c.ID, err)
+		stats, errStats := dm.client.ContainerStats(ctx, c.ID, false)
+		var stat *container.StatsResponse
+
+		if errStats == nil {
+			stat = &container.StatsResponse{}
+			decErr := json.NewDecoder(stats.Body).Decode(stat)
+
+			err = stats.Body.Close()
+			if err != nil {
+				log.Errorf("Error closing stats reader: %s", err)
+			}
+
+			if decErr != nil {
+				log.Errorf("Error decoding container stats: %s", err)
+				stat = nil
+			}
 		}
 
 		// Retrieve container inspect info
 		inspect, err := dm.client.ContainerInspect(ctx, c.ID)
 		if err != nil {
 			log.Infof("Error inspecting container %s: %s", c.ID, err)
-		}
-
-		var stat = &container.StatsResponse{}
-		decErr := json.NewDecoder(stats.Body).Decode(stat)
-
-		err = stats.Body.Close()
-		if err != nil {
-			log.Errorf("Error closing stats reader: %s", err)
-		}
-
-		if decErr != nil {
-			log.Errorf("Error decoding container stats: %s", err)
-			stat = nil
 		}
 
 		d := NewContainerDataFromContainer(&c, stat, inspect)
