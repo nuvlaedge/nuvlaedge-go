@@ -59,7 +59,7 @@ jobs:
           export FILE_NAME="nuvlaedge-${{ matrix.os }}-${{ matrix.arch }}-${{ needs.trigger-release.outputs.tag_name }}"
           export GOOS=${{ matrix.os }}
           export GOARCH=${{ matrix.arch }}
-          go build -o $FILE_NAME -gcflags=all="-l -B" -ldflags="-s -w -X 'nuvlaedge-go/nuvlaedge/version.Version=${{ needs.trigger-release.outputs.tag_name }}'" ./cmd/nuvlaedge/
+          go build -o $FILE_NAME -gcflags=all="-l -B" -ldflags="-s -w -X 'nuvlaedge-go/common/version.Version=${{ needs.trigger-release.outputs.tag_name }}'" ./cmd/nuvlaedge/
           echo "file_name=$FILE_NAME" >> $GITHUB_OUTPUT
 
       - name: Install UPX
