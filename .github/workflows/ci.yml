@@ -1,0 +1,42 @@
+name: "CI Static Analysis"
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  static-analysis:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: "Set up Go"
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.22.0
+          cache: true
+
+      - name: "Install GoSec"
+        run: go install github.com/securego/gosec/v2/cmd/gosec@latest
+
+      - name: "Run tests"
+        run: |
+          make sonar/test
+
+      - name: "Run Linters"
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.61.0
+          make sonar/lint
+
+      - name: "Run GoSec"
+        run: |
+          make sonar/sec
+
+      - name: "SonarCloud Update"
+        uses: SonarSource/sonarcloud-github-action@v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

@@ -1,0 +1,55 @@
+run:
+  timeout: 5m
+
+  issues-exit-code: 0
+
+  build-tags:
+    - coverage
+
+  allow-parallel-runners: true
+
+linters:
+#  enable-all: true
+  disable:
+    # Deprecated linters
+    - execinquery
+    - gomnd
+    - exportloopref
+
+    # We need json tags to be - separated
+    - tagliatelle
+    # We should not use the gocheck package
+    - depguard
+    # Temporary disable this linter
+    - wrapcheck
+    - err113
+
+
+
+
+issues:
+  exclude-dirs:
+    # Exclude generated code and tests
+    - cmd/tests
+    - testutils
+    - cli/flags
+    - vendor
+    - testdata
+    - examples
+    - internal
+    - .git
+    - .idea
+    - .github
+    - .golangci.yaml
+    - .gitignore
+    - .gitmodules
+    - .gitattributes
+
+  exclude-files:
+    - ".*_test.go"
+
+output:
+  formats:
+    - format: checkstyle
+      path: lint-report.xml
+    - format: colored-line-number

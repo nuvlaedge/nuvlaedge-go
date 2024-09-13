@@ -2,136 +2,169 @@ package nuvlaedge
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"github.com/docker/docker/client"
+	"github.com/nuvla/api-client-go/clients"
+	"github.com/nuvla/api-client-go/clients/resources"
 	log "github.com/sirupsen/logrus"
-	"nuvlaedge-go/nuvlaedge/common"
-	"nuvlaedge-go/nuvlaedge/orchestrator"
-	"time"
+	"nuvlaedge-go/common/constants"
+	"nuvlaedge-go/types"
+	"nuvlaedge-go/types/jobs"
+	"nuvlaedge-go/types/settings"
+	"nuvlaedge-go/types/worker"
+	"nuvlaedge-go/workers"
+	"path"
 )
 
-var DataLocation string
-
-func init() {
-	DataLocation = common.DefaultDBPath
-}
+type Workers map[worker.WorkerType]worker.Worker
 
 type NuvlaEdge struct {
-	ctx          context.Context  // ctx: Context
-	coe          orchestrator.Coe // coe: Orchestration engine to control deployments
-	settings     *Settings        // settings:
-	agent        *Agent           // Agent: Nuvla-NuvlaEdge interface manager
-	jobProcessor *JobProcessor    // jobProcessor: Read and execute jobs coming from Nuvla
-	telemetry    *Telemetry       // telemetry: Reads the local telemetry and exposes it. We provide two options, local NuvlaEdge telemetry or Prometheus exporter.
+	ctx  context.Context             // Parent context
+	conf *settings.NuvlaEdgeSettings // NuvlaEdge settings
+
+	// Channels
+	commissionerCh   chan types.CommissionData // Connects Telemetry/EngineMonitor with Commissioner
+	jobCh            chan string               // Connects Agent and Telemetry with Job Processor
+	deploymentCh     chan jobs.Job             // Connects Job Processor with Deployment handler
+	confLastUpdateCh chan string               // Connects Heartbeat and Telemetry responses with Configuration handler
+
+	nuvla        *clients.NuvlaEdgeClient
+	dockerClient client.APIClient
+
+	workerOpts *worker.WorkerOpts
+	workerConf *worker.WorkerConfig
+
+	workers Workers
 }
 
-func NewNuvlaEdge(ctx context.Context, settings *Settings) *NuvlaEdge {
-	// Set global data location
-	DataLocation = settings.DataLocation
-	log.Infof("Setting global data location to: %s", DataLocation)
+func NewNuvlaEdge(ctx context.Context, conf *settings.NuvlaEdgeSettings) (*NuvlaEdge, error) {
 
-	coeClient, err := orchestrator.NewCoe(orchestrator.DockerType)
+	nuvla, err := ValidateSettings(conf)
 	if err != nil {
-		log.Errorf("Error creating COE client: %s", err)
+		return nil, err
+	}
+	b, _ := json.MarshalIndent(conf, "", "  ")
+	log.Infof("Starting NuvlaEdge with settings: %s", string(b))
+
+	// To add K8s, this will need to be converted into an interface
+	dockerCli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return nil, err
 	}
 
-	// MetricsMonitor
-	log.Infof("Creating MetricsMonitor with period %d", settings.Agent.TelemetryPeriod)
+	ne := &NuvlaEdge{
+		ctx:          ctx,
+		nuvla:        nuvla,
+		dockerClient: dockerCli,
+		conf:         conf,
+		workerConf:   worker.NewDefaultWorkersConfig(),
 
-	telemetry := NewTelemetry(coeClient, settings.Agent.TelemetryPeriod, settings.Agent.NuvlaEndpoint)
-
-	// jobChan: Agent -> JobProcessor
-	jobChan := make(chan string, 10)
-
-	return &NuvlaEdge{
-		ctx:      ctx,
-		coe:      coeClient,
-		settings: settings,
-		agent:    NewAgent(ctx, &settings.Agent, coeClient, telemetry, jobChan),
-		// Job engine needs a pointer to Nuvla Client which is created by the agent depending on input s
-		// and previous installations so, we defer the creation of the jobProcessor to the start method
-		telemetry: telemetry,
+		// Channels
+		commissionerCh:   make(chan types.CommissionData),
+		jobCh:            make(chan string),
+		deploymentCh:     make(chan jobs.Job),
+		confLastUpdateCh: make(chan string),
 	}
+
+	jobRegistry := jobs.NewRunningJobs()
+	ne.workerOpts = &worker.WorkerOpts{
+		NuvlaClient:      nuvla,
+		DockerClient:     dockerCli,
+		CommissionCh:     ne.commissionerCh,
+		JobCh:            ne.jobCh,
+		DeploymentCh:     ne.deploymentCh,
+		ConfLastUpdateCh: ne.confLastUpdateCh,
+		Jobs:             &jobRegistry,
+	}
+
+	ne.workers, err = WorkerGenerator(ne.workerOpts, ne.workerConf)
+	if err != nil {
+		return nil, err
+	}
+
+	return ne, nil
 }
 
-// Start initialises the NuvlaEdge.
-// The initialisation process consists in the creation of all the components and the execution
-// of the first required operations as follows:
-// - Check minimum settings
-//   - This should consider the local nuvlaedge-session file
-//
-// - Agent: Initialises the agent
-//   - Activate if required
-//   - Commission if not done already
-//   - Send first heartbeat
-//
-// - Run first telemetry sweep
-// - Send first telemetry
-// None of these steps are executed in a routine, they should be blocking operations to ensure the correct
-// initialisation of the system.
 func (ne *NuvlaEdge) Start() error {
-	// Run requirements check
-	log.Infof("Running requirements check")
 
-	// Run COE telemetry initial sweep
-	err := ne.coe.TelemetryStart()
-	if err != nil {
-		log.Errorf("Error starting COE telemetry: %s, cannot continue", err)
+	// NuvlaEdge startup process...
+
+	if err := ne.startUpProcess(); err != nil {
 		return err
 	}
 
-	// Start Telemetry
-	err = ne.telemetry.Start()
-	if err != nil {
-		log.Errorf("Error starting Telemetry: %s, cannot continue", err)
-		return err
-	}
-
-	// Start Agent
-	err = ne.agent.Start()
-	if err != nil {
-		log.Errorf("Error starting Agent: %s, cannot continue", err)
-		return err
-	}
-
-	// Start JobProcessor
-	ne.jobProcessor = NewJobProcessor(
-		ne.ctx,
-		ne.agent.jobChan,
-		ne.agent.client.GetNuvlaClient(),
-		ne.coe,
-		ne.settings.Agent.EnableLegacyJobSupport,
-		ne.settings.Agent.JobEngineImage)
-
-	err = ne.jobProcessor.Start()
-	if err != nil {
-		log.Errorf("Error starting JobProcessor: %s, cannot continue", err)
+	if err := ne.startWorkers(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (ne *NuvlaEdge) Run(errChan chan error) {
-	log.Infof("Running NuvlaEdge...")
-	go func() {
-		waitTime := 5
-		for {
-			err := ne.agent.Run()
-			if err == nil {
-				log.Warn("Agent has been stopped, exiting")
-				return
-			}
-			// Wait 5 seconds before restarting the agent
-			log.Warnf("Agent has been stopped due to an error, restarting in %d seconds", waitTime)
-			errChan <- err
-			time.Sleep(time.Duration(waitTime) * time.Second)
-			waitTime += waitTime
+func (ne *NuvlaEdge) Run(ctx context.Context) error {
+	<-ctx.Done()
+	return nil
+}
+
+func (ne *NuvlaEdge) startWorkers() error {
+	var errList []error
+	for _, w := range ne.workers {
+		if err := w.Start(ne.ctx); err != nil {
+			errList = append(errList, err)
 		}
-	}()
-
-	_ = ne.jobProcessor.Run()
-
-	select {
-	case <-ne.ctx.Done():
-		log.Info("NuvlaEdge has been stopped")
 	}
+	return errors.Join(errList...)
+}
+
+func (ne *NuvlaEdge) startUpProcess() error {
+	// Start up process
+	// Get remote nuvlaedge state
+	if ne.nuvla.Credentials == nil {
+		// We need to assume that NuvlaEdge is new
+		err := ne.nuvla.Activate()
+		if err != nil {
+			return err
+		}
+
+		err = ne.nuvla.Freeze(path.Join(ne.conf.DBPPath, constants.NuvlaEdgeSessionFile))
+		if err != nil {
+			return err
+		}
+	}
+
+	if err := ne.nuvla.LogIn(); err != nil {
+		return err
+	}
+
+	// else, check state
+	err := ne.nuvla.UpdateResourceSelect([]string{"state"})
+	if err != nil {
+		return err
+	}
+
+	res := ne.nuvla.GetNuvlaEdgeResource()
+
+	if res.State == resources.NuvlaEdgeStateActivated {
+		// Trigger commission once
+		err := workers.TriggerBaseCommissioning(ne.workers[worker.Commissioner], ne.nuvla)
+		if err != nil {
+			return err
+		}
+	}
+
+	// else, check state
+	err = ne.nuvla.UpdateResourceSelect([]string{"state"})
+	if err != nil {
+		return err
+	}
+
+	res = ne.nuvla.GetNuvlaEdgeResource()
+
+	if res.State != resources.NuvlaEdgeStateCommissioned {
+		return fmt.Errorf("can't start a NuvlaEDge from state: %s", res.State)
+	}
+
+	log.Info("Start Up process completed, NuvlaEdge is ready")
+	return nil
 }

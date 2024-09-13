@@ -5,12 +5,14 @@ services:
     image: ${NE_IMAGE_REGISTRY:-}${NE_IMAGE_ORGANIZATION:-sixsq}/${NE_IMAGE_GO_REPOSITORY:-nuvlaedge-go}:${NE_IMAGE_TAG:-2.2.0}
     # x-release-please-end
     container_name: ${COMPOSE_PROJECT_NAME:-nuvlaedge}-agent-go
+    command:
+      - run
     network_mode: "host"
     restart: always
     stop_grace_period: 5s
-    mem_limit: ${MEMORY_LIMIT:-30m}
-    mem_reservation: ${MEMORY_RESERVATION:-20m}
-    memswap_limit: ${MEMORY_SWAP_LIMIT:-30m}
+    mem_limit: ${MEMORY_LIMIT:-50m}
+    mem_reservation: ${MEMORY_RESERVATION:-30m}
+    memswap_limit: ${MEMORY_SWAP_LIMIT:-50m}
     environment:
       - COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME:-nuvlaedge}
       - NUVLAEDGE_UUID=${NUVLAEDGE_UUID}

@@ -9,6 +9,12 @@ on:
     branches:
       - main
   pull_request:
+    paths:
+      - '**/*.go'
+      - '**/*.mod'
+      - '**/*.sum'
+      - '.github/workflows/dev.yml'
+      - 'Dockerfile'
   workflow_dispatch:
 
 jobs:
