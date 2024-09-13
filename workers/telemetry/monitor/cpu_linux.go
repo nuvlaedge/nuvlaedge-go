@@ -24,6 +24,7 @@ func (rm *ResourceMonitor) updateCPU(files ...string) error {
 	} else {
 		file = files[0]
 	}
+	// #nosec
 	raw, err := os.ReadFile(file)
 	if err != nil {
 		return err

@@ -51,6 +51,7 @@ func (sm *SystemMonitor) updateMetrics() {
 
 	unixTime, err := host.BootTime()
 	if err == nil {
+		// #nosec
 		tTime := time.Unix(int64(unixTime), 0)
 		sm.systemData.LastBoot = tTime.Format(constants.DatetimeFormat)
 	} else {

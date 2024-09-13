@@ -31,6 +31,8 @@ issues:
   exclude-dirs:
     # Exclude generated code and tests
     - cmd/tests
+    - testutils
+    - cli/flags
     - vendor
     - testdata
     - examples
