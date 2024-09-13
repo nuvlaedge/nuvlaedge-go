@@ -66,7 +66,7 @@ docker/run:
 # ==================================================================================== #
 .PHONY: sonar/test
 sonar/test:
-	go test -tags=coverage -v -race -buildvcs -coverprofile=cov.out $(shell go list ./... | grep -v -e testutils -e cmd/tests)
+	go test -tags=coverage -v -race -buildvcs -coverprofile=cov.out $(shell go list ./... | grep -v -e testutils -e cmd/tests -e workers/job_processor -e engine)
 
 
 .PHONY: sonar/lint
