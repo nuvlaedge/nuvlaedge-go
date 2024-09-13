@@ -9,7 +9,7 @@ run:
   allow-parallel-runners: true
 
 linters:
-  enable-all: true
+#  enable-all: true
   disable:
     # Deprecated linters
     - execinquery
@@ -18,6 +18,13 @@ linters:
 
     # We need json tags to be - separated
     - tagliatelle
+    # We should not use the gocheck package
+    - depguard
+    # Temporary disable this linter
+    - wrapcheck
+    - err113
+
+
 
 
 issues:

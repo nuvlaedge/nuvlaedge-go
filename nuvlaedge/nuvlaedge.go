@@ -45,7 +45,7 @@ func NewNuvlaEdge(ctx context.Context, conf *settings.NuvlaEdgeSettings) (*Nuvla
 	if err != nil {
 		return nil, err
 	}
-	b, err := json.MarshalIndent(conf, "", "  ")
+	b, _ := json.MarshalIndent(conf, "", "  ")
 	log.Infof("Starting NuvlaEdge with settings: %s", string(b))
 
 	// To add K8s, this will need to be converted into an interface

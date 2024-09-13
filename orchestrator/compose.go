@@ -156,7 +156,10 @@ func (c *Compose) Logs(ctx context.Context, opts *types.LogOpts) error {
 
 		// Read the logs
 		buf := make([]byte, 1024)
-		reader.Read(buf)
+		_, err = reader.Read(buf)
+		if err != nil {
+			return err
+		}
 	}
 
 	return c.service.Logs(ctx, opts.ProjectName, opts.LogConsumer, opts.LogOptions)

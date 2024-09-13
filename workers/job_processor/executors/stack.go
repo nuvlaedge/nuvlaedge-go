@@ -30,10 +30,8 @@ type Stack struct {
 	stackOpts   *options.Deploy
 
 	// Temporary file locations
-	tempDir      string
-	composeFile  string
-	envFile      string
-	registryFile string
+	tempDir     string
+	composeFile string
 }
 
 func (s *Stack) StartDeployment() error {

@@ -41,7 +41,6 @@ func (rm *ResourceMonitor) Run(ctx context.Context) error {
 			return ctx.Err()
 		case <-rm.Ticker.C:
 			// Send metric to channel
-
 			if err := rm.updateMetrics(); err != nil {
 				log.Errorf("Error updating resource metrics: %s", err)
 			}
@@ -140,17 +139,20 @@ func (rm *ResourceMonitor) updateIface() error {
 	// Retrieve public IP address
 	var wg sync.WaitGroup
 	wg.Add(1)
+
 	go func() {
 		defer wg.Done()
+
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
+
 		r, err := http.NewRequestWithContext(ctx, "GET", "https://api.ipify.org", nil)
 		if err != nil {
 			log.Errorf("Error creating request: %v", err)
 			return
 		}
-		resp, err := http.DefaultClient.Do(r)
 
+		resp, err := http.DefaultClient.Do(r)
 		if err != nil {
 			log.Errorf("Error getting public IP: %v", err)
 			return

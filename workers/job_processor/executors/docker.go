@@ -35,7 +35,8 @@ func (d *Docker) Reboot() error {
 			},
 		},
 	}, nil, nil, "")
-	return nil
+
+	return err
 }
 
 func (d *Docker) InstallSSHKey(sshPub, user string) error {

@@ -20,8 +20,7 @@ type ComposeExecutor struct {
 	deploymentResource *resources.DeploymentResource
 	projectName        string
 
-	tempDir     string
-	composePath string
+	tempDir string
 
 	ctx            context.Context
 	composeConfig  *types.ConfigDetails

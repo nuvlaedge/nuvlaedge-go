@@ -12,8 +12,7 @@ import (
 
 type JobProcessor struct {
 	worker.WorkerBase
-	ctx            context.Context
-	jobChan        chan string        // NativeJob channel. Receives jobs IDs from the agent
+	jobChan        chan string        // NativeJob channel. Receive jobs IDs from the agent
 	client         *nuvla.NuvlaClient // Nuvla session required in the jobs and deployment clients
 	coe            engine.Coe         // COE client required in the jobs and deployment clients
 	enableLegacy   bool
@@ -24,7 +23,12 @@ type JobProcessor struct {
 
 func (p *JobProcessor) Start(ctx context.Context) error {
 	log.Infof("Nothing to start in the jobs processor, passing...")
-	go p.Run(ctx)
+	go func() {
+		err := p.Run(ctx)
+		if err != nil {
+			log.Errorf("Error running Job Processor: %s", err)
+		}
+	}()
 	return nil
 }
 
@@ -116,7 +120,6 @@ func (p *JobProcessor) processJob(j string) {
 type RunningJob struct {
 	jobId   string
 	jobType string
-	running bool
 }
 
 type JobRegistry struct {

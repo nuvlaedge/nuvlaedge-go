@@ -83,6 +83,7 @@ func setUpdateEnvBindings() {
 
 func ParseUpdateFlags(flags *pflag.FlagSet, opts *command.UpdateCmdOptions) error {
 	bindViperUpdateFlags(flags)
+	setDefaultUpdateFlags()
 	setUpdateEnvBindings()
 	setEnvBindings()
 	viper.AutomaticEnv()

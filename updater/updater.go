@@ -19,7 +19,6 @@ type Updater func(opts *command.UpdateCmdOptions) error
 
 func GetUpdater() Updater {
 	// This is a comment
-
 	return UpdateWithCompose
 }
 
@@ -47,12 +46,14 @@ func NewDockerUpdater(opts *command.UpdateCmdOptions) (*DockerUpdater, error) {
 	if err != nil {
 		return nil, err
 	}
-	o, err := orchestrator.NewComposeOrchestrator(dCli)
+
+	composeService, err := orchestrator.NewComposeOrchestrator(dCli)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error creating compose orchestrator: %w", err)
 	}
+
 	return &DockerUpdater{
-		cs:   o,
+		cs:   composeService,
 		opts: opts,
 		dCli: dCli,
 	}, nil
@@ -81,12 +82,15 @@ func (du *DockerUpdater) Update(ctx context.Context) error {
 	})
 
 	if err != nil {
-		return err
+		return fmt.Errorf("error starting deployment: %s", err)
 	}
 
-	err = du.checkHealth(ctx, 10)
+	var checkPeriod = 10
+
+	err = du.checkHealth(ctx, checkPeriod)
 	if err == nil {
 		log.Info("NuvlaEdge is healthy")
+
 		return nil
 	}
 
@@ -97,59 +101,71 @@ func (du *DockerUpdater) Update(ctx context.Context) error {
 
 func (du *DockerUpdater) ValidateOpts() error {
 	if du.opts == nil {
-		return fmt.Errorf("update options are nil")
+		return errors.New("update options are nil")
 	}
 
 	if du.opts.Project == "" {
-		return fmt.Errorf("project name is required")
+		return errors.New("project name is required")
 	}
 
 	if du.opts.ComposeFiles == nil {
 		log.Warn("No compose files provided. Using default docker-compose.yml")
+
 		du.opts.ComposeFiles = []string{"docker-compose.yml"}
 	}
 
 	if du.opts.CurrentVersion == "" {
-		return fmt.Errorf("current version is required to allow for rolling back and recovery")
+		return errors.New("current version is required to allow for rolling back and recovery")
 	}
 
 	if du.opts.TargetVersion == "" {
 		if !du.opts.Force {
-			return fmt.Errorf("target version is required. Use --force to update without a target version to the latest available")
+			return errors.New("target version is required. Use --force to update without a target " +
+				"version to the latest available")
 		}
 	}
+
 	return nil
 }
 
 func (du *DockerUpdater) checkHealth(ctx context.Context, period int) error {
-
 	ticker := time.NewTicker(time.Duration(period) * time.Second)
 	defer ticker.Stop()
+
 	initialRestartCount := -1
+
 	for {
 		select {
 		case <-ctx.Done():
 			log.Info("Health check finished, NuvlaEDge is healthy")
+
 			return nil
 		case <-ticker.C:
 			// Check health
-			h, err := du.monitorNuvlaEdge(ctx)
+			health, err := du.monitorNuvlaEdge(ctx)
 			if err != nil {
 				log.Warn("Error monitoring NuvlaEdge: ", err)
 			}
+
 			if initialRestartCount == -1 {
-				initialRestartCount = h.RestartCount
+				initialRestartCount = health.RestartCount
 			}
-			if h.RestartCount > initialRestartCount {
+
+			if health.RestartCount > initialRestartCount {
 				log.Warn("NuvlaEdge restarted, rolling back")
+
 				return errors.New("NuvlaEdge restarted, not healthy")
 			}
-			if !h.Running {
+
+			if !health.Running {
 				log.Warn("NuvlaEdge stopped, rolling back")
+
 				return errors.New("NuvlaEdge stopped, not healthy")
 			}
-			if h.Status != "running" {
+
+			if health.Status != "running" {
 				log.Warn("NuvlaEdge status is not running, rolling back")
+
 				return errors.New("NuvlaEdge status is not running, not healthy")
 			}
 		}
@@ -158,10 +174,12 @@ func (du *DockerUpdater) checkHealth(ctx context.Context, period int) error {
 
 func (du *DockerUpdater) monitorNuvlaEdge(ctx context.Context) (NuvlaEdgeHealth, error) {
 	var neHealth NuvlaEdgeHealth
+
 	containers, err := du.cs.GetProjectStatus(ctx, du.opts.Project)
 	if err != nil {
-		return neHealth, err
+		return neHealth, fmt.Errorf("error getting project status: %w", err)
 	}
+
 	var agent api.ContainerSummary
 	// Monitor containers
 	for _, c := range containers {
@@ -176,7 +194,7 @@ func (du *DockerUpdater) monitorNuvlaEdge(ctx context.Context) (NuvlaEdgeHealth,
 	// Monitor the agent
 	data, err := du.dCli.ContainerInspect(ctx, agent.ID)
 	if err != nil {
-		return neHealth, err
+		return neHealth, fmt.Errorf("error inspecting agent container: %w", err)
 	}
 
 	neHealth.RestartCount = data.RestartCount
@@ -192,6 +210,7 @@ func (du *DockerUpdater) isAgent(container api.ContainerSummary) bool {
 
 func (du *DockerUpdater) cleanEnvs() {
 	var newEnv []string
+
 	for _, e := range du.opts.Environment {
 		if strings.Contains(e, "=") {
 			newEnv = append(newEnv, e)
@@ -199,6 +218,7 @@ func (du *DockerUpdater) cleanEnvs() {
 			log.Warn("Invalid environment variable: ", e)
 		}
 	}
+
 	du.opts.Environment = newEnv
 }
 
@@ -209,19 +229,23 @@ func (du *DockerUpdater) getComposeFiles(reqFiles []string, workDir string, vers
 		if err == nil {
 			return files, nil
 		}
+
 		log.Warn("Error getting compose files from Nuvla release: ", err)
 	}
 
 	log.Info("No Nuvla release found, trying GitHub release")
+
 	ghReleases, err := release.GetGitHubRelease(version)
 	if err != nil {
 		log.Errorf("Error getting GitHub release: %s", err)
+
 		return nil, err
 	}
 
 	files, err := ghReleases.GetComposeFiles(reqFiles, workDir)
 	if err != nil {
 		log.Errorf("Error getting compose files from GitHub release: %s", err)
+
 		return nil, err
 	}
 
@@ -229,10 +253,13 @@ func (du *DockerUpdater) getComposeFiles(reqFiles []string, workDir string, vers
 }
 
 // findConfigInEnvironment looks for the configuration in the environment. Particularly the image to update to.
+//
+//nolint:all
 func (du *DockerUpdater) findConfigInEnvironment() string {
 	keys := []string{"NE_IMAGE_REGISTRY", "NE_IMAGE_ORGANIZATION", "NE_IMAGE_GO_REPOSITORY", "NE_IMAGE_TAG"}
 
 	envs := make(map[string]string)
+
 	for _, env := range du.opts.Environment {
 		if strings.ContainsAny(env, "=") {
 			kv := strings.Split(env, "=")
@@ -241,6 +268,7 @@ func (du *DockerUpdater) findConfigInEnvironment() string {
 	}
 
 	var image imageName
+
 	for _, key := range keys {
 		if val, ok := envs[key]; ok {
 			switch key {
@@ -255,9 +283,11 @@ func (du *DockerUpdater) findConfigInEnvironment() string {
 			}
 		}
 	}
+
 	return image.String()
 }
 
+//nolint:all
 type imageName struct {
 	registry     string
 	organization string
@@ -265,6 +295,7 @@ type imageName struct {
 	tag          string
 }
 
+//nolint:all
 func (i *imageName) String() string {
 	return fmt.Sprintf("%s/%s/%s:%s", i.registry, i.organization, i.repository, i.tag)
 }

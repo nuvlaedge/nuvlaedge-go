@@ -41,11 +41,3 @@ func nuvlaEdgeMain(ctx context.Context) error {
 	}
 	return nil
 }
-
-func getExitCode(err error) int {
-	if err == nil {
-		return 0
-	}
-
-	return 1
-}

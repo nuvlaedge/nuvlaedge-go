@@ -3,6 +3,7 @@ package release
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"nuvlaedge-go/updater/common"
@@ -36,6 +37,7 @@ func (nr *NuvlaReleaseResource) GetComposeFiles(fileNames []string, workDir stri
 				log.Errorf("Error saving compose file %s: %s", composeFile.Name, err)
 				return nil, err
 			}
+
 			composeFiles = append(composeFiles, filepath.Join(workDir, composeFile.Name))
 		}
 	}
@@ -88,5 +90,5 @@ func GetNuvlaRelease(version string) (*NuvlaReleaseResource, error) {
 
 	// Return the latest element if the version is not found
 	log.Info("Version not found, returning the latest release")
-	return &rel[len(rel)-1], errors.New("requested version not found")
+	return &rel[len(rel)-1], fmt.Errorf("requested version not found")
 }

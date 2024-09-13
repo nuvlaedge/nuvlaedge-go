@@ -13,9 +13,9 @@ import (
 	"time"
 )
 
-func parseEnv(env []string) ([]string, error) {
-
+func parseEnv(env []string) []string {
 	var cleanEnvs []string
+
 	for _, e := range env {
 		if strings.Contains(e, "=") {
 			cleanEnvs = append(cleanEnvs, e)
@@ -23,7 +23,8 @@ func parseEnv(env []string) ([]string, error) {
 			log.Warn("Invalid environment variable: ", e)
 		}
 	}
-	return cleanEnvs, nil
+
+	return cleanEnvs
 }
 
 func UpdateWithCompose(opts *command.UpdateCmdOptions) error {
@@ -43,10 +44,7 @@ func UpdateWithCompose(opts *command.UpdateCmdOptions) error {
 	}
 
 	// Parse environment variables
-	env, err := parseEnv(opts.Environment)
-	if err != nil {
-		return err
-	}
+	env := parseEnv(opts.Environment)
 
 	// Download compose files composing GitHubRelease with compose files
 	composeFiles, err := getComposeFiles(opts.ComposeFiles, opts.WorkingDir, opts.TargetVersion)
@@ -54,7 +52,9 @@ func UpdateWithCompose(opts *command.UpdateCmdOptions) error {
 		return err
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
+	startTimeout := 120
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(startTimeout)*time.Second)
 	defer cancel()
 
 	err = compose.Start(ctx, &types.StartOpts{
@@ -77,19 +77,23 @@ func getComposeFiles(composeFiles []string, workDir string, version string) ([]s
 		if err == nil {
 			return files, nil
 		}
+
 		log.Warn("Error getting compose files from Nuvla release: ", err)
 	}
 
 	log.Info("No Nuvla release found, trying GitHub release")
+
 	ghReleases, err := release.GetGitHubRelease(version)
 	if err != nil {
 		log.Errorf("Error getting GitHub release: %s", err)
+
 		return nil, err
 	}
 
 	files, err := ghReleases.GetComposeFiles(composeFiles, workDir)
 	if err != nil {
 		log.Errorf("Error getting compose files from GitHub release: %s", err)
+
 		return nil, err
 	}
 

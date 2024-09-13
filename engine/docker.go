@@ -11,7 +11,6 @@ import (
 	"nuvlaedge-go/common"
 	"nuvlaedge-go/types/jobs"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -22,8 +21,6 @@ const (
 type DockerEngine struct {
 	coeType CoeType
 	client  *client.Client
-
-	clusterDataLock *sync.Mutex
 }
 
 func NewDockerEngine() *DockerEngine {
@@ -181,7 +178,7 @@ func printLogLines(reader io.ReadCloser) string {
 		logParts := strings.SplitN(logLine, " ", 2)
 		if len(logParts) > 0 {
 			// Remove any non-timestamp characters from the start of the timestamp
-			timestamp := strings.TrimLeft(logParts[0], "\x02\x00\x00\x00\x00\x00\x01\x1b")
+			timestamp := strings.TrimLeft(logParts[0], "\x02\x00\x01\x1b")
 			// Update the sinceTime to the timestamp of the current log line
 			sinceTime = timestamp
 		}
