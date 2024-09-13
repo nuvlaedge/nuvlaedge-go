@@ -48,7 +48,12 @@ func (d *DockerCleaner) Start(ctx context.Context) error {
 		"system":     d.cleanSystem,
 	}
 
-	go d.Run(ctx)
+	go func() {
+		err := d.Run(ctx)
+		if err != nil {
+			log.Errorf("Error running Commissioner: %s", err)
+		}
+	}()
 	return nil
 }
 
@@ -101,18 +106,24 @@ func (d *DockerCleaner) cleanResources(ctx context.Context) error {
 			if err := d.cleanVolumes(ctx); err != nil {
 				errList = append(errList, err)
 			}
-			errList = append(errList, d.cleanSystem(ctx))
-			return d.cleanSystem(ctx)
+
+			if err := d.cleanSystem(ctx); err != nil {
+				errList = append(errList, err)
+			}
+
+			return errors.Join(errList...)
 		}
 	}
 
 	for _, obj := range d.objects {
 		log.Infof("Cleaning %s", obj)
+
 		f, ok := d.clearnerFactory[obj]
 		if !ok {
 			log.Warnf("No cleaner for %s", obj)
 			continue
 		}
+
 		if err := f(ctx); err != nil {
 			errList = append(errList, err)
 		}

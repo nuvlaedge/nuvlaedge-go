@@ -88,7 +88,12 @@ func (t *Telemetry) Start(ctx context.Context) error {
 		return err
 	}
 
-	go t.Run(ctx)
+	go func() {
+		err := t.Run(ctx)
+		if err != nil {
+			log.Errorf("Error running Commissioner: %s", err)
+		}
+	}()
 
 	return nil
 }

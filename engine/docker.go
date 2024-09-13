@@ -132,7 +132,13 @@ func (dc *DockerEngine) pullAndWaitImage(ctx context.Context, imageName string) 
 
 	// Pull image
 	r, err := dc.client.ImagePull(ctxTimed, imageName, image.PullOptions{})
-	defer r.Close()
+	defer func() {
+		err := r.Close()
+		if err != nil {
+			log.Infof("Error closing image pull response: %s", err)
+		}
+	}()
+
 	if err != nil {
 		return err
 	}

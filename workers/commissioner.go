@@ -69,7 +69,12 @@ func (c *Commissioner) Start(ctx context.Context) error {
 		return nil
 	}
 
-	go c.Run(ctx)
+	go func() {
+		err := c.Run(ctx)
+		if err != nil {
+			log.Errorf("Error running Commissioner: %s", err)
+		}
+	}()
 	return nil
 }
 

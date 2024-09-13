@@ -28,7 +28,12 @@ func (h *Heartbeat) Init(opts *worker.WorkerOpts, conf *worker.WorkerConfig) err
 
 func (h *Heartbeat) Start(ctx context.Context) error {
 	// Maybe check here is NuvlaEdge status is commissioned, else wait
-	go h.Run(ctx)
+	go func() {
+		err := h.Run(ctx)
+		if err != nil {
+			log.Errorf("Error running Commissioner: %s", err)
+		}
+	}()
 	return nil
 }
 

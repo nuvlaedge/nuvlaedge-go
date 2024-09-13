@@ -11,15 +11,15 @@ type NEResponse struct {
 	LastUpdate string   `json:"doc-last-updated"`
 }
 
-func NewFromResponse(res *http.Response) (*NEResponse, error) {
+func NewFromResponse(res *http.Response) (NEResponse, error) {
 	var neRes NEResponse
 	err := json.NewDecoder(res.Body).Decode(&neRes)
 	if err != nil {
 		log.Error("Error decoding NuvlaEdge response: ", err)
-		return nil, err
+		return neRes, err
 	}
 
-	return &neRes, nil
+	return neRes, nil
 }
 
 func ProcessResponse(res *http.Response, jobChan chan string, confChan chan string) error {
@@ -28,7 +28,7 @@ func ProcessResponse(res *http.Response, jobChan chan string, confChan chan stri
 		return err
 	}
 
-	if neRes.Jobs != nil && len(neRes.Jobs) > 0 {
+	if len(neRes.Jobs) > 0 {
 		log.Infof("Received %d jobs", len(neRes.Jobs))
 		for _, job := range neRes.Jobs {
 			jobChan <- job

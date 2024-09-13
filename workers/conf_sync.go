@@ -32,7 +32,12 @@ func (c *ConfUpdater) Init(opts *worker.WorkerOpts, conf *worker.WorkerConfig) e
 }
 
 func (c *ConfUpdater) Start(ctx context.Context) error {
-	go c.Run(ctx)
+	go func() {
+		err := c.Run(ctx)
+		if err != nil {
+			log.Errorf("Error running Commissioner: %s", err)
+		}
+	}()
 	return nil
 }
 
