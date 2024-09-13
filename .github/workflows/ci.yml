@@ -18,7 +18,7 @@ jobs:
 
       - name: "Run tests"
         run: |
-          make ci/test
+          make ci/test/cover
           make ci/sec
 
       - name: "SonarCloud Update"

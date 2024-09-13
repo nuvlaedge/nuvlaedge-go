@@ -66,7 +66,7 @@ docker/run:
 # ==================================================================================== #
 .PHONY: ci/test/cover
 ci/test/cover:
-	go test -tags=coverage -v -race -buildvcs -coverprofile=/coverage.out $(shell go list ./... | grep -v -e testutils -e cmd/tests)
+	go test -tags=coverage -v -race -buildvcs -coverprofile=cov.out $(shell go list ./... | grep -v -e testutils -e cmd/tests)
 
 
 .PHONY: ci/lint
