@@ -24,8 +24,15 @@ jobs:
 
       - name: "Run tests"
         run: |
-          make ci/test/cover
-          make ci/sec
+          make sonar/test
+
+      - name: "Run Linters"
+        run: |
+          make sonar/lint
+
+      - name: "Run GoSec"
+        run: |
+          make sonar/sec
 
       - name: "SonarCloud Update"
         uses: SonarSource/sonarcloud-github-action@v3.0.0

@@ -17,7 +17,7 @@ import (
 func newUserClient(opts *command.RegisterCmdOptions) (*clients.UserClient, error) {
 	if opts.Key == "" || opts.Secret == "" {
 		log.Errorf("Nuvla API key and are required")
-		return nil, nil
+		return nil, errors.New("Nuvla API key and secret are required")
 	}
 
 	c := clients.NewUserClient(opts.Endpoint, opts.Insecure, false)

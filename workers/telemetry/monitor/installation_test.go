@@ -112,7 +112,7 @@ func TestDockerInstallationUpdaterWithMissingEnv(t *testing.T) {
 func TestDockerInstallationUpdaterWithMissingContainer(t *testing.T) {
 	dc := testutils.TestDockerMetricsClient{}
 	dc.ContainerInspectErr = errors.New("container not found")
-	os.Setenv("COMPOSE_PROJECT_NAME", "nuvlaedge")
+	t.Setenv("COMPOSE_PROJECT_NAME", "nuvlaedge")
 	defer os.Unsetenv("COMPOSE_PROJECT_NAME")
 
 	monitor := NewDockerInstallationMonitor(10, &dc, make(chan metrics.Metric))

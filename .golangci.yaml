@@ -1,6 +1,7 @@
 run:
   build-tags:
     - coverage
+  issues-exit-code: 0
 
 linters:
   enable-all: true
@@ -8,6 +9,10 @@ linters:
     # Deprecated linters
     - execinquery
     - gomnd
+
+    # We need json tags to be - separated
+    - tagliatelle
+
 
 issues:
   exclude-dirs:
@@ -24,3 +29,12 @@ issues:
     - .gitignore
     - .gitmodules
     - .gitattributes
+
+  exclude-files:
+    - ".*_test.go"
+
+output:
+  formats:
+    - format: checkstyle
+      path: lint-report.xml
+    - format: colored-line-number

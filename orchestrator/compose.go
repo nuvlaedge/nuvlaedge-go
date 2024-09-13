@@ -140,7 +140,6 @@ func (c *Compose) Close() error {
 
 func (c *Compose) Logs(ctx context.Context, opts *types.LogOpts) error {
 	// First, get services from the project
-
 	contSum, err := c.service.Ps(ctx, opts.ProjectName, api.PsOptions{All: true})
 	if err != nil {
 		return err

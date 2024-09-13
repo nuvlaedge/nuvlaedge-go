@@ -50,7 +50,7 @@ func TestAddRegisterFlags(t *testing.T) {
 func TestSetDefaultRegisterFlags(t *testing.T) {
 	setDefaultRegisterFlags()
 	assert.Equal(t, "https://nuvla.io", viper.GetString("endpoint"))
-	assert.Equal(t, false, viper.GetBool("insecure"))
+	assert.False(t, viper.GetBool("insecure"))
 	assert.Equal(t, 60, viper.GetInt("refresh-interval"))
 	assert.Equal(t, 20, viper.GetInt("heartbeat-interval"))
 	assert.Equal(t, false, viper.GetBool("vpn"))

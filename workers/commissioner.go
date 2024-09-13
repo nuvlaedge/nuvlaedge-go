@@ -51,7 +51,12 @@ func (c *Commissioner) getNodeIdFromStatus() string {
 
 	node, ok := resource.Data["node-id"]
 	if ok {
-		return node.(string)
+		nodeStr, ok := node.(string)
+		if ok {
+			return nodeStr
+		}
+
+		return ""
 	}
 	return ""
 }

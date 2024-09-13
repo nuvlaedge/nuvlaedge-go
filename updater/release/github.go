@@ -81,6 +81,8 @@ func ListGitHubReleases() ([]GitHubRelease, error) {
 
 	var r []GitHubRelease
 	err = json.NewDecoder(resp.Body).Decode(&r)
-
+	if err != nil {
+		return nil, err
+	}
 	return r, nil
 }

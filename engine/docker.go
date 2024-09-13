@@ -117,6 +117,7 @@ func (dc *DockerEngine) RunJobEngineContainer(conf *jobs.LegacyJobConf) (string,
 		log.Infof("Error creating container: %s", err)
 		return "", err
 	}
+
 	log.Infof("Created container: %s, %v", resp.ID, resp.Warnings)
 
 	err = dc.client.ContainerStart(ctx, resp.ID, container.StartOptions{})
@@ -190,6 +191,7 @@ func printLogLines(reader io.ReadCloser) string {
 
 func (dc *DockerEngine) printLogsUntilFinished(containerId string, exitFlag chan interface{}) {
 	var sinceTime string
+
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
 
@@ -251,39 +253,6 @@ func (dc *DockerEngine) StopContainer(containerId string, force bool) (bool, err
 
 func (dc *DockerEngine) RemoveContainer(containerId string, containerName string) (bool, error) {
 	return false, nil
-}
-
-/**************************************** NuvlaEdge Utils *****************************************/
-
-// TelemetryStart Runs one iteration of the telemetry process related to the COE
-func (dc *DockerEngine) TelemetryStart() error {
-	return nil
-}
-
-func (dc *DockerEngine) TelemetryStatus() (int, error) {
-	return 404, nil
-}
-
-func (dc *DockerEngine) TelemetryStop() (bool, error) {
-	return false, nil
-}
-
-/**************************************** Docker Compose Management *****************************************/
-
-func (dc *DockerEngine) RunCompose(composeFile string) error {
-	return nil
-}
-
-func (dc *DockerEngine) StopCompose() error {
-	return nil
-}
-
-func (dc *DockerEngine) RemoveCompose() error {
-	return nil
-}
-
-func (dc *DockerEngine) GetComposeStatus() (string, error) {
-	return "", nil
 }
 
 var _ Coe = &DockerEngine{}

@@ -64,15 +64,15 @@ docker/run:
 # ==================================================================================== #
 # CI/CD
 # ==================================================================================== #
-.PHONY: ci/test/cover
-ci/test/cover:
+.PHONY: sonar/test
+sonar/test:
 	go test -tags=coverage -v -race -buildvcs -coverprofile=cov.out $(shell go list ./... | grep -v -e testutils -e cmd/tests)
 
 
-.PHONY: ci/lint
-ci/lint:
-	golangci-lint run $(shell go list ./... | grep -v -e testutils -e cmd/tests)
+.PHONY: sonar/lint
+sonar/lint:
+	golangci-lint run $(shell go list ./... | grep -v -e testutils -e cmd/tests | sed 's|^nuvlaedge-go/||')
 
-.PHONY: ci/sec
-ci/sec:
-	gosec -no-fail -fmt=sonarqube -out report.json -exclude-dir cmd/tests ./...
+.PHONY: sonar/sec
+sonar/sec:
+	gosec -no-fail -fmt=sonarqube -out gosec-report.json -exclude-dir cmd/tests ./...

@@ -74,7 +74,7 @@ type NuvlaEdgeMonitor interface {
 	Run(ctx context.Context) error
 	GetChannel() chan metrics.Metric
 	GetPeriod() int
-	SetPeriod(int)
+	SetPeriod(period int)
 	Running() bool
 	Close() error
 }

@@ -168,6 +168,7 @@ func (du *DockerUpdater) monitorNuvlaEdge(ctx context.Context) (NuvlaEdgeHealth,
 		if du.isAgent(c) {
 			agent = c
 			log.Info("found agent: ", agent.ID)
+
 			break
 		}
 	}
@@ -231,7 +232,7 @@ func (du *DockerUpdater) getComposeFiles(reqFiles []string, workDir string, vers
 func (du *DockerUpdater) findConfigInEnvironment() string {
 	keys := []string{"NE_IMAGE_REGISTRY", "NE_IMAGE_ORGANIZATION", "NE_IMAGE_GO_REPOSITORY", "NE_IMAGE_TAG"}
 
-	var envs map[string]string
+	envs := make(map[string]string)
 	for _, env := range du.opts.Environment {
 		if strings.ContainsAny(env, "=") {
 			kv := strings.Split(env, "=")

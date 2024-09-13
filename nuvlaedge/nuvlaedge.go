@@ -120,7 +120,6 @@ func (ne *NuvlaEdge) startWorkers() error {
 func (ne *NuvlaEdge) startUpProcess() error {
 	// Start up process
 	// Get remote nuvlaedge state
-
 	if ne.nuvla.Credentials == nil {
 		// We need to assume that NuvlaEdge is new
 		err := ne.nuvla.Activate()
