@@ -28,6 +28,7 @@ jobs:
 
       - name: "Run Linters"
         run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.61.0
           make sonar/lint
 
       - name: "Run GoSec"
