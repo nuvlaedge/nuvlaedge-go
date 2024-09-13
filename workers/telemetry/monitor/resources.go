@@ -122,8 +122,8 @@ func (rm *ResourceMonitor) updateDisks() error {
 			continue
 		}
 
-		itDisk.Used = int32(usage.Used / 1024 / 1024 / 1024)
-		itDisk.Capacity = int32(usage.Total / 1024 / 1024 / 1024)
+		itDisk.Used = usage.Used / 1024 / 1024 / 1024
+		itDisk.Capacity = usage.Total / 1024 / 1024 / 1024
 		if itDisk.Capacity <= 0 || itDisk.Used <= 0 {
 			log.Debugf("Skipping disk %s. Total disk space is 0", partition.Device)
 			continue

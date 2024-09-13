@@ -226,7 +226,7 @@ func (s *Stack) CleanUp() {
 func (s *Stack) buildTempDir() error {
 	// Create temporary directory
 	s.setTempDirName()
-	err := os.MkdirAll(s.tempDir, 0755)
+	err := os.MkdirAll(s.tempDir, 0750)
 	if err != nil {
 		return err
 	}

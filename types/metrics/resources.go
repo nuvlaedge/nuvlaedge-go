@@ -44,8 +44,8 @@ func (dm DiskMetrics) WriteToStatus(status *NuvlaEdgeStatus) error {
 type DiskInfo struct {
 	BaseResource
 	Device   string `json:"device,omitempty"`
-	Used     int32  `json:"used"`
-	Capacity int32  `json:"capacity"`
+	Used     uint64 `json:"used"`
+	Capacity uint64 `json:"capacity"`
 }
 
 type CPUMetrics struct {

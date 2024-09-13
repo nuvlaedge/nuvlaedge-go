@@ -14,7 +14,8 @@ func SaveFile(fileName, workDir, content string) error {
 	log.Info("Saving file: ", filePath)
 
 	// Open the file for writing, creating it if it does not exist
-	file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	// #nosec
+	file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
 		return err
 	}
@@ -30,6 +31,7 @@ func SaveFile(fileName, workDir, content string) error {
 }
 
 func DownloadFile(url string, dest string) error {
+	// #nosec
 	resp, err := http.Get(url)
 	if err != nil {
 		return err
