@@ -2,6 +2,7 @@ package nuvlaedge
 
 import (
 	"github.com/nuvla/api-client-go/clients"
+	"github.com/nuvla/api-client-go/types"
 	log "github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"nuvlaedge-go/common/constants"
@@ -38,6 +39,10 @@ func Test_ValidateSettings(t *testing.T) {
 
 	sf := &clients.NuvlaEdgeSessionFreeze{
 		NuvlaEdgeId: mockNuvlaEdgeId,
+		Credentials: &types.ApiKeyLogInParams{
+			Key:    "key",
+			Secret: "secret",
+		},
 	}
 	err := sf.Save(filepath.Join(tempDir, constants.NuvlaEdgeSessionFile))
 	assert.NoError(t, err, "Error saving mock session file")
@@ -66,6 +71,10 @@ func Test_findOldSession(t *testing.T) {
 
 	sf := &clients.NuvlaEdgeSessionFreeze{
 		NuvlaEdgeId: mockNuvlaEdgeId,
+		Credentials: &types.ApiKeyLogInParams{
+			Key:    "key",
+			Secret: "secret",
+		},
 	}
 	sFile := filepath.Join(tempDir, constants.NuvlaEdgeSessionFile)
 	err := sf.Save(sFile)
