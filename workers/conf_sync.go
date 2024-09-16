@@ -62,7 +62,6 @@ func (c *ConfUpdater) Run(ctx context.Context) error {
 }
 
 func (c *ConfUpdater) Reconfigure(conf *worker.WorkerConfig) error {
-	log.Info("Reconfiguring ConfUpdater")
 	return nil
 }
 

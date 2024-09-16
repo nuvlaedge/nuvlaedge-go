@@ -71,7 +71,7 @@ func (p *JobProcessor) Run(ctx context.Context) error {
 			log.Info("Context done. Exiting...")
 			return ctx.Err()
 		case conf := <-p.ConfChan:
-			log.Info("Received configuration in Job Processor: ", conf)
+			log.Debug("Received configuration in Job Processor: ", conf)
 			if err := p.Reconfigure(conf); err != nil {
 				log.Error("Failed to reconfigure job processor: ", err)
 			}

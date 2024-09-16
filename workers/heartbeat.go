@@ -53,7 +53,7 @@ func (h *Heartbeat) Run(ctx context.Context) error {
 				log.Error("Failed to send heartbeat: ", err)
 			}
 		case conf := <-h.ConfChan:
-			log.Info("Received configuration in heartbeat: ", conf)
+			log.Debug("Received configuration in heartbeat: ", conf)
 			err := h.Reconfigure(conf)
 			if err != nil {
 				log.Error("Failed to reconfigure heartbeat worker: ", err)
@@ -63,7 +63,6 @@ func (h *Heartbeat) Run(ctx context.Context) error {
 }
 
 func (h *Heartbeat) Reconfigure(conf *worker.WorkerConfig) error {
-	log.Info("Reconfiguring heartbeat worker")
 	h.SetPeriod(conf.HeartBeatPeriod)
 	return nil
 }

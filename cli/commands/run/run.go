@@ -15,7 +15,7 @@ func NewRunCommand() *cobra.Command {
 		Use:   "run [OPTIONS]",
 		Short: "Run a NuvlaEdge",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			log.Infof("Running NuvlaEdge")
+			log.Infof("Parsing NuvlaEdge settings")
 			if err := runFlags.ParseSettings(cmd.Flags(), &opts); err != nil {
 				log.Errorf("Error parsing settings: %s", err)
 				return err

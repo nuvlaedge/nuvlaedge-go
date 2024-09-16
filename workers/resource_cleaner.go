@@ -80,7 +80,7 @@ func (d *DockerCleaner) Run(ctx context.Context) error {
 				log.Error("Failed to clean resources: ", err)
 			}
 		case conf := <-d.ConfChan:
-			log.Info("Received configuration in cleaner: ", conf)
+			log.Debug("Received configuration in cleaner: ", conf)
 			if err := d.Reconfigure(conf); err != nil {
 				log.Error("Failed to reconfigure DockerCleaner: ", err)
 			}

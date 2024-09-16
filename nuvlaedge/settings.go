@@ -79,6 +79,7 @@ func newClientFromSettings(settings *settings.NuvlaEdgeSettings) *clients.NuvlaE
 		creds,
 		nuvlaApi.WithEndpoint(settings.NuvlaEndpoint),
 		nuvlaApi.WithInsecureSession(settings.NuvlaInsecure),
+		nuvlaApi.WithoutPersistCookie,
 		nuvlaApi.ReAuthenticateSession)
 
 	return cli

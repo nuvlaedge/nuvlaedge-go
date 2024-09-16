@@ -126,7 +126,7 @@ func (t *Telemetry) Run(ctx context.Context) error {
 			}
 
 		case conf := <-t.ConfChan:
-			log.Info("Received configuration in telemetry: ", conf)
+			log.Debug("Received configuration in telemetry: ", conf)
 			if err := t.Reconfigure(conf); err != nil {
 				log.Errorf("Error reconfiguring telemetry: %s", err)
 			}
@@ -195,7 +195,6 @@ func (t *Telemetry) sendTelemetry() error {
 }
 
 func (t *Telemetry) Reconfigure(conf *worker.WorkerConfig) error {
-	log.Info("Reconfiguring telemetry worker")
 	if conf.TelemetryPeriod != t.GetPeriod() {
 		t.SetPeriod(conf.TelemetryPeriod)
 	}

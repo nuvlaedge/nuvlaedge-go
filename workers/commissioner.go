@@ -106,7 +106,7 @@ func (c *Commissioner) Run(ctx context.Context) error {
 			}
 
 		case conf := <-c.ConfChan:
-			log.Info("Received configuration in commissioner: ", conf)
+			log.Debug("Received configuration in commissioner: ", conf)
 			if err := c.Reconfigure(conf); err != nil {
 				log.Errorf("Error reconfiguring Commissioner: %s", err)
 			}
@@ -115,7 +115,6 @@ func (c *Commissioner) Run(ctx context.Context) error {
 }
 
 func (c *Commissioner) Reconfigure(conf *worker.WorkerConfig) error {
-	log.Infof("Reconfiguring Commissioner")
 	if conf.CommissionPeriod != c.GetPeriod() {
 		c.SetPeriod(conf.CommissionPeriod)
 	}

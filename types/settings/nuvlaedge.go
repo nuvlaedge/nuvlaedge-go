@@ -11,8 +11,8 @@ type NuvlaEdgeSettings struct {
 
 	// nuvlaedge resource id and (optional) credentials
 	NuvlaEdgeUUID string `mapstructure:"nuvlaedge-uuid" toml:"nuvlaedge-uuid" json:"nuvlaedge-uuid,omitempty"`
-	ApiKey        string `mapstructure:"api-key" toml:"api-key" json:"api-key,omitempty"`
-	ApiSecret     string `mapstructure:"api-secret" toml:"api-secret" json:"api-secret,omitempty"`
+	ApiKey        string `mapstructure:"api-key" toml:"api-key" json:"-"`
+	ApiSecret     string `mapstructure:"api-secret" toml:"api-secret" json:"-"`
 
 	// NuvlaEdge main jobs periods
 	HeartbeatPeriod  int `mapstructure:"heartbeat-period" toml:"heartbeat-period" json:"heartbeat-period,omitempty"`
