@@ -1,25 +1,5 @@
 # Changelog
 
-
-## [2.3.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/2.2.0...2.3.0) (2024-09-16)
-
-
-### Features
-
-* Complete refactor of code base. Add static CI analysis ([5aec612](https://github.com/nuvlaedge/nuvlaedge-go/commit/5aec612d32a1a051688280f402415328bc0f62f9))
-
-
-### Bug Fixes
-
-* Cleanup over logging ([ede64f3](https://github.com/nuvlaedge/nuvlaedge-go/commit/ede64f368a033c1030d0e9eb2f485c5ba2b0f7a4))
-* Fix unittests ([01af1de](https://github.com/nuvlaedge/nuvlaedge-go/commit/01af1de2e7c93ee98bcc578677b70363bcdfc013))
-* NuvlaEdge self registration ([dd2dbfe](https://github.com/nuvlaedge/nuvlaedge-go/commit/dd2dbfeac900a0d8053d26d6ef416ecd2dcbe300))
-
-
-### Dependencies
-
-* Update Nuvla Api Client ([7492785](https://github.com/nuvlaedge/nuvlaedge-go/commit/7492785a47a3676046ff67ddb0097a04f463e365))
-
 ## [2.2.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/2.1.0...2.2.0) (2024-07-19)
 
 
