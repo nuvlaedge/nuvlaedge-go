@@ -70,9 +70,10 @@ func ValidateOpts(opts *command.RegisterCmdOptions) error {
 
 func generateDefaultName(prefix string) string {
 
-	if prefix != "" {
+	if prefix == "" {
 		prefix = constants.DefaultPrefix
 	}
+
 	// Generate a short UUID
 	fullUUID := uuid.New().String()
 	shortUUID := fullUUID[:8] // Taking first 8 characters for brevity
@@ -81,8 +82,8 @@ func generateDefaultName(prefix string) string {
 	currentTime := time.Now()
 
 	// Format timestamp
-	formattedTime := currentTime.Format("02/01/2006|15:04:05")
+	formattedTime := currentTime.Format("02/01/2006 - 15:04:05")
 
 	// Concatenate prefix, formatted timestamp, and short UUID
-	return fmt.Sprintf("%s-%s|%s", prefix, formattedTime, shortUUID)
+	return fmt.Sprintf("%s-%s | %s", prefix, formattedTime, shortUUID)
 }
