@@ -135,7 +135,7 @@ func (t *Telemetry) Run(ctx context.Context) error {
 }
 
 func (t *Telemetry) setInitialStatus() {
-	t.localStatus.NuvlaEdgeEngineVersion = version.GetVersion()
+	t.localStatus.NuvlaEdgeEngineVersion = version.GetVersion() + "-go"
 	t.localStatus.Status = "OPERATIONAL"
 	t.localStatus.Version = 2
 }
