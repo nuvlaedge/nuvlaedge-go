@@ -9,7 +9,7 @@ import (
 )
 
 type TelemetryClientInterface interface {
-	Telemetry(data map[string]interface{}, Select []string) (*http.Response, error)
+	Telemetry(data interface{}, Select []string) (*http.Response, error)
 	GetEndpoint() string
 }
 

@@ -11,7 +11,8 @@ require (
 	github.com/docker/docker v27.1.1+incompatible
 	github.com/google/uuid v1.6.0
 	github.com/jackpal/gateway v1.0.15
-	github.com/nuvla/api-client-go v0.7.15
+	github.com/mattbaird/jsonpatch v0.0.0-20240118010651-0ba75a80ca38
+	github.com/nuvla/api-client-go v0.7.16-0.20240918174525-ecd4a976379d
 	github.com/shirou/gopsutil/v3 v3.24.5
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.1
@@ -21,6 +22,8 @@ require (
 	golang.org/x/sys v0.21.0
 )
 
+replace github.com/docker/compose/v2 => github.com/SixSq/docker-compose/v2 v2.0.0-20240716115452-c08e5c845d89
+
 require (
 	dario.cat/mergo v1.0.0 // indirect
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20230811130428-ced1acdcaa24 // indirect
@@ -28,6 +31,7 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
 	github.com/Masterminds/semver/v3 v3.2.1 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
+	github.com/Microsoft/hcsshim v0.11.7 // indirect
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d // indirect
 	github.com/aws/aws-sdk-go-v2 v1.24.1 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.26.6 // indirect
