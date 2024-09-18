@@ -21,6 +21,10 @@ jobs:
   docker-build:
     runs-on: ubuntu-latest
     steps:
+      - name: Set env
+        shell: bash
+        run: echo "BUILD_TIME=$(date --utc +%FT%T.%3NZ)" >> $GITHUB_ENV
+        
       - uses: actions/checkout@v4
 
       # ------------------------------------------------
@@ -48,6 +52,12 @@ jobs:
           build-args: |
             NUVLAEDGE_VERSION=${{ github.head_ref || github.ref_name }}
             GO_BUILD_TAGS=pprof
+            GIT_BRANCH=${{ github.head_ref || github.ref_name }}
+            GIT_BUILD_TIME=${{ env.BUILD_TIME }}
+            GIT_COMMIT_ID=${{ github.sha }}
+            GITHUB_RUN_NUMBER=${{ github.run_number }}
+            GITHUB_RUN_ID=${{ github.run_id }}
+            PROJECT_URL=${{ github.server_url }}/${{ github.repository }}
           push: true
           tags: >
             nuvladev/${{ github.event.repository.name }}:latest,

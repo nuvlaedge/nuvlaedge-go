@@ -27,6 +27,25 @@ RUN GOOS=$TARGETOS GOARCH=$TARGETARCH CGO_ENABLED=0 \
 # --- Final image ---
 FROM scratch
 
+ARG GIT_BRANCH
+ARG GIT_COMMIT_ID
+ARG GIT_BUILD_TIME
+ARG GITHUB_RUN_NUMBER
+ARG GITHUB_RUN_ID
+ARG PROJECT_URL
+
+LABEL git.branch=${GIT_BRANCH} \
+      git.commit.id=${GIT_COMMIT_ID} \
+      git.build.time=${GIT_BUILD_TIME} \
+      git.run.number=${GITHUB_RUN_NUMBER} \
+      git.run.id=${GITHUB_RUN_ID}
+LABEL org.opencontainers.image.authors="support@sixsq.com" \
+      org.opencontainers.image.created=${GIT_BUILD_TIME} \
+      org.opencontainers.image.url=${PROJECT_URL} \
+      org.opencontainers.image.vendor="SixSq SA" \
+      org.opencontainers.image.title="NuvlaEdge" \
+      org.opencontainers.image.description="NuvlaEdge agent in Golang"
+
 ENV PATH=/bin
 
 # Add default certificates to allow HTTPS connections
