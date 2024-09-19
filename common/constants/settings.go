@@ -15,4 +15,8 @@ const (
 	// Default Job Engine configuration
 	DefaultJobEngineImage  = "sixsq/nuvlaedge:latest"
 	DefaultEnableLegacyJob = false
+
+	// Logging
+	DefaultLogLevel = "info"
+	DefaultDebug    = false
 )

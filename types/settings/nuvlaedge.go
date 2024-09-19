@@ -26,4 +26,8 @@ type NuvlaEdgeSettings struct {
 	// Job Engine
 	JobEngineImage         string `mapstructure:"job-engine-image" toml:"job-engine-image" json:"job-engine-image,omitempty"`
 	EnableJobLegacySupport bool   `mapstructure:"enable-legacy-job" toml:"enable-legacy-job" json:"enable-legacy-job,omitempty"`
+
+	// Logging
+	LogLevel string `mapstructure:"log-level" toml:"log-level" json:"log-level,omitempty"`
+	Debug    bool   `mapstructure:"debug" toml:"debug" json:"debug,omitempty"`
 }
