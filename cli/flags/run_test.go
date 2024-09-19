@@ -34,6 +34,8 @@ func TestAddRunFlags(t *testing.T) {
 		"--vpn-extra-config", "test",
 		"--job-image", "test",
 		"--enable-legacy-job",
+		"--log-level", "debug",
+		"--debug",
 	})
 
 	assert.NoError(t, err)
@@ -49,6 +51,8 @@ func TestAddRunFlags(t *testing.T) {
 	assert.Equal(t, "true", flags.Lookup("vpn-enabled").Value.String())
 	assert.Equal(t, "test", flags.Lookup("job-image").Value.String())
 	assert.Equal(t, "true", flags.Lookup("enable-legacy-job").Value.String())
+	assert.Equal(t, "debug", flags.Lookup("log-level").Value.String())
+	assert.Equal(t, "true", flags.Lookup("debug").Value.String())
 }
 
 func TestSetDefaultRunFlags(t *testing.T) {
@@ -63,6 +67,8 @@ func TestSetDefaultRunFlags(t *testing.T) {
 	assert.Equal(t, constants.DefaultVPNEnabled, viper.GetBool("vpn-enabled"))
 	assert.Equal(t, constants.DefaultJobEngineImage, viper.GetString("job-engine-image"))
 	assert.Equal(t, constants.DefaultEnableLegacyJob, viper.GetBool("enable-legacy-job"))
+	assert.Equal(t, constants.DefaultLogLevel, viper.GetString("log-level"))
+	assert.Equal(t, constants.DefaultDebug, viper.GetBool("debug"))
 }
 
 func TestBindViperRunFlags(t *testing.T) {
@@ -85,6 +91,8 @@ func TestBindViperRunFlags(t *testing.T) {
 		"--vpn-extra-config", "test",
 		"--job-image", "test",
 		"--enable-legacy-job",
+		"--log-level", "warn",
+		"--debug",
 	})
 
 	assert.NoError(t, err)
@@ -100,6 +108,8 @@ func TestBindViperRunFlags(t *testing.T) {
 	assert.Equal(t, true, viper.GetBool("vpn-enabled"))
 	assert.Equal(t, "test", viper.GetString("job-engine-image"))
 	assert.Equal(t, true, viper.GetBool("enable-legacy-job"))
+	assert.Equal(t, "warn", viper.GetString("log-level"))
+	assert.Equal(t, true, viper.GetBool("debug"))
 }
 
 var envs = map[string]string{
@@ -116,6 +126,8 @@ var envs = map[string]string{
 	"VPN_EXTRA_CONFIG":     "test",
 	"JOB_LEGACY_IMAGE":     "test",
 	"ENABLE_LEGACY_JOB":    "true",
+	"NUVLAEDGE_LOG_LEVEL":  "error",
+	"DEBUG":                "true",
 }
 
 func setEnvs(e map[string]string) {
@@ -151,6 +163,8 @@ func TestSetEnvBindings(t *testing.T) {
 	assert.Equal(t, "test", viper.GetString("vpn-extra-config"))
 	assert.Equal(t, "test", viper.GetString("job-engine-image"))
 	assert.Equal(t, true, viper.GetBool("enable-legacy-job"))
+	assert.Equal(t, "error", viper.GetString("log-level"))
+	assert.Equal(t, true, viper.GetBool("debug"))
 }
 
 func TestParseSettings(t *testing.T) {
@@ -177,6 +191,8 @@ func TestParseSettings(t *testing.T) {
 	assert.Equal(t, "test", set.VpnExtraConfig)
 	assert.Equal(t, "test", set.JobEngineImage)
 	assert.Equal(t, true, set.EnableJobLegacySupport)
+	assert.Equal(t, "error", set.LogLevel)
+	assert.Equal(t, true, set.Debug)
 
 	err = ParseSettings(flags, nil)
 	assert.NotNil(t, err, "Expected error")

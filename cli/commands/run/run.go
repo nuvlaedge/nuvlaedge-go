@@ -5,6 +5,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	runFlags "nuvlaedge-go/cli/flags"
+	"nuvlaedge-go/common"
 	"nuvlaedge-go/nuvlaedge"
 	"nuvlaedge-go/types/settings"
 )
@@ -20,6 +21,9 @@ func NewRunCommand() *cobra.Command {
 				log.Errorf("Error parsing settings: %s", err)
 				return err
 			}
+
+			common.InitLogging(opts.LogLevel, opts.Debug)
+
 			log.Infof("Running NuvlaEdge with settings: %v", opts)
 			return nuvlaEdgeMain(cmd.Context(), &opts)
 		},

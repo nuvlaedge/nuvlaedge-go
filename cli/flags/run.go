@@ -47,6 +47,10 @@ func AddRunFlags(flags *pflag.FlagSet) {
 	// Nuvla endpoint definition
 	flags.String("nuvla-endpoint", "", "Nuvla endpoint")
 	flags.Bool("nuvla-insecure", false, "Insecure connection")
+
+	// NuvlaEdge logging
+	flags.String("log-level", "info", "Log level")
+	flags.Bool("debug", false, "Debug mode. Will ignore any Level set in log-level")
 }
 
 // setDefaultRunFlags sets the default values for the NuvlaEdge runtime configuration flags.
@@ -69,6 +73,8 @@ func setDefaultRunFlags() {
 	viper.SetDefault("vpn-enabled", constants.DefaultVPNEnabled)
 	viper.SetDefault("job-engine-image", constants.DefaultJobEngineImage)
 	viper.SetDefault("enable-legacy-job", constants.DefaultEnableLegacyJob)
+	viper.SetDefault("log-level", constants.DefaultLogLevel)
+	viper.SetDefault("debug", constants.DefaultDebug)
 }
 
 // bindViperRunFlags binds each command-line flag to its corresponding Viper configuration key.
@@ -99,6 +105,8 @@ func bindViperRunFlags(flags *pflag.FlagSet) {
 	OnError(viper.BindPFlag("vpn-extra-config", flags.Lookup("vpn-extra-config")), errMsg)
 	OnError(viper.BindPFlag("job-engine-image", flags.Lookup("job-image")), errMsg)
 	OnError(viper.BindPFlag("enable-legacy-job", flags.Lookup("enable-legacy-job")), errMsg)
+	OnError(viper.BindPFlag("log-level", flags.Lookup("log-level")), errMsg)
+	OnError(viper.BindPFlag("debug", flags.Lookup("debug")), errMsg)
 }
 
 // setEnvBindings binds environment variables to their corresponding Viper configuration keys.
@@ -128,6 +136,8 @@ func setEnvBindings() {
 	OnError(viper.BindEnv("enable-legacy-job", "ENABLE_LEGACY_JOB", "JOB_LEGACY_ENABLE"), errMsg)
 	OnError(viper.BindEnv("vpn-enabled", "VPN_ENABLED"), errMsg)
 	OnError(viper.BindEnv("vpn-extra-config", "VPN_EXTRA_CONFIG"), errMsg)
+	OnError(viper.BindEnv("log-level", "NUVLAEDGE_LOG_LEVEL"), errMsg)
+	OnError(viper.BindEnv("debug", "DEBUG", "NUVLAEDGE_DEBUG"), errMsg)
 }
 
 // ParseSettings initializes and applies configuration settings for the NuvlaEdge application.
