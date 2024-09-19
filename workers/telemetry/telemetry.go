@@ -118,7 +118,7 @@ func (t *Telemetry) Run(ctx context.Context) error {
 			patch, data, attrsToDelete := t.getTelemetryDiff()
 			var patchErr error
 			if patch != nil {
-				if patchErr := t.sendTelemetry(patch, attrsToDelete); patchErr != nil {
+				if patchErr = t.sendTelemetry(patch, attrsToDelete); patchErr != nil {
 					// Report error to status handler
 					log.Errorf("Error sending telemetry patch: %s", patchErr)
 				}
@@ -157,8 +157,8 @@ func (t *Telemetry) getTelemetryDiff() ([]jsonpatch.JsonPatchOperation, map[stri
 
 	data, attrsToDelete := common.GetStructDiff(t.lastStatus, t.localStatus)
 
-	previousStatus, err := json.Marshal(t.lastStatus)
-	newStatus, err := json.Marshal(t.localStatus)
+	previousStatus, _ := json.Marshal(t.lastStatus)
+	newStatus, _ := json.Marshal(t.localStatus)
 	patch, err := jsonpatch.CreatePatch(previousStatus, newStatus)
 	if err != nil {
 		log.Errorf("Error creating telemetry patch: %v", err)
