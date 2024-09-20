@@ -6,13 +6,14 @@ toolchain go1.22.2
 
 require (
 	github.com/compose-spec/compose-go/v2 v2.1.5
+	github.com/containerd/log v0.1.0
 	github.com/docker/cli v27.1.1+incompatible
 	github.com/docker/compose/v2 v2.29.1
 	github.com/docker/docker v27.1.1+incompatible
 	github.com/google/uuid v1.6.0
 	github.com/jackpal/gateway v1.0.15
 	github.com/mattbaird/jsonpatch v0.0.0-20240118010651-0ba75a80ca38
-	github.com/nuvla/api-client-go v0.7.16-0.20240918174525-ecd4a976379d
+	github.com/nuvla/api-client-go v0.7.16-0.20240919135010-4edd875c09c6
 	github.com/shirou/gopsutil/v3 v3.24.5
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.1
@@ -55,7 +56,6 @@ require (
 	github.com/containerd/containerd/api v1.7.19 // indirect
 	github.com/containerd/continuity v0.4.3 // indirect
 	github.com/containerd/errdefs v0.1.0 // indirect
-	github.com/containerd/log v0.1.0 // indirect
 	github.com/containerd/platforms v0.2.1 // indirect
 	github.com/containerd/ttrpc v1.2.5 // indirect
 	github.com/containerd/typeurl/v2 v2.1.1 // indirect

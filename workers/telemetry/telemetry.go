@@ -100,7 +100,7 @@ func (t *Telemetry) Start(ctx context.Context) error {
 }
 
 func (t *Telemetry) Run(ctx context.Context) error {
-	log.Info("Starting telemetry...")
+	log.Debug("Running telemetry...")
 
 	statusTimer := time.NewTicker(60 * time.Second)
 	defer statusTimer.Stop()

@@ -1,6 +1,11 @@
 package metrics
 
-import "nuvlaedge-go/types"
+import (
+    "cmp"
+    "nuvlaedge-go/types"
+    "slices"
+    "strings"
+)
 
 type ClusterData struct {
 	NodeId              string
@@ -63,6 +68,9 @@ func (s SwarmData) WriteToAttrs(attrs *types.CommissionAttributes) error {
 type ContainerStats []ContainerData
 
 func (cs ContainerStats) WriteToStatus(status *NuvlaEdgeStatus) error {
+	slices.SortFunc(cs, func(a, b ContainerData) int {
+		return cmp.Compare(strings.ToLower(a.CreatedAt), strings.ToLower(b.CreatedAt))
+	})
 	status.Resources.ContainerStats = cs
 	return nil
 }
