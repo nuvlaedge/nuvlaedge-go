@@ -123,7 +123,8 @@ func (ne *NuvlaEdge) startUpProcess() error {
 	// Start up process
 	// Get remote nuvlaedge state
 
-	if ne.nuvla.Credentials == nil && ne.conf.Irs == "" {
+	if (ne.conf.ApiKey == "" || ne.conf.ApiSecret == "") && ne.conf.Irs == "" {
+
 		// We need to assume that NuvlaEdge is new
 		creds, err := ne.nuvla.Activate()
 		if err != nil {
