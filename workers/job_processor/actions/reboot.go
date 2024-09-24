@@ -46,3 +46,7 @@ func (r *RebootAction) Init(_ ...ActionOptsFn) error {
 	log.Infof("Reboot actions initialised with executor: %s", r.GetExecutorName())
 	return nil
 }
+
+func (r *RebootAction) GetOutput() string {
+	return ""
+}

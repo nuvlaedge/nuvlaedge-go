@@ -11,6 +11,8 @@ import (
 	"github.com/docker/compose/v2/pkg/compose"
 	"github.com/nuvla/api-client-go/clients/resources"
 	log "github.com/sirupsen/logrus"
+	"io"
+	"nuvlaedge-go/common"
 	"strings"
 )
 
@@ -27,6 +29,8 @@ type ComposeExecutor struct {
 	composeProject *types.Project
 	composeService composeAPI.Service
 	dockerCli      *command.DockerCli
+
+	dockerOutPut io.Writer
 }
 
 func (ce *ComposeExecutor) StartDeployment() error {
@@ -62,6 +66,7 @@ func (ce *ComposeExecutor) StopDeployment() error {
 
 func (ce *ComposeExecutor) GetServices() ([]DeploymentService, error) {
 	ce.projectName = GetProjectNameFromDeploymentId(ce.deploymentResource.Id)
+
 	if err := ce.setUpService(); err != nil {
 		return nil, err
 	}
@@ -70,10 +75,6 @@ func (ce *ComposeExecutor) GetServices() ([]DeploymentService, error) {
 	containers, err := ce.composeService.Ps(ce.ctx, ce.projectName, composeAPI.PsOptions{
 		All: true,
 	})
-	for _, container := range containers {
-		log.Infof("Container: %s", container.Name)
-	}
-
 	if err != nil {
 		log.Infof("Error getting services: %s", err)
 	}
@@ -82,6 +83,7 @@ func (ce *ComposeExecutor) GetServices() ([]DeploymentService, error) {
 	for _, container := range containers {
 		services = append(services, NewDeploymentServiceFromContainerSummary(container))
 	}
+
 	return services, nil
 }
 
@@ -166,13 +168,16 @@ func (ce *ComposeExecutor) setUpProject() error {
 }
 
 func (ce *ComposeExecutor) setUpService() error {
-	dockerCli, err := command.NewDockerCli()
+	ce.dockerOutPut = NewCaptureWriter()
+
+	dockerCli, err := command.NewDockerCli(command.WithCombinedStreams(ce.dockerOutPut))
+
 	if err != nil {
 		return err
 	}
 	ce.dockerCli = dockerCli
 
-	myOpts := &flags.ClientOptions{Context: "default", LogLevel: "info"}
+	myOpts := &flags.ClientOptions{Context: "default", LogLevel: common.LogLevel.String()}
 	err = ce.dockerCli.Initialize(myOpts)
 	if err != nil {
 		return err
@@ -209,4 +214,8 @@ func (ce *ComposeExecutor) Close() error {
 		return ce.dockerCli.Client().Close()
 	}
 	return nil
+}
+
+func (ce *ComposeExecutor) GetOutput() string {
+	return fmt.Sprintf("%s", ce.dockerOutPut)
 }
