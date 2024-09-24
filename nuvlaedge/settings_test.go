@@ -65,8 +65,11 @@ func Test_ValidateSettings(t *testing.T) {
 func Test_findOldSession(t *testing.T) {
 	NewTempDir()
 	defer RemoveTempDir()
-
-	f, ok := findOldSession(tempDir)
+	conf := &settings.NuvlaEdgeSettings{
+		DBPPath: tempDir,
+		RootFs:  "/",
+	}
+	f, ok := findOldSession(conf)
 	assert.False(t, ok, "Session file should not be found")
 
 	sf := &clients.NuvlaEdgeSessionFreeze{
@@ -80,13 +83,13 @@ func Test_findOldSession(t *testing.T) {
 	err := sf.Save(sFile)
 	assert.NoError(t, err, "Error saving mock session file")
 
-	f, ok = findOldSession(tempDir)
+	f, ok = findOldSession(conf)
 	assert.True(t, ok, "Session file not found")
 	assert.NotNil(t, f, "Session file is nil")
 	assert.Equal(t, mockNuvlaEdgeId, f.NuvlaEdgeId, "Unexpected NuvlaEdgeId")
 
 	_ = os.WriteFile(sFile, []byte("invalid json"), 0644)
-	f, ok = findOldSession(tempDir)
+	f, ok = findOldSession(conf)
 	assert.False(t, ok, "Session file should not be found")
 	assert.Nil(t, f, "Session file should be nil")
 }
