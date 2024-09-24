@@ -120,9 +120,13 @@ func (j *NativeJob) RunJob() error {
 
 	// Run the action
 	if err = j.Action.ExecuteAction(); err != nil {
-		j.Client.SetFailedState(err.Error())
+		errMsg := j.Action.GetOutput() + "\n" + err.Error()
+		j.Client.SetFailedState(errMsg)
 		return err
 	}
+
+	okMsg := j.Action.GetOutput() + "\n" + "Success running job"
+	j.Client.SetStatusMessage(okMsg)
 	j.Client.SetSuccessState()
 	return nil
 }

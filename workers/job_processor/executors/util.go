@@ -1,6 +1,7 @@
 package executors
 
 import (
+	"bytes"
 	"errors"
 	log "github.com/sirupsen/logrus"
 	"os"
@@ -111,4 +112,21 @@ func ExpandEnvMapWithDefaults(s string, envMap map[string]string) string {
 		}
 		return ""
 	})
+}
+
+type CaptureWriter struct {
+	buf bytes.Buffer
+}
+
+func NewCaptureWriter() *CaptureWriter {
+	return &CaptureWriter{
+		buf: bytes.Buffer{},
+	}
+}
+func (cw *CaptureWriter) Write(p []byte) (n int, err error) {
+	return cw.buf.Write(p)
+}
+
+func (cw *CaptureWriter) String() string {
+	return cw.buf.String()
 }
