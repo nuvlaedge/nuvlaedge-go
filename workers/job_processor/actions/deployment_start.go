@@ -31,9 +31,14 @@ func (d *DeploymentStart) ExecuteAction() error {
 	if err := d.client.SetState(resources.StateStarted); err != nil {
 		log.Warnf("Error setting deployment state to started: %s", err)
 	}
+
 	return nil
 }
 
 func (d *DeploymentStart) GetExecutorName() executors.ExecutorName {
 	return d.executor.GetName()
+}
+
+func (d *DeploymentStart) GetOutput() string {
+	return d.executor.GetOutput()
 }

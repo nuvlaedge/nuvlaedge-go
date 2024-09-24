@@ -32,3 +32,7 @@ func (d *DeploymentStop) ExecuteAction() error {
 func (d *DeploymentStop) GetExecutorName() executors.ExecutorName {
 	return d.executor.GetName()
 }
+
+func (d *DeploymentStop) GetOutput() string {
+	return d.executor.GetOutput()
+}

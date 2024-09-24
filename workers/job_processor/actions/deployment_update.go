@@ -31,3 +31,7 @@ func (d *DeploymentUpdate) ExecuteAction() error {
 func (d *DeploymentUpdate) GetExecutorName() executors.ExecutorName {
 	return d.executor.GetName()
 }
+
+func (d *DeploymentUpdate) GetOutput() string {
+	return d.executor.GetOutput()
+}
