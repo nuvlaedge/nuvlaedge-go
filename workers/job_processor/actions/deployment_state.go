@@ -22,6 +22,8 @@ func (d *DeploymentState) ExecuteAction() error {
 		return err
 	}
 
+	d.CreateUserOutputParams()
+
 	log.Infof("Deployment %s services: %v", d.deploymentId, s)
 	err = d.manageServiceParameters(s)
 	if err != nil {

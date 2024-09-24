@@ -10,21 +10,6 @@ type DeploymentStart struct {
 	DeploymentBase
 }
 
-func (d *DeploymentStart) CreateUserOutputParams() {
-	// Fixed parameters for all deployments, hostname and IPs. TODO: IP should be created by Nuvla...
-	if err := d.ManageHostNameParam(); err != nil {
-		log.Warnf("Error creating hostname parameter: %s", err)
-	}
-
-	if err := d.ManageIPsParams(); err != nil {
-		log.Warnf("Error creating IPs parameters: %s", err)
-	}
-
-	if err := d.ManageDeploymentParameters(); err != nil {
-		log.Warnf("Error creating deployment parameters: %s", err)
-	}
-}
-
 func (d *DeploymentStart) ExecuteAction() error {
 	defer CloseDeploymentClientWithLog(d.client)
 	defer d.executor.Close()
@@ -33,15 +18,16 @@ func (d *DeploymentStart) ExecuteAction() error {
 		log.Warnf("Error setting deployment state to starting: %s", err)
 	}
 
-	// Creates nuvla output params if they don't exist or updates them
-	d.CreateUserOutputParams()
-
 	if err := d.executor.StartDeployment(); err != nil {
 		if stateErr := d.client.SetState(resources.StateError); stateErr != nil {
 			log.Warnf("Error setting deployment state to error: %s", stateErr)
 		}
 		return err
 	}
+
+	// Creates nuvla output params if they don't exist or updates them
+	d.CreateUserOutputParams()
+
 	if err := d.client.SetState(resources.StateStarted); err != nil {
 		log.Warnf("Error setting deployment state to started: %s", err)
 	}

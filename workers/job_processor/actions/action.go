@@ -115,12 +115,6 @@ func WithJobId(id string) ActionOptsFn {
 	}
 }
 
-func WithIPs(ips []string) ActionOptsFn {
-	return func(opts *ActionOpts) {
-		opts.IPs = ips
-	}
-}
-
 func WithJobResource(resource *resources.JobResource) ActionOptsFn {
 	return func(opts *ActionOpts) {
 		opts.JobResource = resource

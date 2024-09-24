@@ -30,6 +30,27 @@ type NetworkMetrics struct {
 
 func (n NetworkMetrics) WriteToStatus(status *NuvlaEdgeStatus) error {
 	status.Network = n
+
+	var globalIp string
+
+	if status.Network.IPs.Vpn != "" {
+		globalIp = status.Network.IPs.Vpn
+
+	} else if status.Network.IPs.Local != "" {
+		globalIp = status.Network.IPs.Local
+
+	} else if status.Network.IPs.Public != "" {
+		globalIp = status.Network.IPs.Public
+
+	} else if status.Network.IPs.Swarm != "" {
+		globalIp = status.Network.IPs.Swarm
+
+	} else {
+		globalIp = ""
+	}
+
+	status.IpV4Address = globalIp
+
 	return nil
 }
 
