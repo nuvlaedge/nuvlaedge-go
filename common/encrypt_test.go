@@ -134,18 +134,8 @@ func Test_HashMachineId(t *testing.T) {
 }
 
 func Test_FindMachineID(t *testing.T) {
-	mockDir := "/tmp/creds/"
-	dir, err := os.MkdirTemp(mockDir, "creds")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.RemoveAll(dir)
-
-	err = os.WriteFile(filepath.Join(mockDir, MachineIdFile), []byte("machine-id"), 0644)
-	if err != nil {
-		t.Fatal(err)
-	}
-
+	mockDir := createMockMachineId("machine-id")
+	defer os.RemoveAll(mockDir)
 	mID := findMachineId("/tmp/creds/mock1")
 	assert.Equal(t, "", mID)
 
