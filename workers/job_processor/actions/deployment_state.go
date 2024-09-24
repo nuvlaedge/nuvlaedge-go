@@ -39,3 +39,7 @@ func (d *DeploymentState) ExecuteAction() error {
 func (d *DeploymentState) GetExecutorName() executors.ExecutorName {
 	return d.executor.GetName()
 }
+
+func (d *DeploymentState) GetOutput() string {
+	return d.executor.GetOutput()
+}
