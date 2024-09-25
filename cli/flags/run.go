@@ -25,11 +25,13 @@ var OnError = func(err error, msg string) {
 func AddRunFlags(flags *pflag.FlagSet) {
 	// Database location
 	flags.String("db-path", "", "NuvlaEdge Database path")
+	flags.String("rootfs", constants.DefaultRootFs, "Root filesystem")
 
 	// NuvlaEdge resource
 	flags.String("uuid", "", "NuvlaEdge ID")
 	flags.String("api-key", "", "NuvlaEdge API key")
 	flags.String("api-secret", "", "NuvlaEdge API secret")
+	flags.String("irs", "", "NuvlaEdge IRS")
 
 	// Agent configuration
 	flags.Int("heartbeat-period", 0, "Heartbeat period")
@@ -65,6 +67,7 @@ func AddRunFlags(flags *pflag.FlagSet) {
 func setDefaultRunFlags() {
 	// Set default run flags
 	viper.SetDefault("db-path", constants.DefaultDBPath)
+	viper.SetDefault("rootfs", constants.DefaultRootFs)
 	viper.SetDefault("nuvla-endpoint", constants.DefaultEndPoint)
 	viper.SetDefault("nuvla-insecure", constants.DefaultInsecure)
 	viper.SetDefault("heartbeat-period", constants.DefaultHeartbeatPeriod)
@@ -93,6 +96,7 @@ func bindViperRunFlags(flags *pflag.FlagSet) {
 	errMsg := "Error binding flag to viper var"
 
 	OnError(viper.BindPFlag("db-path", flags.Lookup("db-path")), errMsg)
+	OnError(viper.BindPFlag("rootfs", flags.Lookup("rootfs")), errMsg)
 	OnError(viper.BindPFlag("nuvla-endpoint", flags.Lookup("nuvla-endpoint")), errMsg)
 	OnError(viper.BindPFlag("nuvla-insecure", flags.Lookup("nuvla-insecure")), errMsg)
 	OnError(viper.BindPFlag("nuvlaedge-uuid", flags.Lookup("uuid")), errMsg)
@@ -107,6 +111,7 @@ func bindViperRunFlags(flags *pflag.FlagSet) {
 	OnError(viper.BindPFlag("enable-legacy-job", flags.Lookup("enable-legacy-job")), errMsg)
 	OnError(viper.BindPFlag("log-level", flags.Lookup("log-level")), errMsg)
 	OnError(viper.BindPFlag("debug", flags.Lookup("debug")), errMsg)
+	OnError(viper.BindPFlag("irs", flags.Lookup("irs")), errMsg)
 }
 
 // setEnvBindings binds environment variables to their corresponding Viper configuration keys.
@@ -124,11 +129,13 @@ func setEnvBindings() {
 	errMsg := "Error binding env var to viper var"
 
 	OnError(viper.BindEnv("db-path", "DB_PATH", "DATA_LOCATION"), errMsg)
+	OnError(viper.BindEnv("rootfs", "ROOTFS"), errMsg)
 	OnError(viper.BindEnv("nuvla-endpoint", "NUVLA_ENDPOINT"), errMsg)
 	OnError(viper.BindEnv("nuvla-insecure", "NUVLA_INSECURE"), errMsg)
 	OnError(viper.BindEnv("nuvlaedge-uuid", "NUVLAEDGE_UUID"), errMsg)
 	OnError(viper.BindEnv("api-key", "NUVLAEDGE_API_KEY"), errMsg)
 	OnError(viper.BindEnv("api-secret", "NUVLAEDGE_API_SECRET"), errMsg)
+	OnError(viper.BindEnv("irs", "NUVLAEDGE_IRS"), errMsg)
 	OnError(viper.BindEnv("heartbeat-period", "HEARTBEAT_PERIOD"), errMsg)
 	OnError(viper.BindEnv("telemetry-period", "TELEMETRY_PERIOD"), errMsg)
 	OnError(viper.BindEnv("remote-sync-period", "REMOTE_SYNC_PERIOD"), errMsg)
