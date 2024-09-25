@@ -1,5 +1,25 @@
 # Changelog
 
+## [2.4.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/2.3.0...2.4.0) (2024-09-25)
+
+
+### Features
+
+* Add credential encryption  ([#87](https://github.com/nuvlaedge/nuvlaedge-go/issues/87)) ([5af86d8](https://github.com/nuvlaedge/nuvlaedge-go/commit/5af86d86d4530715de0951095ec4be6ddab8506a))
+* **telemetry:** add support to send telemetry as JSON Patch ([#86](https://github.com/nuvlaedge/nuvlaedge-go/issues/86)) ([29bb678](https://github.com/nuvlaedge/nuvlaedge-go/commit/29bb6780343917f13569e132a361f57e21dbdd83))
+
+
+### Bug Fixes
+
+* **telemetry:** append "-go" to NuvlaEdge version ([d3eaa89](https://github.com/nuvlaedge/nuvlaedge-go/commit/d3eaa8956d5968113369abe41d2c513fe7caabc1))
+
+
+### Minor Changes
+
+* Add hostname and IPs params ([#88](https://github.com/nuvlaedge/nuvlaedge-go/issues/88)) ([d8c519c](https://github.com/nuvlaedge/nuvlaedge-go/commit/d8c519c8d8e67fc4afeeb1fe3be39b425c6b49f0))
+* Add job message posting for deployments ([#89](https://github.com/nuvlaedge/nuvlaedge-go/issues/89)) ([79b20a5](https://github.com/nuvlaedge/nuvlaedge-go/commit/79b20a5ec61f8dd794529a153e8d062f26b9b5d8))
+* Add logging flags to run CMD ([16315af](https://github.com/nuvlaedge/nuvlaedge-go/commit/16315afbbacfcbd0ffecaea52ef441320c0e391d))
+
 ## [2.3.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/2.2.0...2.3.0) (2024-09-16)
 
 
