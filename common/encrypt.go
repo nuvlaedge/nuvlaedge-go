@@ -100,8 +100,7 @@ func fromIrs(key, cipherText []byte) ([]byte, error) {
 		return nil, errors.New("ciphertext is not a multiple of the block size")
 	}
 
-	mode := cipher.NewCBCDecrypter(block, iv)
-	mode.CryptBlocks(cipherText, cipherText)
+	cipher.NewCBCDecrypter(block, iv).CryptBlocks(cipherText, cipherText)
 
 	return cipherText, nil
 }
@@ -122,8 +121,7 @@ func getIrs(key, plainText []byte) ([]byte, error) {
 		return nil, fmt.Errorf("error generating random IV: %s", err)
 	}
 
-	mode := cipher.NewCBCEncrypter(block, iv)
-	mode.CryptBlocks(cipherText[aes.BlockSize:], plainText)
+	cipher.NewCBCEncrypter(block, iv).CryptBlocks(cipherText[aes.BlockSize:], plainText)
 
 	return cipherText, nil
 }
