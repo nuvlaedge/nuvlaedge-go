@@ -11,7 +11,7 @@ type MockTelemetryClient struct {
 	GetEndpointResponse string
 }
 
-func (mtc *MockTelemetryClient) Telemetry(data map[string]interface{}, Select []string) (*http.Response, error) {
+func (mtc *MockTelemetryClient) Telemetry(data interface{}, Select []string) (*http.Response, error) {
 	mtc.TelemetryCnt++
 	return &mtc.TelemetryResponse, mtc.TelemetryErr
 }

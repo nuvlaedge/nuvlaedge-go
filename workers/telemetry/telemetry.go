@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	"github.com/wI2L/jsondiff"
 	"io"
 	"nuvlaedge-go/common"
 	"nuvlaedge-go/common/constants"
@@ -99,7 +100,7 @@ func (t *Telemetry) Start(ctx context.Context) error {
 }
 
 func (t *Telemetry) Run(ctx context.Context) error {
-	log.Info("Starting telemetry...")
+	log.Debug("Running telemetry...")
 
 	statusTimer := time.NewTicker(60 * time.Second)
 	defer statusTimer.Stop()
@@ -114,9 +115,19 @@ func (t *Telemetry) Run(ctx context.Context) error {
 
 		case <-t.BaseTicker.C:
 			log.Info("Try sending telemetry...")
-			if err := t.sendTelemetry(); err != nil {
-				// Report error to status handler
-				log.Errorf("Error sending telemetry: %s", err)
+			patch, data, attrsToDelete := t.getTelemetryDiff()
+			var patchErr error
+			if patch != nil {
+				if patchErr = t.sendTelemetry(patch, attrsToDelete); patchErr != nil {
+					// Report error to status handler
+					log.Errorf("Error sending telemetry patch: %s", patchErr)
+				}
+			}
+			if patch == nil || patchErr != nil {
+				if err := t.sendTelemetry(data, attrsToDelete); err != nil {
+					// Report error to status handler
+					log.Errorf("Error sending telemetry: %s", err)
+				}
 			}
 
 		case m := <-t.metricsChan:
@@ -140,28 +151,38 @@ func (t *Telemetry) setInitialStatus() {
 	t.localStatus.Version = 2
 }
 
-func (t *Telemetry) sendTelemetry() error {
+func (t *Telemetry) getTelemetryDiff() (jsondiff.Patch, map[string]interface{}, []string) {
+	// Update current time
+	t.localStatus.CurrentTime = time.Now().Format(constants.DatetimeFormat)
+
+	data, attrsToDelete := common.GetStructDiff(t.lastStatus, t.localStatus)
+
+	patch, err := jsondiff.Compare(t.lastStatus, t.localStatus, jsondiff.Factorize())
+	if err != nil {
+		log.Errorf("Error creating telemetry patch: %v", err)
+		return nil, data, attrsToDelete
+	}
+
+	return patch, data, attrsToDelete
+}
+
+func (t *Telemetry) sendTelemetry(data interface{}, attrsToDelete []string) error {
 	if t.nuvla == nil {
 		return errors.New("telemetry client not initialized, cannot send telemetry")
 	}
 
-	// Get data diff from telemetries
-	data, sel := common.GetStructDiff(t.lastStatus, t.localStatus)
-	if (data == nil && sel == nil) || (len(data) == 0 && len(sel) == 0) {
+	if data == nil && len(attrsToDelete) == 0 {
 		return nil
 	}
 
-	// Update current time
-	data["current-time"] = time.Now().Format(constants.DatetimeFormat)
-
-	if log.GetLevel() == log.DebugLevel && (data != nil || len(data) == 0) {
+	if log.GetLevel() == log.DebugLevel && data != nil {
 		d, _ := json.MarshalIndent(data, "", "  ")
 		log.Infof("Telemetry data to send: %s \n", string(d))
 	}
 
 	// Send telemetry to client
 	log.Info("Sending telemetry...")
-	res, err := t.nuvla.Telemetry(data, sel)
+	res, err := t.nuvla.Telemetry(data, attrsToDelete)
 	defer func() {
 		if res != nil {
 			if err := res.Body.Close(); err != nil {
