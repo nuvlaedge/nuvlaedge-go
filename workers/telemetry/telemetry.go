@@ -171,7 +171,7 @@ func (t *Telemetry) sendTelemetry(data interface{}, attrsToDelete []string) erro
 		return errors.New("telemetry client not initialized, cannot send telemetry")
 	}
 
-	if data == nil && (attrsToDelete == nil || len(attrsToDelete) == 0) {
+	if data == nil && len(attrsToDelete) == 0 {
 		return nil
 	}
 
