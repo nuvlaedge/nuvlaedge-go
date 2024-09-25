@@ -45,6 +45,9 @@ type Deployer interface {
 	GetServices() ([]DeploymentService, error)
 	// Close TODO: For the moment, we only need to close dockerCLI
 	Close() error
+
+	// GetOutput returns the output of the service that executed the deployment action
+	GetOutput() string
 }
 
 func GetDeployer(resource *resources.DeploymentResource) (Deployer, error) {

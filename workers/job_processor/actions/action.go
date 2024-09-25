@@ -21,6 +21,9 @@ type Action interface {
 	ExecuteAction() error
 	// GetActionName returns the name of the action being implemented
 	GetActionName() ActionName
+
+	// GetOutput Action stdout and stderr
+	GetOutput() string
 }
 
 type ActionBase struct {
@@ -109,12 +112,6 @@ func WithActionName(name string) ActionOptsFn {
 func WithJobId(id string) ActionOptsFn {
 	return func(opts *ActionOpts) {
 		opts.JobId = id
-	}
-}
-
-func WithIPs(ips []string) ActionOptsFn {
-	return func(opts *ActionOpts) {
-		opts.IPs = ips
 	}
 }
 

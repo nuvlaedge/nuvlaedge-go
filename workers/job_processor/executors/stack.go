@@ -13,6 +13,7 @@ import (
 	"github.com/nuvla/api-client-go/clients/resources"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
+	"io"
 	"nuvlaedge-go/updater/common"
 	"os"
 	"path/filepath"
@@ -32,6 +33,8 @@ type Stack struct {
 	// Temporary file locations
 	tempDir     string
 	composeFile string
+
+	dockerOutPut io.Writer
 }
 
 func (s *Stack) StartDeployment() error {
@@ -189,7 +192,9 @@ func (s *Stack) setUpFiles() error {
 
 // setUpDockerCLI prepares the docker client and its context
 func (s *Stack) setUpDockerCLI() error {
-	dCli, err := command.NewDockerCli()
+	s.dockerOutPut = NewCaptureWriter()
+
+	dCli, err := command.NewDockerCli(command.WithCombinedStreams(s.dockerOutPut))
 	if err != nil {
 		log.Errorf("Error creating docker cli")
 		return err
@@ -231,6 +236,10 @@ func (s *Stack) buildTempDir() error {
 		return err
 	}
 	return nil
+}
+
+func (s *Stack) GetOutput() string {
+	return fmt.Sprintf("%s", s.dockerOutPut)
 }
 
 func (s *Stack) setTempDirName() string {

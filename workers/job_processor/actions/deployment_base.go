@@ -1,12 +1,16 @@
 package actions
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
+	nuvla "github.com/nuvla/api-client-go"
 	"github.com/nuvla/api-client-go/clients"
 	"github.com/nuvla/api-client-go/clients/resources"
 	log "github.com/sirupsen/logrus"
+	"nuvlaedge-go/types/metrics"
 	"nuvlaedge-go/workers/job_processor/executors"
-	"os"
+	"strings"
 )
 
 type DeploymentBase struct {
@@ -15,6 +19,7 @@ type DeploymentBase struct {
 	deploymentId       string
 	deploymentResource *resources.DeploymentResource
 	client             *clients.NuvlaDeploymentClient
+	nuvlaClient        *nuvla.NuvlaClient
 
 	ipAddresses []string
 
@@ -39,6 +44,8 @@ func (d *DeploymentBase) Init(optsFn ...ActionOptsFn) error {
 	}
 
 	d.deploymentId = opts.JobResource.TargetResource.Href
+
+	d.nuvlaClient = opts.Client
 
 	// Create deployment client and update deployment resource
 	d.client = clients.NewNuvlaDeploymentClient(d.deploymentId, opts.Client)
@@ -69,24 +76,54 @@ func (d *DeploymentBase) Init(optsFn ...ActionOptsFn) error {
 	return nil
 }
 
-func (d *DeploymentBase) ManageHostNameParam() error {
-	hostname, err := os.Hostname()
-	if err != nil {
-		return err
-	}
-	err = d.client.UpdateParameter(
+func (d *DeploymentBase) ManageHostNameParam(ip string) error {
+	return d.client.UpdateParameter(
 		d.deploymentResource.Owner,
 		resources.WithParent(d.deploymentResource.Id),
-		resources.WithValue(hostname),
+		resources.WithValue(ip),
 		resources.WithName("hostname"),
 		resources.WithDescription("Hostname or IP to access the service."))
-	return err
 }
 
-func (d *DeploymentBase) ManageIPsParams() error {
-	// TODO: This is intended to extract the IP addresses from nuvlabox-status resource in Nuvla.
-	// It should probably be done either be reading from a local file or received as a Job parameter.
-	return nil
+func (d *DeploymentBase) ManageIPsParams(ips deploymentIps) error {
+	// Iterate over ips.Network.ips and create a parameter for each one
+	var itIp map[string]string
+	b, err := json.Marshal(ips.Network.IPs)
+	if err != nil {
+		return fmt.Errorf("error marshaling IPs: %s", err)
+	}
+
+	if err := json.Unmarshal(b, &itIp); err != nil {
+		return fmt.Errorf("error unmarshaling IPs: %s", err)
+	}
+
+	if len(itIp) == 0 {
+		log.Infof("No IP addresses available for deployment %s", d.deploymentId)
+		return nil
+	}
+
+	var errList []error
+	for k, v := range itIp {
+		if v == "" || k == "" {
+			log.Debugf("IP address %s is empty", k)
+			continue
+		}
+
+		k = strings.ToLower(k)
+		paramName := fmt.Sprintf("ip.%s", k)
+
+		err := d.client.UpdateParameter(
+			d.deploymentResource.Owner,
+			resources.WithParent(d.deploymentResource.Id),
+			resources.WithName(paramName),
+			resources.WithValue(v))
+
+		if err != nil {
+			errList = append(errList, err)
+		}
+	}
+
+	return errors.Join(errList...)
 }
 
 // getDeploymentParameters tries to retrieve the deployment parameters from the deployment resource. It's main purpose is
@@ -167,4 +204,77 @@ func CloseDeploymentClientWithLog(client *clients.NuvlaDeploymentClient) {
 	if err := client.Logout(); err != nil {
 		log.Errorf("Error logging out deployment client: %s", err)
 	}
+}
+
+func (d *DeploymentBase) CreateUserOutputParams() {
+	// Fixed parameters for all deployments, hostname and IPs. TODO: IP should be created by Nuvla...
+	ips, err := d.getIps()
+	if err == nil {
+		if err := d.ManageHostNameParam(ips.IP); err != nil {
+			log.Warnf("Error creating hostname parameter: %s", err)
+		}
+
+		if err := d.ManageIPsParams(ips); err != nil {
+			log.Warnf("Error creating IPs parameters: %s", err)
+		}
+
+	} else {
+		log.Warnf("Error getting IPs: %s", err)
+	}
+
+	if err := d.ManageDeploymentParameters(); err != nil {
+		log.Warnf("Error creating deployment parameters: %s", err)
+	}
+}
+
+func (d *DeploymentBase) getIps() (deploymentIps, error) {
+	var ips deploymentIps
+
+	neId := d.deploymentResource.Nuvlabox
+	log.Debugf("Getting IPs for NuvlaBox %s", neId)
+
+	cli := d.nuvlaClient
+
+	neRes, err := cli.Get(neId, []string{"nuvlabox-status"})
+	if err != nil {
+		log.Errorf("Error getting NuvlaBox %s: %s", neId, err)
+		return ips, fmt.Errorf("error getting NuvlaBox Status ID from Ne %s: %s", neId, err)
+	}
+
+	neStatusId, ok := neRes.Data["nuvlabox-status"]
+	if !ok {
+		log.Errorf("NuvlaBox %s does not have a status", neId)
+		return ips, fmt.Errorf("NuvlaBox %s does not have a status", neId)
+	}
+
+	neStatusRes, err := cli.Get(neStatusId.(string), []string{"ip", "network"})
+	if err != nil {
+		log.Errorf("Error getting NuvlaBox %s status: %s", neId, err)
+		return ips, fmt.Errorf("error getting NuvlaBox %s status: %s", neId, err)
+	}
+
+	neIp, ipFound := neStatusRes.Data["ip"]
+	neNetwork, netFound := neStatusRes.Data["network"]
+
+	if !ipFound && !netFound {
+		return ips, fmt.Errorf("NuvlaBox %s status does not have an IP or network", neId)
+	}
+
+	if ipFound {
+		ips.IP = neIp.(string)
+	}
+
+	if netFound {
+		b, err := json.Marshal(neNetwork)
+		if err == nil {
+			_ = json.Unmarshal(b, &ips.Network)
+		}
+	}
+
+	return ips, nil
+}
+
+type deploymentIps struct {
+	IP      string `json:"ip"`
+	Network metrics.NetworkMetrics
 }
