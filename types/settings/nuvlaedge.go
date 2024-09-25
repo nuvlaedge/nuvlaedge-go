@@ -4,6 +4,7 @@ type NuvlaEdgeSettings struct {
 	// NuvlaEdge Database Location
 	DBPPath    string `toml:"db-path" json:"db-path,omitempty" mapstructure:"db-path"`
 	ConfigFile string `toml:"config-file" json:"config-file,omitempty" mapstructure:"config-file"`
+	RootFs     string `toml:"rootfs" json:"rootfs,omitempty" mapstructure:"rootfs"`
 
 	// nuvla endpoint definition
 	NuvlaEndpoint string `mapstructure:"nuvla-endpoint" toml:"nuvla-endpoint" json:"nuvla-endpoint,omitempty"`
@@ -30,4 +31,7 @@ type NuvlaEdgeSettings struct {
 	// Logging
 	LogLevel string `mapstructure:"log-level" toml:"log-level" json:"log-level,omitempty"`
 	Debug    bool   `mapstructure:"debug" toml:"debug" json:"debug,omitempty"`
+
+	// Irs
+	Irs string `mapstructure:"irs" toml:"irs" json:"irs,omitempty"`
 }

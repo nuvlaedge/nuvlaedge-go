@@ -38,7 +38,7 @@ func (h *Heartbeat) Start(ctx context.Context) error {
 }
 
 func (h *Heartbeat) Run(ctx context.Context) error {
-	log.Info()
+	log.Info("Running heartbeat worker")
 	for {
 		select {
 		case <-ctx.Done():

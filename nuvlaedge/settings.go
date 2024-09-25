@@ -8,6 +8,7 @@ import (
 	"github.com/nuvla/api-client-go/common"
 	nuvlaTypes "github.com/nuvla/api-client-go/types"
 	log "github.com/sirupsen/logrus"
+	neCommon "nuvlaedge-go/common"
 	"nuvlaedge-go/common/constants"
 	"nuvlaedge-go/types/settings"
 	"path/filepath"
@@ -16,8 +17,8 @@ import (
 
 // ValidateSettings validates the settings and returns a NuvlaEdge client
 func ValidateSettings(settings *settings.NuvlaEdgeSettings) (*clients.NuvlaEdgeClient, error) {
-	oldSession, ok := findOldSession(settings.DBPPath)
-	if ok {
+	oldSession, sessionExists := findOldSession(settings)
+	if sessionExists {
 		log.Infof("Found stored NuvlaEdge session")
 		mergeSessionIntoSettings(settings, oldSession)
 	}
@@ -25,12 +26,20 @@ func ValidateSettings(settings *settings.NuvlaEdgeSettings) (*clients.NuvlaEdgeC
 	if err := minSettings(settings); err != nil {
 		return nil, err
 	}
-	return newClientFromSettings(settings), nil
+
+	nc := newClientFromSettings(settings)
+
+	// Deprecated: Stored session credentials will be deprecated and only persisted if they already exist
+	if sessionExists && oldSession.Credentials != nil {
+		nc.Credentials = oldSession.Credentials
+	}
+
+	return nc, nil
 }
 
 // findOldSession finds the old session
-func findOldSession(dbpPath string) (*clients.NuvlaEdgeSessionFreeze, bool) {
-	sessionFile := filepath.Join(dbpPath, constants.NuvlaEdgeSessionFile)
+func findOldSession(conf *settings.NuvlaEdgeSettings) (*clients.NuvlaEdgeSessionFreeze, bool) {
+	sessionFile := filepath.Join(conf.DBPPath, constants.NuvlaEdgeSessionFile)
 	if !common.FileExists(sessionFile) {
 		return nil, false
 	}
@@ -39,6 +48,19 @@ func findOldSession(dbpPath string) (*clients.NuvlaEdgeSessionFreeze, bool) {
 	if err := f.Load(sessionFile); err != nil {
 		log.Errorf("Error loading session file: %s", err)
 		return nil, false
+	}
+
+	if f.Irs == "" && f.Credentials != nil && f.Credentials.Key != "" && f.Credentials.Secret != "" {
+		i, err := neCommon.GetIrs(*f.Credentials, conf.RootFs, f.NuvlaEdgeId)
+		if err != nil {
+			log.Errorf("Error creating IRS from stored credentials: %s", err)
+			return f, true
+		}
+
+		f.Irs = i
+		if err := f.Save(filepath.Join(conf.DBPPath, constants.NuvlaEdgeSessionFile)); err != nil {
+			log.Errorf("Error saving session file: %s", err)
+		}
 	}
 
 	return f, true
@@ -58,6 +80,10 @@ func mergeSessionIntoSettings(settings *settings.NuvlaEdgeSettings, session *cli
 	if session.Credentials != nil {
 		settings.ApiKey = session.Credentials.Key
 		settings.ApiSecret = session.Credentials.Secret
+	}
+
+	if session.Irs != "" {
+		settings.Irs = session.Irs
 	}
 }
 
@@ -92,6 +118,15 @@ func isRestoreNuvlaEdge(settings *settings.NuvlaEdgeSettings) bool {
 func minSettings(settings *settings.NuvlaEdgeSettings) error {
 	if settings.NuvlaEndpoint == "" {
 		return errors.New("NuvlaEndpoint is missing and required")
+	}
+
+	if settings.Irs != "" {
+		creds, err := neCommon.FromIrs(settings.Irs, settings.RootFs, settings.NuvlaEdgeUUID)
+		if err != nil {
+			return fmt.Errorf("error decoding IRS: %s", err)
+		}
+		settings.ApiKey = creds.Key
+		settings.ApiSecret = creds.Secret
 	}
 
 	if (settings.ApiKey == "" || settings.ApiSecret == "") && settings.NuvlaEdgeUUID == "" {

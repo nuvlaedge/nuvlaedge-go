@@ -8,7 +8,9 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/nuvla/api-client-go/clients"
 	"github.com/nuvla/api-client-go/clients/resources"
+	types2 "github.com/nuvla/api-client-go/types"
 	log "github.com/sirupsen/logrus"
+	"nuvlaedge-go/common"
 	"nuvlaedge-go/common/constants"
 	"nuvlaedge-go/types"
 	"nuvlaedge-go/types/jobs"
@@ -120,12 +122,22 @@ func (ne *NuvlaEdge) startWorkers() error {
 func (ne *NuvlaEdge) startUpProcess() error {
 	// Start up process
 	// Get remote nuvlaedge state
-	if ne.nuvla.Credentials == nil {
+
+	if (ne.conf.ApiKey == "" || ne.conf.ApiSecret == "") && ne.conf.Irs == "" {
+
 		// We need to assume that NuvlaEdge is new
-		err := ne.nuvla.Activate()
+		creds, err := ne.nuvla.Activate()
 		if err != nil {
 			return err
 		}
+
+		irs, err := common.GetIrs(creds, "/rootfs", ne.nuvla.NuvlaEdgeId.String())
+		if err != nil {
+			return err
+		}
+
+		ne.conf.Irs = irs
+		ne.nuvla.Irs = irs
 
 		err = ne.nuvla.Freeze(path.Join(ne.conf.DBPPath, constants.NuvlaEdgeSessionFile))
 		if err != nil {
@@ -133,12 +145,27 @@ func (ne *NuvlaEdge) startUpProcess() error {
 		}
 	}
 
-	if err := ne.nuvla.LogIn(); err != nil {
+	var c types2.ApiKeyLogInParams
+	var err error
+
+	if ne.conf.Irs != "" {
+		ne.nuvla.Irs = ne.conf.Irs
+		c, err = common.FromIrs(ne.conf.Irs, "/rootfs", ne.nuvla.NuvlaEdgeId.String())
+
+		if err != nil {
+			return fmt.Errorf("error decrypting credentials: %s", err)
+		}
+
+	} else {
+		c = *ne.nuvla.Credentials.(*types2.ApiKeyLogInParams)
+	}
+
+	if err := ne.nuvla.LogIn(c); err != nil {
 		return err
 	}
 
 	// else, check state
-	err := ne.nuvla.UpdateResourceSelect([]string{"state"})
+	err = ne.nuvla.UpdateResourceSelect([]string{"state"})
 	if err != nil {
 		return err
 	}
