@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/mattbaird/jsonpatch"
 	log "github.com/sirupsen/logrus"
+	"github.com/wI2L/jsondiff"
 	"io"
 	"nuvlaedge-go/common"
 	"nuvlaedge-go/common/constants"
@@ -151,15 +151,13 @@ func (t *Telemetry) setInitialStatus() {
 	t.localStatus.Version = 2
 }
 
-func (t *Telemetry) getTelemetryDiff() ([]jsonpatch.JsonPatchOperation, map[string]interface{}, []string) {
+func (t *Telemetry) getTelemetryDiff() (jsondiff.Patch, map[string]interface{}, []string) {
 	// Update current time
 	t.localStatus.CurrentTime = time.Now().Format(constants.DatetimeFormat)
 
 	data, attrsToDelete := common.GetStructDiff(t.lastStatus, t.localStatus)
 
-	previousStatus, _ := json.Marshal(t.lastStatus)
-	newStatus, _ := json.Marshal(t.localStatus)
-	patch, err := jsonpatch.CreatePatch(previousStatus, newStatus)
+	patch, err := jsondiff.Compare(t.lastStatus, t.localStatus, jsondiff.Factorize())
 	if err != nil {
 		log.Errorf("Error creating telemetry patch: %v", err)
 		return nil, data, attrsToDelete
