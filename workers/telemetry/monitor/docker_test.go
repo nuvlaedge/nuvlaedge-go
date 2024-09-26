@@ -3,6 +3,7 @@ package monitor
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/swarm"
@@ -19,7 +20,6 @@ import (
 	"time"
 )
 
-var mockTestClient testutils.TestDockerMetricsClient
 var mockChan chan metrics.Metric
 var commChan chan neTypes.CommissionData
 
@@ -30,19 +30,15 @@ func init() {
 	log.SetLevel(log.PanicLevel)
 }
 
-func resetMock() {
-	mockTestClient = testutils.TestDockerMetricsClient{}
-}
-
 func TestNewDockerMonitor(t *testing.T) {
-	defer resetMock()
+	mockTestClient := testutils.TestDockerMetricsClient{}
 	dockerMonitor := NewDockerMonitor(&mockTestClient, 10, mockChan, "https://nuvla.io", commChan)
 	assert.NotNil(t, dockerMonitor, "DockerMonitor should not be nil")
 	assert.Equal(t, 10, dockerMonitor.GetPeriod(), "DockerMonitor period should be 10")
 }
 
 func TestDockerMonitor_Run(t *testing.T) {
-	defer resetMock()
+	mockTestClient := testutils.TestDockerMetricsClient{}
 	dockerMonitor := NewDockerMonitor(&mockTestClient, 10, mockChan, "https://nuvla.io", commChan)
 	ctx := context.Background()
 	var err error
@@ -56,7 +52,7 @@ func TestDockerMonitor_Run(t *testing.T) {
 }
 
 func TestDockerMonitor_sendMetrics(t *testing.T) {
-	defer resetMock()
+	mockTestClient := testutils.TestDockerMetricsClient{}
 	commChan = make(chan neTypes.CommissionData)
 	mockChan = make(chan metrics.Metric)
 	dockerMonitor := NewDockerMonitor(&mockTestClient, 10, mockChan, "https://nuvla.io", commChan)
@@ -65,7 +61,7 @@ func TestDockerMonitor_sendMetrics(t *testing.T) {
 	dockerMonitor.containerStatsSupported = true
 	dockerMonitor.period = 1
 	var wg sync.WaitGroup
-
+	fmt.Printf("count %d\n", count)
 	cxt, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	wg.Add(2)
@@ -94,7 +90,7 @@ func TestDockerMonitor_sendMetrics(t *testing.T) {
 			case <-mockChan:
 				// A
 				count++
-				if count == 2 {
+				if count == 3 {
 					return
 				}
 			}
@@ -102,20 +98,19 @@ func TestDockerMonitor_sendMetrics(t *testing.T) {
 	}(cxt)
 	time.Sleep(100 * time.Millisecond)
 	dockerMonitor.sendMetrics()
-
 	wg.Wait()
 	assert.Equal(t, 2, countComm, "DockerMonitor sendMetrics should send 2 metrics to commChan")
-	assert.Equal(t, 2, count, "DockerMonitor sendMetrics should send 3 metrics")
+	assert.Equal(t, 3, count, "DockerMonitor sendMetrics should send 3 metrics")
 }
 
 func TestDockerMonitor_GetChannel(t *testing.T) {
-	defer resetMock()
+	mockTestClient := testutils.TestDockerMetricsClient{}
 	dockerMonitor := NewDockerMonitor(&mockTestClient, 10, mockChan, "https://nuvla.io", commChan)
 	assert.NotNil(t, dockerMonitor.GetChannel(), "DockerMonitor GetChannel should not be nil")
 }
 
 func Test_DockerMonitor_setDefaultSwarmData(t *testing.T) {
-	defer resetMock()
+	mockTestClient := testutils.TestDockerMetricsClient{}
 	dockerMonitor := NewDockerMonitor(&mockTestClient, 10, mockChan, "https://nuvla.io", commChan)
 	dockerMonitor.setDefaultSwarmData()
 	assert.NotNil(t, dockerMonitor.swarmData, "DockerMonitor swarmData should not be nil")
@@ -125,7 +120,7 @@ func Test_DockerMonitor_setDefaultSwarmData(t *testing.T) {
 }
 
 func Test_DockerMonitor_UpdateSwarmData(t *testing.T) {
-	defer resetMock()
+	mockTestClient := testutils.TestDockerMetricsClient{}
 	mockTestClient.InspectReturn = swarm.Swarm{
 		JoinTokens: swarm.JoinTokens{
 			Worker:  "workerToken",
@@ -138,7 +133,7 @@ func Test_DockerMonitor_UpdateSwarmData(t *testing.T) {
 	assert.Equal(t, "workerToken", dockerMonitor.swarmData.SwarmTokenWorker, "SwarmTokenWorker should be set")
 	assert.Equal(t, "managerToken", dockerMonitor.swarmData.SwarmTokenManager, "SwarmTokenManager should be set")
 
-	resetMock()
+	mockTestClient = testutils.TestDockerMetricsClient{}
 	mockTestClient.InspectErr = errors.New("swarm not active")
 	dockerMonitor = NewDockerMonitor(&mockTestClient, 10, mockChan, "https://nuvla.io", commChan)
 	err = dockerMonitor.updateSwarmData()
@@ -147,7 +142,7 @@ func Test_DockerMonitor_UpdateSwarmData(t *testing.T) {
 	assert.Equal(t, "null", dockerMonitor.swarmData.SwarmClientKey, "SwarmClientKey should be reset to 'null'")
 	assert.Equal(t, "null", dockerMonitor.swarmData.SwarmClientCert, "SwarmClientCert should be reset to 'null'")
 
-	resetMock()
+	mockTestClient = testutils.TestDockerMetricsClient{}
 	mockTestClient.InspectErr = errors.New("error inspecting swarm")
 	dockerMonitor = NewDockerMonitor(&mockTestClient, 10, mockChan, "https://nuvla.io", commChan)
 	err = dockerMonitor.updateSwarmData()
@@ -155,7 +150,7 @@ func Test_DockerMonitor_UpdateSwarmData(t *testing.T) {
 }
 
 func TestUpdateClusterData_SwarmDisabled_SetsEmptyClusterData(t *testing.T) {
-	defer resetMock()
+	mockTestClient := testutils.TestDockerMetricsClient{}
 	mockTestClient.InfoReturn = system.Info{
 		Swarm: swarm.Info{
 			LocalNodeState: "inactive",
@@ -166,7 +161,7 @@ func TestUpdateClusterData_SwarmDisabled_SetsEmptyClusterData(t *testing.T) {
 	assert.Nil(t, err, "updateClusterData should not return an error when swarm is disabled")
 	assert.Empty(t, dockerMonitor.clusterData, "ClusterData should be empty when swarm is disabled")
 
-	resetMock()
+	mockTestClient = testutils.TestDockerMetricsClient{}
 	mockTestClient.InfoErr = errors.New("failed to get Docker info")
 	dockerMonitor = NewDockerMonitor(&mockTestClient, 10, mockChan, "https://nuvla.io", commChan)
 	err = dockerMonitor.updateClusterData()
@@ -174,7 +169,7 @@ func TestUpdateClusterData_SwarmDisabled_SetsEmptyClusterData(t *testing.T) {
 }
 
 func TestUpdateClusterData_SwarmEnabledButNoNodes_ReturnsClusterDataWithoutNodes(t *testing.T) {
-	defer resetMock()
+	mockTestClient := testutils.TestDockerMetricsClient{}
 	mockTestClient.InfoReturn = system.Info{
 		ServerVersion: "20.10",
 		Swarm: swarm.Info{
@@ -201,7 +196,7 @@ func TestUpdateClusterData_SwarmEnabledButNoNodes_ReturnsClusterDataWithoutNodes
 }
 
 func TestUpdateClusterData_SwarmEnabledWithNodes_SetsClusterAndNodeData(t *testing.T) {
-	defer resetMock()
+	mockTestClient := testutils.TestDockerMetricsClient{}
 	mockTestClient.InfoReturn = system.Info{
 		ServerVersion: "20.10",
 		Swarm: swarm.Info{
@@ -245,7 +240,7 @@ func TestUpdateClusterData_SwarmEnabledWithNodes_SetsClusterAndNodeData(t *testi
 }
 
 func TestUpdateClusterData_PluginsListedSuccessfully_SetsContainerPluginsCorrectly(t *testing.T) {
-	defer resetMock()
+	mockTestClient := testutils.TestDockerMetricsClient{}
 	mockTestClient.InfoReturn = system.Info{
 		Swarm: swarm.Info{
 			LocalNodeState: "active",
@@ -265,7 +260,7 @@ func TestUpdateClusterData_PluginsListedSuccessfully_SetsContainerPluginsCorrect
 }
 
 func TestUpdateClusterData_PluginListError_HandlesErrorGracefully(t *testing.T) {
-	defer resetMock()
+	mockTestClient := testutils.TestDockerMetricsClient{}
 	mockTestClient.InfoReturn = system.Info{
 		Swarm: swarm.Info{
 			LocalNodeState: "active",
@@ -282,7 +277,7 @@ func TestUpdateClusterData_PluginListError_HandlesErrorGracefully(t *testing.T) 
 }
 
 func TestUpdateContainersData_Integrated(t *testing.T) {
-	defer resetMock()
+	mockTestClient := testutils.TestDockerMetricsClient{}
 
 	// Mocking container list to return two containers
 	mockTestClient.ContainerListReturn = []types.Container{
@@ -347,7 +342,7 @@ func TestUpdateContainersData_Integrated(t *testing.T) {
 }
 
 func TestUpdateMetrics_AllUpdatesSucceed_ReturnsNoError(t *testing.T) {
-	defer resetMock()
+	mockTestClient := testutils.TestDockerMetricsClient{}
 	mockTestClient.InfoReturn = system.Info{
 		ServerVersion: "20.10",
 		Swarm: swarm.Info{
@@ -412,21 +407,21 @@ func TestUpdateMetrics_AllUpdatesSucceed_ReturnsNoError(t *testing.T) {
 }
 
 func TestUpdateMetrics_ClusterDataUpdateFails_ReturnsError(t *testing.T) {
-	defer resetMock()
+	mockTestClient := testutils.TestDockerMetricsClient{}
 	mockTestClient.InfoErr = errors.New("failed to get Docker info")
 
 	dockerMonitor := NewDockerMonitor(&mockTestClient, 10, mockChan, "https://nuvla.io", commChan)
 	err := dockerMonitor.updateMetrics()
 	assert.NotNil(t, err, "updateMetrics should return an error when cluster data update fails")
 
-	resetMock()
+	mockTestClient = testutils.TestDockerMetricsClient{}
 	mockTestClient.InspectErr = errors.New("error inspecting swarm")
 
 	dockerMonitor = NewDockerMonitor(&mockTestClient, 10, mockChan, "https://nuvla.io", commChan)
 	err = dockerMonitor.updateMetrics()
 	assert.NotNil(t, err, "updateMetrics should return an error when swarm data update fails")
 
-	resetMock()
+	mockTestClient = testutils.TestDockerMetricsClient{}
 	mockTestClient.InfoErr = errors.New("failed to get Docker info")
 	mockTestClient.InspectErr = errors.New("error inspecting swarm")
 	mockTestClient.ContainerListErr = errors.New("error listing containers")
@@ -439,7 +434,7 @@ func TestUpdateMetrics_ClusterDataUpdateFails_ReturnsError(t *testing.T) {
 }
 
 func TestCloseSucceeds_ReportsNoError(t *testing.T) {
-	defer resetMock()
+	mockTestClient := testutils.TestDockerMetricsClient{}
 	mockTestClient.CloseErr = nil
 	dockerMonitor := NewDockerMonitor(&mockTestClient, 10, mockChan, "https://nuvla.io", commChan)
 	dockerMonitor.Close()

@@ -5,7 +5,7 @@ import "net/http"
 type MockTelemetryClient struct {
 	TelemetryCnt      int
 	TelemetryErr      error
-	TelemetryResponse http.Response
+	TelemetryResponse *http.Response
 
 	GetEndpointCnt      int
 	GetEndpointResponse string
@@ -13,7 +13,7 @@ type MockTelemetryClient struct {
 
 func (mtc *MockTelemetryClient) Telemetry(data interface{}, Select []string) (*http.Response, error) {
 	mtc.TelemetryCnt++
-	return &mtc.TelemetryResponse, mtc.TelemetryErr
+	return mtc.TelemetryResponse, mtc.TelemetryErr
 }
 
 func (mtc *MockTelemetryClient) GetEndpoint() string {

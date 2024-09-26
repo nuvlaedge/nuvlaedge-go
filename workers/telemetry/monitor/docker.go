@@ -3,6 +3,7 @@ package monitor
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -28,6 +29,7 @@ type DockerMonitor struct {
 	clusterData             metrics.ClusterData
 	swarmData               metrics.SwarmData
 	containersData          metrics.ContainerStats
+	coeResources            metrics.CoeResources
 	containerStatsSupported bool
 }
 
@@ -70,9 +72,12 @@ func (dm *DockerMonitor) Run(ctx context.Context) error {
 
 func (dm *DockerMonitor) sendMetrics() {
 	dm.reportChan <- dm.clusterData
+	dm.reportChan <- dm.coeResources
+
 	if dm.containerStatsSupported {
 		dm.reportChan <- dm.containersData
 	}
+
 	dm.commissionerChan <- dm.clusterData
 	dm.commissionerChan <- dm.swarmData
 }
@@ -256,8 +261,13 @@ func (dm *DockerMonitor) updateMetrics() error {
 			errs = append(errs, err)
 		}
 	}
+
+	if err := dm.updateCoeResources(); err != nil {
+		errs = append(errs, err)
+	}
+
 	if len(errs) > 0 {
-		return fmt.Errorf("errors updating metrics: %v", errs)
+		return fmt.Errorf("errors updating metrics: %v", errors.Join(errs...))
 	}
 	return nil
 }
