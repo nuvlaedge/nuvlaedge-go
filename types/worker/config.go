@@ -26,10 +26,10 @@ type WorkerConfig struct {
 
 func NewDefaultWorkersConfig() *WorkerConfig {
 	return &WorkerConfig{
-		TelemetryPeriod:  60,
-		HeartBeatPeriod:  20,
-		CleanUpPeriod:    60,
-		CommissionPeriod: 60,
+		TelemetryPeriod:  constants.DefaultTelemetryPeriod,
+		HeartBeatPeriod:  constants.DefaultHeartbeatPeriod,
+		CleanUpPeriod:    constants.DefaultCleanUpPeriod,
+		CommissionPeriod: constants.MinCommissioningPeriod,
 		EnableJobLegacy:  false,
 	}
 }
@@ -41,7 +41,7 @@ func (wc *WorkerConfig) UpdateFromResource(res *resources.NuvlaEdgeResource) {
 	//wc.CommissionPeriod = res.CommissionPeriod
 
 	// TODO: Update when nuvla has the new fields
-	wc.CleanUpPeriod = constants.CleanUpPeriod
+	wc.CleanUpPeriod = constants.DefaultCleanUpPeriod
 	wc.RemoveObjects = []string{"images"}
 }
 
