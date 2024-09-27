@@ -55,3 +55,4 @@ COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=build /build/out/nuvlaedge /bin/nuvlaedge
 
 ENTRYPOINT ["nuvlaedge"]
+CMD ["run"]

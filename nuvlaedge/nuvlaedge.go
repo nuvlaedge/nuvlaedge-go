@@ -56,12 +56,16 @@ func NewNuvlaEdge(ctx context.Context, conf *settings.NuvlaEdgeSettings) (*Nuvla
 		return nil, err
 	}
 
+	wConf := worker.NewDefaultWorkersConfig()
+	wConf.EnableJobLegacy = conf.EnableJobLegacySupport
+	wConf.LegacyJobImage = conf.JobEngineImage
+
 	ne := &NuvlaEdge{
 		ctx:          ctx,
 		nuvla:        nuvla,
 		dockerClient: dockerCli,
 		conf:         conf,
-		workerConf:   worker.NewDefaultWorkersConfig(),
+		workerConf:   wConf,
 
 		// Channels
 		commissionerCh:   make(chan types.CommissionData),

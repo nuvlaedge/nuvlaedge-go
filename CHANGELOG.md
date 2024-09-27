@@ -1,31 +1,13 @@
 # Changelog
 
-## [2.4.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/2.3.0...2.4.0) (2024-09-25)
+## [2.3.1](https://github.com/nuvlaedge/nuvlaedge-go/compare/2.2.0...2.3.1) (2024-09-27)
 
 
 ### Features
 
 * Add credential encryption  ([#87](https://github.com/nuvlaedge/nuvlaedge-go/issues/87)) ([5af86d8](https://github.com/nuvlaedge/nuvlaedge-go/commit/5af86d86d4530715de0951095ec4be6ddab8506a))
-* **telemetry:** add support to send telemetry as JSON Patch ([#86](https://github.com/nuvlaedge/nuvlaedge-go/issues/86)) ([29bb678](https://github.com/nuvlaedge/nuvlaedge-go/commit/29bb6780343917f13569e132a361f57e21dbdd83))
-
-
-### Bug Fixes
-
-* **telemetry:** append "-go" to NuvlaEdge version ([d3eaa89](https://github.com/nuvlaedge/nuvlaedge-go/commit/d3eaa8956d5968113369abe41d2c513fe7caabc1))
-
-
-### Minor Changes
-
-* Add hostname and IPs params ([#88](https://github.com/nuvlaedge/nuvlaedge-go/issues/88)) ([d8c519c](https://github.com/nuvlaedge/nuvlaedge-go/commit/d8c519c8d8e67fc4afeeb1fe3be39b425c6b49f0))
-* Add job message posting for deployments ([#89](https://github.com/nuvlaedge/nuvlaedge-go/issues/89)) ([79b20a5](https://github.com/nuvlaedge/nuvlaedge-go/commit/79b20a5ec61f8dd794529a153e8d062f26b9b5d8))
-* Add logging flags to run CMD ([16315af](https://github.com/nuvlaedge/nuvlaedge-go/commit/16315afbbacfcbd0ffecaea52ef441320c0e391d))
-
-## [2.3.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/2.2.0...2.3.0) (2024-09-16)
-
-
-### Features
-
 * Complete refactor of code base. Add static CI analysis ([5aec612](https://github.com/nuvlaedge/nuvlaedge-go/commit/5aec612d32a1a051688280f402415328bc0f62f9))
+* **telemetry:** add support to send telemetry as JSON Patch ([#86](https://github.com/nuvlaedge/nuvlaedge-go/issues/86)) ([29bb678](https://github.com/nuvlaedge/nuvlaedge-go/commit/29bb6780343917f13569e132a361f57e21dbdd83))
 
 
 ### Bug Fixes
@@ -33,12 +15,21 @@
 * Cleanup over logging ([ede64f3](https://github.com/nuvlaedge/nuvlaedge-go/commit/ede64f368a033c1030d0e9eb2f485c5ba2b0f7a4))
 * Fix release workflow ([5a9d703](https://github.com/nuvlaedge/nuvlaedge-go/commit/5a9d70331a446b65424e96a3b37011fc90015705))
 * Fix unittests ([01af1de](https://github.com/nuvlaedge/nuvlaedge-go/commit/01af1de2e7c93ee98bcc578677b70363bcdfc013))
+* **jobs:** Legacy enable flag not being parsed ([#91](https://github.com/nuvlaedge/nuvlaedge-go/issues/91)) ([0c1cedc](https://github.com/nuvlaedge/nuvlaedge-go/commit/0c1cedc201600f11859a27e9e5d547b64378f375))
 * NuvlaEdge self registration ([dd2dbfe](https://github.com/nuvlaedge/nuvlaedge-go/commit/dd2dbfeac900a0d8053d26d6ef416ecd2dcbe300))
+* **telemetry:** append "-go" to NuvlaEdge version ([d3eaa89](https://github.com/nuvlaedge/nuvlaedge-go/commit/d3eaa8956d5968113369abe41d2c513fe7caabc1))
 
 
 ### Dependencies
 
 * Update Nuvla Api Client ([7492785](https://github.com/nuvlaedge/nuvlaedge-go/commit/7492785a47a3676046ff67ddb0097a04f463e365))
+
+
+### Minor Changes
+
+* Add hostname and IPs params ([#88](https://github.com/nuvlaedge/nuvlaedge-go/issues/88)) ([d8c519c](https://github.com/nuvlaedge/nuvlaedge-go/commit/d8c519c8d8e67fc4afeeb1fe3be39b425c6b49f0))
+* Add job message posting for deployments ([#89](https://github.com/nuvlaedge/nuvlaedge-go/issues/89)) ([79b20a5](https://github.com/nuvlaedge/nuvlaedge-go/commit/79b20a5ec61f8dd794529a153e8d062f26b9b5d8))
+* Add logging flags to run CMD ([16315af](https://github.com/nuvlaedge/nuvlaedge-go/commit/16315afbbacfcbd0ffecaea52ef441320c0e391d))
 
 ## [2.2.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/2.1.0...2.2.0) (2024-07-19)
 

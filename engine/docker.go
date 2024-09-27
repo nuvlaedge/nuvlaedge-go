@@ -73,6 +73,10 @@ func (dc *DockerEngine) RunJobEngineContainer(conf *jobs.LegacyJobConf) (string,
 		return "", err
 	}
 
+	if !strings.HasPrefix(conf.Endpoint, "https://") || !strings.HasPrefix(conf.Endpoint, "http://") {
+		conf.Endpoint = "https://" + conf.Endpoint
+	}
+
 	command := []string{"--", "/app/job_executor.py",
 		"--api-url", conf.Endpoint,
 		"--api-key", conf.ApiKey,
