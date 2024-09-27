@@ -157,7 +157,7 @@ func (t *Telemetry) getTelemetryDiff() (jsondiff.Patch, map[string]interface{}, 
 
 	data, attrsToDelete := common.GetStructDiff(t.lastStatus, t.localStatus)
 
-	patch, err := jsondiff.Compare(t.lastStatus, t.localStatus, jsondiff.Factorize())
+	patch, err := jsondiff.Compare(t.lastStatus, t.localStatus)
 	if err != nil {
 		log.Errorf("Error creating telemetry patch: %v", err)
 		return nil, data, attrsToDelete
@@ -216,6 +216,10 @@ func (t *Telemetry) sendTelemetry(data interface{}, attrsToDelete []string) erro
 }
 
 func (t *Telemetry) Reconfigure(conf *worker.WorkerConfig) error {
+	if conf == nil {
+		return fmt.Errorf("nil configuration received")
+	}
+
 	if conf.TelemetryPeriod != t.GetPeriod() {
 		t.SetPeriod(conf.TelemetryPeriod)
 	}

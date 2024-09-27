@@ -10,6 +10,9 @@ type MonitorMock struct {
 	// MonitorMock is a mock for the Monitor interface
 	runningLock *sync.Mutex
 	running     bool
+
+	CloseCnt int
+	CloseErr error
 }
 
 func NewMonitorMock() *MonitorMock {
@@ -55,5 +58,6 @@ func (m *MonitorMock) SetPeriod(int) {
 }
 
 func (m *MonitorMock) Close() error {
-	return nil
+	m.CloseCnt++
+	return m.CloseErr
 }

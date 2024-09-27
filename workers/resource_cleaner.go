@@ -67,6 +67,7 @@ func (d *DockerCleaner) Reconfigure(conf *worker.WorkerConfig) error {
 }
 
 func (d *DockerCleaner) Run(ctx context.Context) error {
+	log.Infof("Running DockerCleaner with a period of %d seconds", d.GetPeriod())
 	for {
 		select {
 		case <-ctx.Done():

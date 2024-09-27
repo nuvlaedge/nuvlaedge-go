@@ -12,6 +12,7 @@ type NuvlaEdgeStatus struct {
 	ClusterNodeRole         string              `json:"cluster-node-role,omitempty"`
 	ClusterJoinAddress      string              `json:"cluster-join-address,omitempty"`
 	SwarmNodeCertExpiryDate string              `json:"swarm-node-cert-expiry-date,omitempty"`
+	CoeResources            *CoeResources       `json:"coe-resources,omitempty"`
 
 	// Host System Settings
 	Architecture        string `json:"architecture,omitempty"`

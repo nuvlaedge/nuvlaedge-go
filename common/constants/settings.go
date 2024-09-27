@@ -6,11 +6,8 @@ const (
 	DefaultInsecure = false
 
 	// Default NuvlaEdge configuration
-	DefaultDBPath           = "/var/lib/nuvlaedge/"
-	DefaultHeartbeatPeriod  = 20
-	DefaultTelemetryPeriod  = 60
-	DefaultRemoteSyncPeriod = 60
-	DefaultVPNEnabled       = false
+	DefaultDBPath     = "/var/lib/nuvlaedge/"
+	DefaultVPNEnabled = false
 
 	// Default Job Engine configuration
 	DefaultJobEngineImage  = "sixsq/nuvlaedge:latest"
