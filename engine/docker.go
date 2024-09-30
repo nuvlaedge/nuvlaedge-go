@@ -73,7 +73,7 @@ func (dc *DockerEngine) RunJobEngineContainer(conf *jobs.LegacyJobConf) (string,
 		return "", err
 	}
 
-	if !strings.HasPrefix(conf.Endpoint, "https://") || !strings.HasPrefix(conf.Endpoint, "http://") {
+	if !strings.HasPrefix(conf.Endpoint, "https://") && !strings.HasPrefix(conf.Endpoint, "http://") {
 		conf.Endpoint = "https://" + conf.Endpoint
 	}
 
@@ -128,8 +128,8 @@ func (dc *DockerEngine) RunJobEngineContainer(conf *jobs.LegacyJobConf) (string,
 	}
 
 	return resp.ID, nil
-
 }
+
 func (dc *DockerEngine) pullAndWaitImage(ctx context.Context, imageName string) error {
 	ctxTimed, cancel := context.WithTimeout(ctx, ImagePullTimeout)
 	defer cancel()
