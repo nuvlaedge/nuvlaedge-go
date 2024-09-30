@@ -1,5 +1,17 @@
 # Changelog
 
+## [2.4.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/2.3.1...2.4.0) (2024-09-30)
+
+
+### Features
+
+* **telemetry:** Add Docker COE resource metric ([#90](https://github.com/nuvlaedge/nuvlaedge-go/issues/90)) ([25ff06c](https://github.com/nuvlaedge/nuvlaedge-go/commit/25ff06c20ae4040a673422321440118d4d45bcbc))
+
+
+### Bug Fixes
+
+* **job-engine:** Error when updating due to bug on endpoint parsing ([edd7e6b](https://github.com/nuvlaedge/nuvlaedge-go/commit/edd7e6b3db95a07172edfd732f19f1ed4c5c2a5a))
+
 ## [2.3.1](https://github.com/nuvlaedge/nuvlaedge-go/compare/2.2.0...2.3.1) (2024-09-27)
 
 
