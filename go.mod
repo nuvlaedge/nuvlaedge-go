@@ -222,3 +222,5 @@ require (
 	sigs.k8s.io/yaml v1.3.0 // indirect
 	tags.cncf.io/container-device-interface v0.8.0 // indirect
 )
+
+replace github.com/nuvla/api-client-go => /Users/nacho/go/src/github.com/nuvla/api-client-go

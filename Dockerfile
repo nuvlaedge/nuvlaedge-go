@@ -10,12 +10,9 @@ WORKDIR /build
 
 COPY . .
 
-#RUN apk add --no-cache tzdata
-# RUN apk add --no-cache upx
-
-RUN go mod tidy
 RUN GOOS=$TARGETOS GOARCH=$TARGETARCH CGO_ENABLED=0 \
     go build \
+    -mod=vendor \
     -ldflags "-w -s -X 'nuvlaedge-go/common/version.Version=$NUVLAEDGE_VERSION'" \
     -gcflags=all="-l -B" \
     -o out/nuvlaedge \

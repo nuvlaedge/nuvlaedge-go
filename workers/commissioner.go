@@ -43,7 +43,10 @@ func (c *Commissioner) getNodeIdFromStatus() string {
 		return ""
 	}
 
-	resource, err := c.client.Get(c.client.GetStatusId(), []string{"node-id"})
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	resource, err := c.client.Get(ctx, c.client.GetStatusId(), []string{"node-id"})
 	if err != nil {
 		log.Errorf("Error getting NuvlaEdge status: %s", err)
 		return ""
@@ -98,7 +101,7 @@ func (c *Commissioner) Run(ctx context.Context) error {
 
 		case <-c.BaseTicker.C:
 			if data, ok := c.needsCommissioning(); ok {
-				if err := c.commission(data); err != nil {
+				if err := c.commission(ctx, data); err != nil {
 					log.Errorf("Error commissioning: %s", err)
 				} else {
 					c.lastCommission = c.currentData
@@ -139,9 +142,12 @@ func (c *Commissioner) needsCommissioning() (map[string]interface{}, bool) {
 	return data, true
 }
 
-func (c *Commissioner) commission(data map[string]interface{}) error {
+func (c *Commissioner) commission(ctx context.Context, data map[string]interface{}) error {
+	ctxCancel, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	log.Infof("Commissioning with data: %v", data)
-	if err := c.client.Commission(data); err != nil {
+	if err := c.client.Commission(ctxCancel, data); err != nil {
 		log.Errorf("Error commissioning: %s", err)
 		return err
 	}
@@ -150,7 +156,7 @@ func (c *Commissioner) commission(data map[string]interface{}) error {
 }
 
 // TriggerBaseCommissioning triggers the base commissioning of the node manually
-func TriggerBaseCommissioning(w worker.Worker, nuvla *clients.NuvlaEdgeClient) error {
+func TriggerBaseCommissioning(ctx context.Context, w worker.Worker, nuvla *clients.NuvlaEdgeClient) error {
 	c, ok := w.(*Commissioner)
 	if !ok {
 		return errors.New("worker is not a Commissioner")
@@ -161,7 +167,10 @@ func TriggerBaseCommissioning(w worker.Worker, nuvla *clients.NuvlaEdgeClient) e
 		log.Errorf("This is the first commissioning and data should be available, something went wrong")
 	}
 
-	return nuvla.Commission(comData)
+	ctxCancel, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	return nuvla.Commission(ctxCancel, comData)
 }
 
 var _ worker.Worker = &Commissioner{}

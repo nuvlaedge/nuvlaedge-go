@@ -38,11 +38,11 @@ func GetRebooter(needsRoot bool) (Rebooter, error) {
 // Deployer is an interface for executors that can deploy Nuvla applications
 type Deployer interface {
 	Executor
-	StartDeployment() error
-	StopDeployment() error
-	StateDeployment() error
-	UpdateDeployment() error
-	GetServices() ([]DeploymentService, error)
+	StartDeployment(ctx context.Context) error
+	StopDeployment(ctx context.Context) error
+	StateDeployment(ctx context.Context) error
+	UpdateDeployment(ctx context.Context) error
+	GetServices(ctx context.Context) ([]DeploymentService, error)
 	// Close TODO: For the moment, we only need to close dockerCLI
 	Close() error
 
@@ -60,7 +60,6 @@ func GetDeployer(resource *resources.DeploymentResource) (Deployer, error) {
 		switch compatibility {
 		case "docker-compose":
 			return &ComposeExecutor{
-				ctx:                context.Background(),
 				ExecutorBase:       ExecutorBase{Name: ComposeExecutorName},
 				deploymentResource: resource,
 			}, nil
@@ -68,7 +67,6 @@ func GetDeployer(resource *resources.DeploymentResource) (Deployer, error) {
 			return &Stack{
 				ExecutorBase:       ExecutorBase{Name: StackExecutorName},
 				deploymentResource: resource,
-				context:            context.Background(),
 			}, nil
 		default:
 			return nil, errors.NewNotImplementedActionError(compatibility)

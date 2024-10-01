@@ -1,6 +1,7 @@
 package nuvlaedge
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	nuvlaApi "github.com/nuvla/api-client-go"
@@ -185,7 +186,7 @@ func getNuvlaEdgeIdFromApiKeys(settings *settings.NuvlaEdgeSettings) (string, er
 		sOpts)
 
 	// Get the NuvlaEdge ID
-	col, err := cli.Search("session", nil)
+	col, err := cli.Search(context.Background(), "session", nil)
 	if err != nil {
 		return "", err
 	}
@@ -199,7 +200,7 @@ func getNuvlaEdgeIdFromApiKeys(settings *settings.NuvlaEdgeSettings) (string, er
 		return "", ErrNotFoundSession
 	}
 
-	res, err := cli.Get(s.(string), nil)
+	res, err := cli.Get(context.Background(), s.(string), nil)
 	if err != nil {
 		return "", ErrNotFoundSession
 	}

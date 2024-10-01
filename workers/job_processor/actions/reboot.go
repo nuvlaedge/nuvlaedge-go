@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"context"
 	log "github.com/sirupsen/logrus"
 	"nuvlaedge-go/workers/job_processor/executors"
 )
@@ -13,7 +14,7 @@ type RebootAction struct {
 	executor executors.Rebooter
 }
 
-func (r *RebootAction) ExecuteAction() error {
+func (r *RebootAction) ExecuteAction(_ context.Context) error {
 	err := r.executor.Reboot()
 	if err != nil {
 		log.Errorf("Error executing reboot: %s", err)
@@ -38,7 +39,7 @@ func (r *RebootAction) assertExecutor() error {
 	return nil
 }
 
-func (r *RebootAction) Init(_ ...ActionOptsFn) error {
+func (r *RebootAction) Init(_ context.Context, _ ...ActionOptsFn) error {
 	err := r.assertExecutor()
 	if err != nil {
 		return err

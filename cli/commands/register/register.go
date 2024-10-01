@@ -1,6 +1,7 @@
 package register
 
 import (
+	"context"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"nuvlaedge-go/cli/flags"
@@ -23,7 +24,7 @@ func NewRegisterCommand() *cobra.Command {
 				return err
 			}
 
-			return Register(&opts)
+			return Register(cmd.Context(), &opts)
 		},
 	}
 
@@ -32,7 +33,7 @@ func NewRegisterCommand() *cobra.Command {
 	return cmd
 }
 
-func Register(opts *command.RegisterCmdOptions) error {
+func Register(ctx context.Context, opts *command.RegisterCmdOptions) error {
 	// Create a new session with the provided opts
 	client, err := newUserClient(opts)
 	if err != nil {
@@ -45,7 +46,7 @@ func Register(opts *command.RegisterCmdOptions) error {
 	}
 
 	// Create a new NuvlaEdge resource with the provided configuration
-	id, err := client.Add("nuvlabox", conf)
+	id, err := client.Add(ctx, "nuvlabox", conf)
 	if err != nil {
 		log.Errorf("Failed to create NuvlaEdge resource: %s", err)
 		return err

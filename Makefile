@@ -42,12 +42,12 @@ lint:
 ## test: run all tests
 .PHONY: test
 test:
-	go test -tags=coverage -v -race -buildvcs $(shell go list ./... | grep -v -e testutils -e cmd/tests)
+	go test -mod=vendor -tags=coverage -v -race -buildvcs $(shell go list ./... | grep -v -e testutils -e cmd/tests)
 
 ## test/cover: run all tests and display coverage
 .PHONY: test/cover
 test/cover:
-	go test -tags=coverage -v -race -buildvcs -coverprofile=/tmp/coverage.out $(shell go list ./... | grep -v -e testutils -e cmd/tests)
+	go test -mod=vendor -tags=coverage -v -race -buildvcs -coverprofile=/tmp/coverage.out $(shell go list ./... | grep -v -e testutils -e cmd/tests)
 	go tool cover -html=/tmp/coverage.out
 
 # docker/build: build docker image
@@ -66,7 +66,7 @@ docker/run:
 # ==================================================================================== #
 .PHONY: sonar/test
 sonar/test:
-	go test -tags=coverage -v -race -buildvcs -coverprofile=cov.out $(shell go list ./... | grep -v -e testutils -e cmd/tests -e workers/job_processor -e engine)
+	go test -mod=vendor -tags=coverage -v -race -buildvcs -coverprofile=cov.out $(shell go list ./... | grep -v -e testutils -e cmd/tests -e workers/job_processor -e engine)
 
 
 .PHONY: sonar/lint

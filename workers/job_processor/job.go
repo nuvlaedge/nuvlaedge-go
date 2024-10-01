@@ -1,6 +1,7 @@
 package job_processor
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	nuvla "github.com/nuvla/api-client-go"
@@ -19,18 +20,18 @@ const (
 )
 
 type Job interface {
-	RunJob() error
-	Init(coe engine.Coe, enableLegacy bool, legacyImage string) (Job, error)
+	RunJob(ctx context.Context) error
+	Init(ctx context.Context, coe engine.Coe, enableLegacy bool, legacyImage string) (Job, error)
 	GetId() string
 	GetJobType() string
 }
 
-func NewJob(jobId string, c *nuvla.NuvlaClient, coe engine.Coe, enableLegacy bool, legacyImage string) (Job, error) {
+func NewJob(ctx context.Context, jobId string, c *nuvla.NuvlaClient, coe engine.Coe, enableLegacy bool, legacyImage string) (Job, error) {
 	job := JobBase{
 		JobId:  jobId,
 		Client: clients.NewJobClient(jobId, c),
 	}
-	j, err := job.Init(coe, enableLegacy, legacyImage)
+	j, err := job.Init(ctx, coe, enableLegacy, legacyImage)
 	if err != nil {
 		return nil, err
 	}
@@ -53,9 +54,9 @@ func isNotSupportedActionError(err error) bool {
 	return errors.As(err, &notImplementedActionError)
 }
 
-func (j *JobBase) Init(coe engine.Coe, enableLegacy bool, legacyImage string) (Job, error) {
+func (j *JobBase) Init(ctx context.Context, coe engine.Coe, enableLegacy bool, legacyImage string) (Job, error) {
 	log.Infof("Initialising job %s", j.JobId)
-	if err := j.Client.UpdateResource(); err != nil {
+	if err := j.Client.UpdateResource(ctx); err != nil {
 		log.Errorf("Error updating job resource: %s", err)
 		return nil, err
 	}
@@ -73,6 +74,7 @@ func (j *JobBase) Init(coe engine.Coe, enableLegacy bool, legacyImage string) (J
 		if !enableLegacy {
 			log.Infof("Legacy actions are disabled, cannot run unsupported job %s", j.JobId)
 			j.Client.SetFailedState(
+				ctx,
 				fmt.Sprintf("NuvlaEdge-Go doesn't support action %s. "+
 					"Set env JOB_LEGACY_ENABLE=true to run unsupported actions in a separate container", j.JobResource.Action))
 			return nil, err
@@ -104,30 +106,31 @@ func NewNativeJobFromBase(jb *JobBase, action actions.Action, actionName string)
 	}
 }
 
-func (j *NativeJob) RunJob() error {
-	_ = j.Client.SetProgress(30)
+func (j *NativeJob) RunJob(ctx context.Context) error {
+	_ = j.Client.SetProgress(ctx, 30)
 
 	// Initialise the action
 	err := j.Action.Init(
+		ctx,
 		actions.WithActionName(j.JobName),
 		actions.WithJobId(j.JobId),
 		actions.WithJobResource(j.JobResource),
 		actions.WithClient(j.Client.NuvlaClient))
 	if err != nil {
-		j.Client.SetFailedState(err.Error())
+		j.Client.SetFailedState(ctx, err.Error())
 		return err
 	}
 
 	// Run the action
-	if err = j.Action.ExecuteAction(); err != nil {
+	if err = j.Action.ExecuteAction(ctx); err != nil {
 		errMsg := j.Action.GetOutput() + "\n" + err.Error()
-		j.Client.SetFailedState(errMsg)
+		j.Client.SetFailedState(ctx, errMsg)
 		return err
 	}
 
 	okMsg := j.Action.GetOutput() + "\n" + "Success running job"
-	j.Client.SetStatusMessage(okMsg)
-	j.Client.SetSuccessState()
+	j.Client.SetStatusMessage(ctx, okMsg)
+	j.Client.SetSuccessState(ctx)
 	return nil
 }
 
@@ -145,7 +148,7 @@ func NewContainerEngineJobFromBase(jb *JobBase, coe engine.Coe, legacyImage stri
 	}
 }
 
-func (cj *ContainerEngineJob) RunJob() error {
+func (cj *ContainerEngineJob) RunJob(ctx context.Context) error {
 	k, s, err := cj.Client.GetCredentials()
 	if err != nil {
 		log.Errorf("Error getting credentials: %s", err)
@@ -159,7 +162,7 @@ func (cj *ContainerEngineJob) RunJob() error {
 		Endpoint:         cj.Client.SessionOpts.Endpoint,
 		EndpointInsecure: cj.Client.SessionOpts.Insecure,
 	}
-	containerId, err := cj.coe.RunJobEngineContainer(conf)
+	containerId, err := cj.coe.RunJobEngineContainer(ctx, conf)
 	if err != nil {
 		log.Errorf("Error running container: %s", err)
 		return err
@@ -167,7 +170,7 @@ func (cj *ContainerEngineJob) RunJob() error {
 
 	// Wait container to finish
 	log.Infof("Waiting job to finish...")
-	finishStatus, err := cj.coe.WaitContainerFinish(containerId, 60*time.Second, true)
+	finishStatus, err := cj.coe.WaitContainerFinish(ctx, containerId, 60*time.Second, true)
 	log.Infof("Container Job finished with status: %d", finishStatus)
 	if err != nil {
 		log.Errorf("Error waiting container to finish: %s", err)

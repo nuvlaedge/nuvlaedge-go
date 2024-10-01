@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"io"
 	"nuvlaedge-go/types/jobs"
 	"time"
@@ -14,10 +15,10 @@ const (
 )
 
 type Coe interface {
-	RunContainer(image string, configuration map[string]string) (string, error)
-	RunJobEngineContainer(conf *jobs.LegacyJobConf) (string, error)
-	StopContainer(containerId string, force bool) (bool, error)
-	RemoveContainer(containerId string, containerName string) (bool, error)
-	GetContainerLogs(containerId string, since string) (io.ReadCloser, error)
-	WaitContainerFinish(containerId string, timeout time.Duration, printLogs bool) (int64, error)
+	RunContainer(ctx context.Context, image string, configuration map[string]string) (string, error)
+	RunJobEngineContainer(ctx context.Context, conf *jobs.LegacyJobConf) (string, error)
+	StopContainer(ctx context.Context, containerId string, force bool) (bool, error)
+	RemoveContainer(ctx context.Context, containerId string, containerName string) (bool, error)
+	GetContainerLogs(ctx context.Context, containerId string, since string) (io.ReadCloser, error)
+	WaitContainerFinish(ctx context.Context, containerId string, timeout time.Duration, printLogs bool) (int64, error)
 }

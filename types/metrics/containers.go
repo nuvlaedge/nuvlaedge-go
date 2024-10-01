@@ -1,10 +1,10 @@
 package metrics
 
 import (
-    "cmp"
-    "nuvlaedge-go/types"
-    "slices"
-    "strings"
+	"cmp"
+	"nuvlaedge-go/types"
+	"slices"
+	"strings"
 )
 
 type ClusterData struct {
