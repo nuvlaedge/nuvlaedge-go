@@ -6,6 +6,7 @@ import (
 	"nuvlaedge-go/common"
 	"nuvlaedge-go/types"
 	"nuvlaedge-go/types/worker"
+	"time"
 )
 
 type Heartbeat struct {
@@ -47,11 +48,13 @@ func (h *Heartbeat) Run(ctx context.Context) error {
 				return err
 			}
 			return ctx.Err()
+
 		case <-h.BaseTicker.C:
 			log.Info("Sending heartbeat")
-			if err := h.sendHeartbeat(); err != nil {
+			if err := h.sendHeartbeat(ctx); err != nil {
 				log.Error("Failed to send heartbeat: ", err)
 			}
+
 		case conf := <-h.ConfChan:
 			log.Debug("Received configuration in heartbeat: ", conf)
 			err := h.Reconfigure(conf)
@@ -67,8 +70,11 @@ func (h *Heartbeat) Reconfigure(conf *worker.WorkerConfig) error {
 	return nil
 }
 
-func (h *Heartbeat) sendHeartbeat() error {
-	res, err := h.client.Heartbeat()
+func (h *Heartbeat) sendHeartbeat(ctx context.Context) error {
+	ctxTimed, cancel := context.WithTimeout(ctx, time.Duration(h.GetPeriod())*time.Second)
+	defer cancel()
+
+	res, err := h.client.Heartbeat(ctxTimed)
 	if err != nil {
 		log.Error("Failed to send heartbeat: ", err)
 		return err

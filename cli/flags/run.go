@@ -38,6 +38,10 @@ func AddRunFlags(flags *pflag.FlagSet) {
 	flags.Int("telemetry-period", 0, "Telemetry period")
 	flags.Int("remote-sync-period", 0, "Remote sync period")
 
+	// Resource cleanup
+	flags.Int("cleanup-period", 0, "COE (Docker/K8s) Cleanup period")
+	flags.StringSlice("resources", []string{}, "Resources to cleanup")
+
 	// VPN settings
 	flags.Bool("vpn-enabled", false, "VPN enabled")
 	flags.String("vpn-extra-config", "", "VPN extra configuration")
@@ -78,6 +82,8 @@ func setDefaultRunFlags() {
 	viper.SetDefault("enable-legacy-job", constants.DefaultEnableLegacyJob)
 	viper.SetDefault("log-level", constants.DefaultLogLevel)
 	viper.SetDefault("debug", constants.DefaultDebug)
+	viper.SetDefault("cleanup-period", 86400)
+	viper.SetDefault("resources", []string{"images"})
 }
 
 // bindViperRunFlags binds each command-line flag to its corresponding Viper configuration key.
@@ -105,6 +111,8 @@ func bindViperRunFlags(flags *pflag.FlagSet) {
 	OnError(viper.BindPFlag("heartbeat-period", flags.Lookup("heartbeat-period")), errMsg)
 	OnError(viper.BindPFlag("telemetry-period", flags.Lookup("telemetry-period")), errMsg)
 	OnError(viper.BindPFlag("remote-sync-period", flags.Lookup("remote-sync-period")), errMsg)
+	OnError(viper.BindPFlag("cleanup-period", flags.Lookup("cleanup-period")), errMsg)
+	OnError(viper.BindPFlag("resources", flags.Lookup("resources")), errMsg)
 	OnError(viper.BindPFlag("vpn-enabled", flags.Lookup("vpn-enabled")), errMsg)
 	OnError(viper.BindPFlag("vpn-extra-config", flags.Lookup("vpn-extra-config")), errMsg)
 	OnError(viper.BindPFlag("job-engine-image", flags.Lookup("job-image")), errMsg)
@@ -139,6 +147,8 @@ func setEnvBindings() {
 	OnError(viper.BindEnv("heartbeat-period", "HEARTBEAT_PERIOD"), errMsg)
 	OnError(viper.BindEnv("telemetry-period", "TELEMETRY_PERIOD"), errMsg)
 	OnError(viper.BindEnv("remote-sync-period", "REMOTE_SYNC_PERIOD"), errMsg)
+	OnError(viper.BindEnv("cleanup-period", "CLEANUP_PERIOD"), errMsg)
+	OnError(viper.BindEnv("resources", "CLEAN_RESOURCES"), errMsg)
 	OnError(viper.BindEnv("job-engine-image", "NUVLAEDGE_JOB_ENGINE_LITE_IMAGE", "JOB_LEGACY_IMAGE"), errMsg)
 	OnError(viper.BindEnv("enable-legacy-job", "ENABLE_LEGACY_JOB", "JOB_LEGACY_ENABLE"), errMsg)
 	OnError(viper.BindEnv("vpn-enabled", "VPN_ENABLED"), errMsg)

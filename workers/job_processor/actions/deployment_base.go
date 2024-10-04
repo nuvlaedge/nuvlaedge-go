@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -36,7 +37,10 @@ func (d *DeploymentBase) assertExecutor() error {
 	return nil
 }
 
-func (d *DeploymentBase) Init(optsFn ...ActionOptsFn) error {
+func (d *DeploymentBase) Init(ctx context.Context, optsFn ...ActionOptsFn) error {
+	ctxCancel, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	// Retrieve deployment ID from jobs resource
 	opts := GetActionOpts(optsFn...)
 	if opts.JobResource == nil || opts.Client == nil {
@@ -44,12 +48,11 @@ func (d *DeploymentBase) Init(optsFn ...ActionOptsFn) error {
 	}
 
 	d.deploymentId = opts.JobResource.TargetResource.Href
-
 	d.nuvlaClient = opts.Client
 
 	// Create deployment client and update deployment resource
 	d.client = clients.NewNuvlaDeploymentClient(d.deploymentId, opts.Client)
-	if err := d.client.UpdateResource(); err != nil {
+	if err := d.client.UpdateResource(ctxCancel); err != nil {
 		return err
 	}
 	d.deploymentResource = d.client.GetResource()
@@ -57,7 +60,7 @@ func (d *DeploymentBase) Init(optsFn ...ActionOptsFn) error {
 	// After retrieving the deployment resource, update the session with the deployment credentials.
 	// Features such as deployment-parameters are only available for deployments and users and the received clients
 	// is logged in as a NuvlaEdge
-	if err := d.client.UpdateSessionFromDeploymentCredentials(); err != nil {
+	if err := d.client.UpdateSessionFromDeploymentCredentials(ctxCancel); err != nil {
 		log.Errorf("Error refleshing session from deployment credentials: %s", err)
 		return err
 	}
@@ -76,8 +79,9 @@ func (d *DeploymentBase) Init(optsFn ...ActionOptsFn) error {
 	return nil
 }
 
-func (d *DeploymentBase) ManageHostNameParam(ip string) error {
+func (d *DeploymentBase) ManageHostNameParam(ctx context.Context, ip string) error {
 	return d.client.UpdateParameter(
+		ctx,
 		d.deploymentResource.Owner,
 		resources.WithParent(d.deploymentResource.Id),
 		resources.WithValue(ip),
@@ -85,7 +89,7 @@ func (d *DeploymentBase) ManageHostNameParam(ip string) error {
 		resources.WithDescription("Hostname or IP to access the service."))
 }
 
-func (d *DeploymentBase) ManageIPsParams(ips deploymentIps) error {
+func (d *DeploymentBase) ManageIPsParams(ctx context.Context, ips deploymentIps) error {
 	// Iterate over ips.Network.ips and create a parameter for each one
 	var itIp map[string]string
 	b, err := json.Marshal(ips.Network.IPs)
@@ -113,6 +117,7 @@ func (d *DeploymentBase) ManageIPsParams(ips deploymentIps) error {
 		paramName := fmt.Sprintf("ip.%s", k)
 
 		err := d.client.UpdateParameter(
+			ctx,
 			d.deploymentResource.Owner,
 			resources.WithParent(d.deploymentResource.Id),
 			resources.WithName(paramName),
@@ -137,7 +142,7 @@ func (d *DeploymentBase) getDeploymentParameters() ([]resources.OutputParameter,
 }
 
 // ManageDeploymentParameters creates or updates the deployment parameters in the deployment resource if any available
-func (d *DeploymentBase) ManageDeploymentParameters() error {
+func (d *DeploymentBase) ManageDeploymentParameters(ctx context.Context) error {
 	params, err := d.getDeploymentParameters()
 	if err != nil {
 		return err
@@ -151,6 +156,7 @@ func (d *DeploymentBase) ManageDeploymentParameters() error {
 
 	for _, p := range params {
 		if err := d.client.UpdateParameter(
+			ctx,
 			d.deploymentResource.Owner,
 			resources.WithParent(d.deploymentResource.Id),
 			resources.WithName(p.Name),
@@ -162,17 +168,18 @@ func (d *DeploymentBase) ManageDeploymentParameters() error {
 }
 
 // manageServiceParameters updates the parameters corresponding to the services started by the deployment
-func (d *DeploymentBase) manageServiceParameters(services []executors.DeploymentService) error {
+func (d *DeploymentBase) manageServiceParameters(ctx context.Context, services []executors.DeploymentService) error {
 	for _, s := range services {
-		if err := d.updateServiceParameter(s); err != nil {
+		if err := d.updateServiceParameter(ctx, s); err != nil {
 			log.Warnf("Error updating service %s parameter: %s", s.GetServiceMap()["name"], err)
 		}
 	}
 	return nil
 }
 
-func (d *DeploymentBase) updateParamInCurrentDeployment(paramName, value, nodeId string) error {
+func (d *DeploymentBase) updateParamInCurrentDeployment(ctx context.Context, paramName, value, nodeId string) error {
 	return d.client.UpdateParameter(
+		ctx,
 		d.deploymentResource.Owner,
 		resources.WithParent(d.deploymentResource.Id),
 		resources.WithName(paramName),
@@ -180,19 +187,19 @@ func (d *DeploymentBase) updateParamInCurrentDeployment(paramName, value, nodeId
 		resources.WithNodeId(nodeId))
 }
 
-func (d *DeploymentBase) updateServiceParameter(s executors.DeploymentService) error {
+func (d *DeploymentBase) updateServiceParameter(ctx context.Context, s executors.DeploymentService) error {
 	serviceMap := s.GetServiceMap()
 	nodeId := serviceMap["node-id"]
 	for k, v := range s.GetServiceMap() {
 		paramName := fmt.Sprintf("%s.%s", nodeId, k)
-		if err := d.updateParamInCurrentDeployment(paramName, v, nodeId); err != nil {
+		if err := d.updateParamInCurrentDeployment(ctx, paramName, v, nodeId); err != nil {
 			log.Warnf("Error updating parameter %s: %s", paramName, err)
 		}
 	}
 
 	for k, v := range s.GetPorts() {
 		paramName := fmt.Sprintf("%s.%s", nodeId, k)
-		if err := d.updateParamInCurrentDeployment(paramName, fmt.Sprintf("%d", v), nodeId); err != nil {
+		if err := d.updateParamInCurrentDeployment(ctx, paramName, fmt.Sprintf("%d", v), nodeId); err != nil {
 			log.Warnf("Error updating parameter %s: %s", paramName, err)
 		}
 	}
@@ -206,15 +213,15 @@ func CloseDeploymentClientWithLog(client *clients.NuvlaDeploymentClient) {
 	}
 }
 
-func (d *DeploymentBase) CreateUserOutputParams() {
+func (d *DeploymentBase) CreateUserOutputParams(ctx context.Context) {
 	// Fixed parameters for all deployments, hostname and IPs. TODO: IP should be created by Nuvla...
-	ips, err := d.getIps()
+	ips, err := d.getIps(ctx)
 	if err == nil {
-		if err := d.ManageHostNameParam(ips.IP); err != nil {
+		if err := d.ManageHostNameParam(ctx, ips.IP); err != nil {
 			log.Warnf("Error creating hostname parameter: %s", err)
 		}
 
-		if err := d.ManageIPsParams(ips); err != nil {
+		if err := d.ManageIPsParams(ctx, ips); err != nil {
 			log.Warnf("Error creating IPs parameters: %s", err)
 		}
 
@@ -222,12 +229,12 @@ func (d *DeploymentBase) CreateUserOutputParams() {
 		log.Warnf("Error getting IPs: %s", err)
 	}
 
-	if err := d.ManageDeploymentParameters(); err != nil {
+	if err := d.ManageDeploymentParameters(ctx); err != nil {
 		log.Warnf("Error creating deployment parameters: %s", err)
 	}
 }
 
-func (d *DeploymentBase) getIps() (deploymentIps, error) {
+func (d *DeploymentBase) getIps(ctx context.Context) (deploymentIps, error) {
 	var ips deploymentIps
 
 	neId := d.deploymentResource.Nuvlabox
@@ -235,7 +242,7 @@ func (d *DeploymentBase) getIps() (deploymentIps, error) {
 
 	cli := d.nuvlaClient
 
-	neRes, err := cli.Get(neId, []string{"nuvlabox-status"})
+	neRes, err := cli.Get(ctx, neId, []string{"nuvlabox-status"})
 	if err != nil {
 		log.Errorf("Error getting NuvlaBox %s: %s", neId, err)
 		return ips, fmt.Errorf("error getting NuvlaBox Status ID from Ne %s: %s", neId, err)
@@ -247,7 +254,7 @@ func (d *DeploymentBase) getIps() (deploymentIps, error) {
 		return ips, fmt.Errorf("NuvlaBox %s does not have a status", neId)
 	}
 
-	neStatusRes, err := cli.Get(neStatusId.(string), []string{"ip", "network"})
+	neStatusRes, err := cli.Get(ctx, neStatusId.(string), []string{"ip", "network"})
 	if err != nil {
 		log.Errorf("Error getting NuvlaBox %s status: %s", neId, err)
 		return ips, fmt.Errorf("error getting NuvlaBox %s status: %s", neId, err)

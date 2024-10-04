@@ -59,6 +59,8 @@ func NewNuvlaEdge(ctx context.Context, conf *settings.NuvlaEdgeSettings) (*Nuvla
 	wConf := worker.NewDefaultWorkersConfig()
 	wConf.EnableJobLegacy = conf.EnableJobLegacySupport
 	wConf.LegacyJobImage = conf.JobEngineImage
+	wConf.CleanUpPeriod = conf.CleanUpPeriod
+	wConf.RemoveObjects = conf.Resources
 
 	ne := &NuvlaEdge{
 		ctx:          ctx,
@@ -93,11 +95,11 @@ func NewNuvlaEdge(ctx context.Context, conf *settings.NuvlaEdgeSettings) (*Nuvla
 	return ne, nil
 }
 
-func (ne *NuvlaEdge) Start() error {
+func (ne *NuvlaEdge) Start(ctx context.Context) error {
 
 	// NuvlaEdge startup process...
 
-	if err := ne.startUpProcess(); err != nil {
+	if err := ne.startUpProcess(ctx); err != nil {
 		return err
 	}
 
@@ -123,14 +125,14 @@ func (ne *NuvlaEdge) startWorkers() error {
 	return errors.Join(errList...)
 }
 
-func (ne *NuvlaEdge) startUpProcess() error {
+func (ne *NuvlaEdge) startUpProcess(ctx context.Context) error {
 	// Start up process
 	// Get remote nuvlaedge state
 
 	if (ne.conf.ApiKey == "" || ne.conf.ApiSecret == "") && ne.conf.Irs == "" {
 
 		// We need to assume that NuvlaEdge is new
-		creds, err := ne.nuvla.Activate()
+		creds, err := ne.nuvla.Activate(ctx)
 		if err != nil {
 			return err
 		}
@@ -168,8 +170,11 @@ func (ne *NuvlaEdge) startUpProcess() error {
 		return err
 	}
 
+	ctxCancel, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	// else, check state
-	err = ne.nuvla.UpdateResourceSelect([]string{"state"})
+	err = ne.nuvla.UpdateResourceSelect(ctxCancel, []string{"state"})
 	if err != nil {
 		return err
 	}
@@ -178,14 +183,14 @@ func (ne *NuvlaEdge) startUpProcess() error {
 
 	if res.State == resources.NuvlaEdgeStateActivated {
 		// Trigger commission once
-		err := workers.TriggerBaseCommissioning(ne.workers[worker.Commissioner], ne.nuvla)
+		err := workers.TriggerBaseCommissioning(ctxCancel, ne.workers[worker.Commissioner], ne.nuvla)
 		if err != nil {
 			return err
 		}
 	}
 
 	// else, check state
-	err = ne.nuvla.UpdateResourceSelect([]string{"state"})
+	err = ne.nuvla.UpdateResourceSelect(ctxCancel, []string{"state"})
 	if err != nil {
 		return err
 	}

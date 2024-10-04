@@ -1,6 +1,7 @@
 package types
 
 import (
+	"context"
 	"github.com/nuvla/api-client-go/clients"
 	"github.com/nuvla/api-client-go/clients/resources"
 	nuvlaTypes "github.com/nuvla/api-client-go/types"
@@ -9,7 +10,7 @@ import (
 )
 
 type TelemetryClientInterface interface {
-	Telemetry(data interface{}, Select []string) (*http.Response, error)
+	Telemetry(ctx context.Context, data interface{}, selects []string) (*http.Response, error)
 	GetEndpoint() string
 }
 
@@ -22,8 +23,8 @@ func (tc *TelemetryClient) GetEndpoint() string {
 }
 
 type CommissionClientInterface interface {
-	Get(id string, selectFields []string) (*nuvlaTypes.NuvlaResource, error)
-	Commission(data map[string]interface{}) error
+	Get(ctx context.Context, id string, selectFields []string) (*nuvlaTypes.NuvlaResource, error)
+	Commission(ctx context.Context, data map[string]interface{}) error
 	GetStatusId() string
 }
 
@@ -34,7 +35,11 @@ type CommissionClient struct {
 func (cc *CommissionClient) GetStatusId() string {
 	neRes := cc.GetNuvlaEdgeResource()
 	if neRes.NuvlaBoxStatus == "" {
-		err := cc.UpdateResourceSelect([]string{"nuvlabox-status"})
+
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
+		err := cc.UpdateResourceSelect(ctx, []string{"nuvlabox-status"})
 		if err != nil {
 			log.Error("Failed to update nuvlabox status ID", err)
 			return ""
@@ -44,11 +49,11 @@ func (cc *CommissionClient) GetStatusId() string {
 }
 
 type ConfUpdaterClient interface {
-	UpdateResourceSelect(selects []string) error
+	UpdateResourceSelect(ctx context.Context, selects []string) error
 	GetNuvlaEdgeResource() resources.NuvlaEdgeResource
 }
 
 //go:generate mockery --name HeartbeatClient
 type HeartbeatClient interface {
-	Heartbeat() (*http.Response, error)
+	Heartbeat(ctx context.Context) (*http.Response, error)
 }

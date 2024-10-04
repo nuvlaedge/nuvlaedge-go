@@ -42,12 +42,12 @@ lint:
 ## test: run all tests
 .PHONY: test
 test:
-	go test -tags=coverage -v -race -buildvcs $(shell go list ./... | grep -v -e testutils -e cmd/tests)
+	go test -mod=vendor -tags=coverage -v -race -buildvcs $(shell go list ./... | grep -v -e testutils -e cmd/tests -e vendor)
 
 ## test/cover: run all tests and display coverage
 .PHONY: test/cover
 test/cover:
-	go test -tags=coverage -v -race -buildvcs -coverprofile=/tmp/coverage.out $(shell go list ./... | grep -v -e testutils -e cmd/tests)
+	go test -mod=vendor -tags=coverage -v -race -buildvcs -coverprofile=/tmp/coverage.out $(shell go list ./... | grep -v -e testutils -e cmd/tests -e vendor)
 	go tool cover -html=/tmp/coverage.out
 
 # docker/build: build docker image
@@ -66,12 +66,12 @@ docker/run:
 # ==================================================================================== #
 .PHONY: sonar/test
 sonar/test:
-	go test -tags=coverage -v -race -buildvcs -coverprofile=cov.out $(shell go list ./... | grep -v -e testutils -e cmd/tests -e workers/job_processor -e engine)
+	go test -mod=vendor -tags=coverage -v -race -buildvcs -coverprofile=cov.out $(shell go list ./... | grep -v -e testutils -e cmd/tests -e workers/job_processor -e engine -e vendor)
 
 
 .PHONY: sonar/lint
 sonar/lint:
-	golangci-lint run $(shell go list ./... | grep -v -e testutils -e cmd/tests | sed 's|^nuvlaedge-go/||')
+	golangci-lint run $(shell go list ./... | grep -v -e testutils -e cmd/tests -e vendor | sed 's|^nuvlaedge-go/||')
 
 .PHONY: sonar/sec
 sonar/sec:

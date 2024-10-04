@@ -44,7 +44,7 @@ func nuvlaEdgeMain(ctx context.Context, settings *settings.NuvlaEdgeSettings) er
 		return err
 	}
 
-	if err := ne.Start(); err != nil {
+	if err := ne.Start(ctx); err != nil {
 		log.Errorf("Failed to start NuvlaEdge: %s", err)
 		return err
 	}

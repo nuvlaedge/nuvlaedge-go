@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"context"
 	nuvla "github.com/nuvla/api-client-go"
 	"github.com/nuvla/api-client-go/clients/resources"
 	"nuvlaedge-go/types/errors"
@@ -10,7 +11,7 @@ import (
 type Action interface {
 	// Init allows implementations of the interface to each create their own client from the generic NuvlaClient
 	// and retrieve any field required from the jobs resource.
-	Init(opts ...ActionOptsFn) error
+	Init(ctx context.Context, opts ...ActionOptsFn) error
 	// GetExecutorName returns the name of the executor that will be used to execute the action. This will be
 	// initialised after asserting the executor. It should return an empty sting if the executor is not set.
 	GetExecutorName() executors.ExecutorName // TODO: Should be change to ExecutorName type when it is defined
@@ -18,7 +19,7 @@ type Action interface {
 	// Each action will have their onw executor extension interface.
 	assertExecutor() error
 	// ExecuteAction will execute the action using the executor.
-	ExecuteAction() error
+	ExecuteAction(ctx context.Context) error
 	// GetActionName returns the name of the action being implemented
 	GetActionName() ActionName
 

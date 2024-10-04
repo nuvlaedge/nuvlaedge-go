@@ -59,10 +59,10 @@ func (d *DockerCleaner) Start(ctx context.Context) error {
 
 func (d *DockerCleaner) Reconfigure(conf *worker.WorkerConfig) error {
 	// Do this check to prevent the ticker from being reset
-	if conf.CleanUpPeriod != d.GetPeriod() {
-		d.SetPeriod(conf.CleanUpPeriod)
-	}
-	d.objects = conf.RemoveObjects
+	//if conf.CleanUpPeriod != d.GetPeriod() {
+	//	d.SetPeriod(conf.CleanUpPeriod)
+	//}
+	//d.objects = conf.RemoveObjects
 	return nil
 }
 
@@ -95,6 +95,11 @@ func (d *DockerCleaner) Stop(_ context.Context) error {
 }
 
 func (d *DockerCleaner) cleanResources(ctx context.Context) error {
+	log.Infof("Cleaning resources: %v", d.objects)
+
+	ctxCancel, cancel := context.WithCancel(ctx)
+	defer cancel()
+
 	if len(d.objects) == 0 {
 		// Prune dangling images only
 		return d.cleanImages(ctx)
@@ -104,16 +109,16 @@ func (d *DockerCleaner) cleanResources(ctx context.Context) error {
 	if slices.Contains(d.objects, "system") {
 		// If system is in the list, clean all resources and ignore the rest unless volumes are
 		if slices.Contains(d.objects, "volumes") {
-			if err := d.cleanVolumes(ctx); err != nil {
+			if err := d.cleanVolumes(ctxCancel); err != nil {
 				errList = append(errList, err)
 			}
 
-			if err := d.cleanSystem(ctx); err != nil {
-				errList = append(errList, err)
-			}
-
-			return errors.Join(errList...)
 		}
+		if err := d.cleanSystem(ctxCancel); err != nil {
+			errList = append(errList, err)
+		}
+
+		return errors.Join(errList...)
 	}
 
 	for _, obj := range d.objects {
@@ -125,7 +130,7 @@ func (d *DockerCleaner) cleanResources(ctx context.Context) error {
 			continue
 		}
 
-		if err := f(ctx); err != nil {
+		if err := f(ctxCancel); err != nil {
 			errList = append(errList, err)
 		}
 	}

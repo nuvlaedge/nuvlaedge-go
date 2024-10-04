@@ -66,7 +66,7 @@ func (p *JobProcessor) Run(ctx context.Context) error {
 	for {
 		select {
 		case job := <-p.jobChan:
-			go p.processJob(job)
+			go p.processJob(ctx, job)
 		case <-ctx.Done():
 			log.Info("Context done. Exiting...")
 			return ctx.Err()
@@ -80,7 +80,9 @@ func (p *JobProcessor) Run(ctx context.Context) error {
 	}
 }
 
-func (p *JobProcessor) processJob(j string) {
+func (p *JobProcessor) processJob(ctx context.Context, j string) {
+	jobCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
 	if p.runningJobs.Exists(j) {
 		log.Infof("NativeJob %s is already running", j)
@@ -90,7 +92,7 @@ func (p *JobProcessor) processJob(j string) {
 	log.Infof("NativeJob Processor starting new jobs with id %s", j)
 
 	// 1. Create NativeJob structure
-	job, err := NewJob(j, p.client, p.coe, p.enableLegacy, p.legacyJobImage)
+	job, err := NewJob(jobCtx, j, p.client, p.coe, p.enableLegacy, p.legacyJobImage)
 	if err != nil {
 		log.Errorf("Error creating job %s: %s", j, err)
 		return
@@ -108,7 +110,7 @@ func (p *JobProcessor) processJob(j string) {
 	defer p.runningJobs.Remove(j)
 
 	// 2. Run the jobs
-	err = job.RunJob()
+	err = job.RunJob(jobCtx)
 	if err != nil {
 		log.Errorf("Error running job %s: %s", j, err)
 		return

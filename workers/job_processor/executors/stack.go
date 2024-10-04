@@ -26,7 +26,6 @@ type Stack struct {
 	projectName        string
 
 	stackConfig *composetypes.Config
-	context     context.Context
 	dockerCli   *command.DockerCli
 	stackOpts   *options.Deploy
 
@@ -37,7 +36,7 @@ type Stack struct {
 	dockerOutPut io.Writer
 }
 
-func (s *Stack) StartDeployment() error {
+func (s *Stack) StartDeployment(ctx context.Context) error {
 	s.projectName = GetProjectNameFromDeploymentId(s.deploymentResource.Id)
 	log.Infof("Starting deployment for project %s", s.projectName)
 
@@ -56,21 +55,21 @@ func (s *Stack) StartDeployment() error {
 	defer s.CleanUp()
 
 	// Start deployment
-	if err := s.deploy(); err != nil {
+	if err := s.deploy(ctx); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (s *Stack) StopDeployment() error {
+func (s *Stack) StopDeployment(ctx context.Context) error {
 	s.projectName = GetProjectNameFromDeploymentId(s.deploymentResource.Id)
 
 	if err := s.setUpDockerCLI(); err != nil {
 		return err
 	}
 
-	if err := s.remove(); err != nil {
+	if err := s.remove(ctx); err != nil {
 		log.Errorf("Error removing stack: %s", err)
 		return err
 	}
@@ -78,22 +77,22 @@ func (s *Stack) StopDeployment() error {
 	return nil
 }
 
-func (s *Stack) StateDeployment() error {
+func (s *Stack) StateDeployment(_ context.Context) error {
 	return nil
 }
 
-func (s *Stack) UpdateDeployment() error {
-	return s.StartDeployment()
+func (s *Stack) UpdateDeployment(ctx context.Context) error {
+	return s.StartDeployment(ctx)
 }
 
-func (s *Stack) GetServices() ([]DeploymentService, error) {
+func (s *Stack) GetServices(ctx context.Context) ([]DeploymentService, error) {
 	if err := s.setUpDockerCLI(); err != nil {
 		return nil, err
 	}
 	s.projectName = GetProjectNameFromDeploymentId(s.deploymentResource.Id)
 
 	//var services []*DeploymentComposeService
-	swarmServices, err := swarm.GetServices(s.context, s.dockerCli, options.Services{
+	swarmServices, err := swarm.GetServices(ctx, s.dockerCli, options.Services{
 		Namespace: s.projectName,
 		Format:    "json",
 		Filter:    opts.NewFilterOpt(),
@@ -112,9 +111,9 @@ func (s *Stack) GetServices() ([]DeploymentService, error) {
 	return services, nil
 }
 
-func (s *Stack) deploy() error {
+func (s *Stack) deploy(ctx context.Context) error {
 	// Deploy the stack
-	err := swarm.RunDeploy(s.context, s.dockerCli, &pflag.FlagSet{}, s.stackOpts, s.stackConfig)
+	err := swarm.RunDeploy(ctx, s.dockerCli, &pflag.FlagSet{}, s.stackOpts, s.stackConfig)
 	if err != nil {
 		log.Errorf("Error deploying stack: %s", err)
 		return err
@@ -123,9 +122,9 @@ func (s *Stack) deploy() error {
 	return nil
 }
 
-func (s *Stack) remove() error {
+func (s *Stack) remove(ctx context.Context) error {
 	err := swarm.RunRemove(
-		s.context,
+		ctx,
 		s.dockerCli,
 		options.Remove{
 			Namespaces: []string{s.projectName},

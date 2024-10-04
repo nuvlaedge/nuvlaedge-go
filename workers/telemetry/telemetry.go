@@ -114,17 +114,21 @@ func (t *Telemetry) Run(ctx context.Context) error {
 			t.monitorStatus(ctx)
 
 		case <-t.BaseTicker.C:
-			log.Info("Try sending telemetry...")
+			log.Debug("Try sending telemetry...")
 			patch, data, attrsToDelete := t.getTelemetryDiff()
+
 			var patchErr error
 			if patch != nil {
-				if patchErr = t.sendTelemetry(patch, attrsToDelete); patchErr != nil {
+				log.Debug("Sending telemetry patch...")
+				if patchErr = t.sendTelemetry(ctx, patch, attrsToDelete); patchErr != nil {
 					// Report error to status handler
 					log.Errorf("Error sending telemetry patch: %s", patchErr)
 				}
 			}
+
 			if patch == nil || patchErr != nil {
-				if err := t.sendTelemetry(data, attrsToDelete); err != nil {
+				log.Debug("Sending telemetry plain data...")
+				if err := t.sendTelemetry(ctx, data, attrsToDelete); err != nil {
 					// Report error to status handler
 					log.Errorf("Error sending telemetry: %s", err)
 				}
@@ -166,7 +170,7 @@ func (t *Telemetry) getTelemetryDiff() (jsondiff.Patch, map[string]interface{}, 
 	return patch, data, attrsToDelete
 }
 
-func (t *Telemetry) sendTelemetry(data interface{}, attrsToDelete []string) error {
+func (t *Telemetry) sendTelemetry(ctx context.Context, data interface{}, attrsToDelete []string) error {
 	if t.nuvla == nil {
 		return errors.New("telemetry client not initialized, cannot send telemetry")
 	}
@@ -182,7 +186,10 @@ func (t *Telemetry) sendTelemetry(data interface{}, attrsToDelete []string) erro
 
 	// Send telemetry to client
 	log.Info("Sending telemetry...")
-	res, err := t.nuvla.Telemetry(data, attrsToDelete)
+	ctxTimed, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+
+	res, err := t.nuvla.Telemetry(ctxTimed, data, attrsToDelete)
 	defer func() {
 		if res != nil {
 			if err := res.Body.Close(); err != nil {

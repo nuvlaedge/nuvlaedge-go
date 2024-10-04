@@ -24,7 +24,6 @@ type ComposeExecutor struct {
 
 	tempDir string
 
-	ctx            context.Context
 	composeConfig  *types.ConfigDetails
 	composeProject *types.Project
 	composeService composeAPI.Service
@@ -33,30 +32,29 @@ type ComposeExecutor struct {
 	dockerOutPut io.Writer
 }
 
-func (ce *ComposeExecutor) StartDeployment() error {
-	ce.ctx = context.TODO()
+func (ce *ComposeExecutor) StartDeployment(ctx context.Context) error {
+
 	ce.projectName = GetProjectNameFromDeploymentId(ce.deploymentResource.Id)
 
-	if err := ce.prepareComposeUp(); err != nil {
+	if err := ce.prepareComposeUp(ctx); err != nil {
 		return err
 	}
 
-	if err := ce.composeService.Up(ce.ctx, ce.composeProject, composeAPI.UpOptions{}); err != nil {
+	if err := ce.composeService.Up(ctx, ce.composeProject, composeAPI.UpOptions{}); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (ce *ComposeExecutor) StopDeployment() error {
-	ce.ctx = context.TODO()
+func (ce *ComposeExecutor) StopDeployment(ctx context.Context) error {
 	ce.projectName = GetProjectNameFromDeploymentId(ce.deploymentResource.Id)
 
 	if err := ce.prepareComposeDown(); err != nil {
 		return err
 	}
 
-	if err := ce.composeService.Down(ce.ctx, ce.projectName, composeAPI.DownOptions{}); err != nil {
+	if err := ce.composeService.Down(ctx, ce.projectName, composeAPI.DownOptions{}); err != nil {
 		log.Errorf("Error stopping deployment: %s", err)
 		return err
 	}
@@ -64,7 +62,7 @@ func (ce *ComposeExecutor) StopDeployment() error {
 	return nil
 }
 
-func (ce *ComposeExecutor) GetServices() ([]DeploymentService, error) {
+func (ce *ComposeExecutor) GetServices(ctx context.Context) ([]DeploymentService, error) {
 	ce.projectName = GetProjectNameFromDeploymentId(ce.deploymentResource.Id)
 
 	if err := ce.setUpService(); err != nil {
@@ -72,7 +70,7 @@ func (ce *ComposeExecutor) GetServices() ([]DeploymentService, error) {
 	}
 	defer ce.dockerCli.Client().Close()
 
-	containers, err := ce.composeService.Ps(ce.ctx, ce.projectName, composeAPI.PsOptions{
+	containers, err := ce.composeService.Ps(ctx, ce.projectName, composeAPI.PsOptions{
 		All: true,
 	})
 	if err != nil {
@@ -87,14 +85,14 @@ func (ce *ComposeExecutor) GetServices() ([]DeploymentService, error) {
 	return services, nil
 }
 
-func (ce *ComposeExecutor) StateDeployment() error {
+func (ce *ComposeExecutor) StateDeployment(_ context.Context) error {
 	ce.projectName = GetProjectNameFromDeploymentId(ce.deploymentResource.Id)
 
 	return nil
 }
 
-func (ce *ComposeExecutor) UpdateDeployment() error {
-	return ce.StartDeployment()
+func (ce *ComposeExecutor) UpdateDeployment(ctx context.Context) error {
+	return ce.StartDeployment(ctx)
 }
 
 func (ce *ComposeExecutor) getComposeFromDeployment() (string, error) {
@@ -137,11 +135,11 @@ func GetEnvironmentMappingFromContent(content *resources.ModuleApplicationResour
 	return envMap
 }
 
-func (ce *ComposeExecutor) setUpProject() error {
+func (ce *ComposeExecutor) setUpProject(ctx context.Context) error {
 	if ce.composeConfig == nil {
 		return fmt.Errorf("compose config is not set, cannot create the project")
 	}
-	p, err := loader.LoadWithContext(ce.ctx, *ce.composeConfig, func(options *loader.Options) {
+	p, err := loader.LoadWithContext(ctx, *ce.composeConfig, func(options *loader.Options) {
 		options.SetProjectName(ce.projectName, true)
 	})
 	if err != nil {
@@ -187,12 +185,12 @@ func (ce *ComposeExecutor) setUpService() error {
 	return nil
 }
 
-func (ce *ComposeExecutor) prepareComposeUp() error {
+func (ce *ComposeExecutor) prepareComposeUp(ctx context.Context) error {
 	if err := ce.setUpProjectConfig(); err != nil {
 		return err
 	}
 
-	if err := ce.setUpProject(); err != nil {
+	if err := ce.setUpProject(ctx); err != nil {
 		return err
 	}
 
@@ -219,3 +217,5 @@ func (ce *ComposeExecutor) Close() error {
 func (ce *ComposeExecutor) GetOutput() string {
 	return fmt.Sprintf("%s", ce.dockerOutPut)
 }
+
+var _ Deployer = &ComposeExecutor{}

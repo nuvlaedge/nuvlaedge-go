@@ -1,6 +1,9 @@
 package testutils
 
-import "net/http"
+import (
+	"context"
+	"net/http"
+)
 
 type MockTelemetryClient struct {
 	TelemetryCnt      int
@@ -11,7 +14,7 @@ type MockTelemetryClient struct {
 	GetEndpointResponse string
 }
 
-func (mtc *MockTelemetryClient) Telemetry(data interface{}, Select []string) (*http.Response, error) {
+func (mtc *MockTelemetryClient) Telemetry(ctx context.Context, data interface{}, Select []string) (*http.Response, error) {
 	mtc.TelemetryCnt++
 	return mtc.TelemetryResponse, mtc.TelemetryErr
 }

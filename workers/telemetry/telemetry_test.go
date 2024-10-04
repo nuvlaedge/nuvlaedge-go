@@ -179,17 +179,21 @@ func TestTelemetry_GetTelemetryDiff(t *testing.T) {
 
 func Test_Telemetry_SendTelemetry_WithNilClient_ReturnError(t *testing.T) {
 	t.Parallel()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	telemetry := newTelemetry(10, &testutils.MockTelemetryClient{}, &testutils.TestDockerMetricsClient{}, commissionerChan, jobChan)
 	telemetry.nuvla = nil
-	err := telemetry.sendTelemetry(nil, nil)
+	err := telemetry.sendTelemetry(ctx, nil, nil)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "telemetry client not initialized, cannot send telemetry")
 }
 
 func Test_Telemetry_SendTelemetry_WithNilData_ReturnNil(t *testing.T) {
 	t.Parallel()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	telemetry := newTelemetry(10, &testutils.MockTelemetryClient{}, &testutils.TestDockerMetricsClient{}, commissionerChan, jobChan)
-	err := telemetry.sendTelemetry(nil, nil)
+	err := telemetry.sendTelemetry(ctx, nil, nil)
 	assert.NoError(t, err)
 	assert.Nil(t, err)
 	err = nil
@@ -197,14 +201,19 @@ func Test_Telemetry_SendTelemetry_WithNilData_ReturnNil(t *testing.T) {
 
 func Test_Telemetry_SendTelemetry_WithData_ResponseError(t *testing.T) {
 	t.Parallel()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	telemetry := newTelemetry(10, &testutils.MockTelemetryClient{TelemetryResponse: nil, TelemetryErr: assert.AnError}, &testutils.TestDockerMetricsClient{}, commissionerChan, jobChan)
-	err := telemetry.sendTelemetry("data", nil)
+	err := telemetry.sendTelemetry(ctx, "data", nil)
 	assert.Error(t, err)
 	assert.Equal(t, assert.AnError, err)
 }
 
 func Test_Telemetry_SendTelemetry_WithData_ResponseOK(t *testing.T) {
 	t.Parallel()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	res := &http.Response{
 		StatusCode: 200,
 		Body:       io.NopCloser(strings.NewReader(`{"key": "value"}`)),
@@ -213,12 +222,12 @@ func Test_Telemetry_SendTelemetry_WithData_ResponseOK(t *testing.T) {
 	telemetry.localStatus = metrics.NuvlaEdgeStatus{
 		Status: "OPERATIONAL",
 	}
-	err := telemetry.sendTelemetry("data", nil)
+	err := telemetry.sendTelemetry(ctx, "data", nil)
 	assert.NoError(t, err)
 	assert.Equal(t, "OPERATIONAL", telemetry.lastStatus.Status)
 
 	res.StatusCode = 400
-	err = telemetry.sendTelemetry("data", nil)
+	err = telemetry.sendTelemetry(ctx, "data", nil)
 	assert.Error(t, err)
 	assert.Equal(t, "telemetry failed with status code: 400", err.Error())
 }

@@ -1,6 +1,9 @@
 package testutils
 
-import nuvlaTypes "github.com/nuvla/api-client-go/types"
+import (
+	"context"
+	nuvlaTypes "github.com/nuvla/api-client-go/types"
+)
 
 type CommissionerClientMock struct {
 	GetCnt    int
@@ -14,12 +17,12 @@ type CommissionerClientMock struct {
 	GetStatusIdReturn string
 }
 
-func (c *CommissionerClientMock) Get(id string, selectFields []string) (*nuvlaTypes.NuvlaResource, error) {
+func (c *CommissionerClientMock) Get(ctx context.Context, id string, selectFields []string) (*nuvlaTypes.NuvlaResource, error) {
 	c.GetCnt++
 	return &c.GetReturn, c.GetError
 }
 
-func (c *CommissionerClientMock) Commission(data map[string]interface{}) error {
+func (c *CommissionerClientMock) Commission(ctx context.Context, data map[string]interface{}) error {
 	c.CommissionCnt++
 	return c.CommissionErr
 }

@@ -1,6 +1,8 @@
 package actions
 
 import (
+	"context"
+	"fmt"
 	"github.com/nuvla/api-client-go/clients/resources"
 	log "github.com/sirupsen/logrus"
 	"nuvlaedge-go/workers/job_processor/executors"
@@ -10,22 +12,27 @@ type DeploymentStop struct {
 	DeploymentBase
 }
 
-func (d *DeploymentStop) ExecuteAction() error {
+func (d *DeploymentStop) ExecuteAction(ctx context.Context) error {
 	defer CloseDeploymentClientWithLog(d.client)
 	defer d.executor.Close()
-	if err := d.client.SetState(resources.StateStopping); err != nil {
+
+	ctxTimed, cancel := context.WithTimeout(ctx, 60)
+	defer cancel()
+
+	if err := d.client.SetState(ctxTimed, resources.StateStopping); err != nil {
 		log.Warnf("Error setting deployment state to stopping: %s", err)
 	}
 
-	if err := d.executor.StopDeployment(); err != nil {
-		if stateErr := d.client.SetState(resources.StateError); stateErr != nil {
+	if err := d.executor.StopDeployment(ctxTimed); err != nil {
+		if stateErr := d.client.SetState(ctxTimed, resources.StateError); stateErr != nil {
 			log.Warnf("Error setting deployment state to error: %s", stateErr)
 		}
-		return err
+		return fmt.Errorf("error stopping deployment: %s", err)
 	}
-	if err := d.client.SetState(resources.StateStopped); err != nil {
+	if err := d.client.SetState(ctxTimed, resources.StateStopped); err != nil {
 		log.Warnf("Error setting deployment state to stopped: %s", err)
 	}
+
 	return nil
 }
 

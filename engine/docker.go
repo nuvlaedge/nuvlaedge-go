@@ -46,7 +46,7 @@ func (dc *DockerEngine) String() string {
 
 /********************************* Docker container management functions *************************************/
 
-func (dc *DockerEngine) RunContainer(image string, configuration map[string]string) (string, error) {
+func (dc *DockerEngine) RunContainer(ctx context.Context, image string, configuration map[string]string) (string, error) {
 	//ctx := context.Background()
 
 	return "", nil
@@ -62,12 +62,11 @@ type ImagePullResponse struct {
 	ID       string `json:"id"`
 }
 
-func (dc *DockerEngine) RunJobEngineContainer(conf *jobs.LegacyJobConf) (string, error) {
+func (dc *DockerEngine) RunJobEngineContainer(ctx context.Context, conf *jobs.LegacyJobConf) (string, error) {
 	if conf.Image == "" {
 		conf.Image = "nuvlaedge/job-engine:latest"
 	}
 
-	ctx := context.Background()
 	// Pull image
 	if err := dc.pullAndWaitImage(ctx, conf.Image); err != nil {
 		return "", err
@@ -158,9 +157,9 @@ func (dc *DockerEngine) pullAndWaitImage(ctx context.Context, imageName string) 
 
 }
 
-func (dc *DockerEngine) GetContainerLogs(containerId, since string) (io.ReadCloser, error) {
+func (dc *DockerEngine) GetContainerLogs(ctx context.Context, containerId, since string) (io.ReadCloser, error) {
 	logs, err := dc.client.ContainerLogs(
-		context.Background(),
+		ctx,
 		containerId,
 		container.LogsOptions{
 			ShowStdout: true,
@@ -196,7 +195,7 @@ func printLogLines(reader io.ReadCloser) string {
 	return sinceTime
 }
 
-func (dc *DockerEngine) printLogsUntilFinished(containerId string, exitFlag chan interface{}) {
+func (dc *DockerEngine) printLogsUntilFinished(ctx context.Context, containerId string) {
 	var sinceTime string
 
 	ticker := time.NewTicker(1 * time.Second)
@@ -204,40 +203,41 @@ func (dc *DockerEngine) printLogsUntilFinished(containerId string, exitFlag chan
 
 	for {
 		select {
-		case <-exitFlag:
+		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			logs, err := dc.GetContainerLogs(containerId, sinceTime)
+			logs, err := dc.GetContainerLogs(ctx, containerId, sinceTime)
 			if err != nil {
 				log.Infof("Error getting logs: %s", err)
 				return
 			}
+
 			sinceTime = printLogLines(logs)
 			log.Infof("Container logs: %s", logs)
+
+			err = logs.Close()
+			if err != nil {
+				log.Warnf("Error closing logs: %s", err)
+			}
 		}
 	}
 }
 
-func (dc *DockerEngine) GetContainerStatus(containerId string) (string, error) {
-	info, err := dc.client.ContainerInspect(context.Background(), containerId)
+func (dc *DockerEngine) GetContainerStatus(ctx context.Context, containerId string) (string, error) {
+	info, err := dc.client.ContainerInspect(ctx, containerId)
 	if err != nil {
 		return "", err
 	}
 	return info.State.Status, nil
 }
 
-func (dc *DockerEngine) WaitContainerFinish(containerId string, timeout time.Duration, printLogs bool) (int64, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+func (dc *DockerEngine) WaitContainerFinish(ctx context.Context, containerId string, timeout time.Duration, printLogs bool) (int64, error) {
+	ctxTimed, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
 	if printLogs {
-		exitFlag := make(chan interface{})
-		go dc.printLogsUntilFinished(containerId, exitFlag)
-		// TODO: Not sure if this is needed, or it is enough to close the channel
-		defer func() {
-			exitFlag <- struct{}{}
-			close(exitFlag)
-		}()
+		go dc.printLogsUntilFinished(ctxTimed, containerId)
+		<-ctxTimed.Done()
 	}
 
 	statusCh, errCh := dc.client.ContainerWait(ctx, containerId, container.WaitConditionNotRunning)
@@ -254,11 +254,11 @@ func (dc *DockerEngine) WaitContainerFinish(containerId string, timeout time.Dur
 	return -1, nil
 }
 
-func (dc *DockerEngine) StopContainer(containerId string, force bool) (bool, error) {
+func (dc *DockerEngine) StopContainer(ctx context.Context, containerId string, force bool) (bool, error) {
 	return false, nil
 }
 
-func (dc *DockerEngine) RemoveContainer(containerId string, containerName string) (bool, error) {
+func (dc *DockerEngine) RemoveContainer(ctx context.Context, containerId string, containerName string) (bool, error) {
 	return false, nil
 }
 

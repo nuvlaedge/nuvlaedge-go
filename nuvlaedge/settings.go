@@ -1,6 +1,7 @@
 package nuvlaedge
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	nuvlaApi "github.com/nuvla/api-client-go"
@@ -61,6 +62,16 @@ func findOldSession(conf *settings.NuvlaEdgeSettings) (*clients.NuvlaEdgeSession
 		if err := f.Save(filepath.Join(conf.DBPPath, constants.NuvlaEdgeSessionFile)); err != nil {
 			log.Errorf("Error saving session file: %s", err)
 		}
+	}
+
+	if f.Irs != "" {
+		k, err := neCommon.FromIrs(f.Irs, conf.RootFs, f.NuvlaEdgeId)
+		if err != nil {
+			log.Errorf("Error decoding IRS: %s", err)
+			return f, true
+		}
+
+		f.Credentials = &k
 	}
 
 	return f, true
@@ -185,7 +196,7 @@ func getNuvlaEdgeIdFromApiKeys(settings *settings.NuvlaEdgeSettings) (string, er
 		sOpts)
 
 	// Get the NuvlaEdge ID
-	col, err := cli.Search("session", nil)
+	col, err := cli.Search(context.Background(), "session", nil)
 	if err != nil {
 		return "", err
 	}
@@ -199,7 +210,7 @@ func getNuvlaEdgeIdFromApiKeys(settings *settings.NuvlaEdgeSettings) (string, er
 		return "", ErrNotFoundSession
 	}
 
-	res, err := cli.Get(s.(string), nil)
+	res, err := cli.Get(context.Background(), s.(string), nil)
 	if err != nil {
 		return "", ErrNotFoundSession
 	}

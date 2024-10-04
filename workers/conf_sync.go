@@ -52,7 +52,7 @@ func (c *ConfUpdater) Run(ctx context.Context) error {
 			}
 			return ctx.Err()
 		case lastUpdate := <-c.confChan:
-			if err := c.updateConfigIfNeeded(lastUpdate); err != nil {
+			if err := c.updateConfigIfNeeded(ctx, lastUpdate); err != nil {
 				log.Error("Failed to update config: ", err)
 			}
 		case <-c.ConfChan:
@@ -85,7 +85,7 @@ func (c *ConfUpdater) needsUpdate(remoteUpdateTime string) (bool, *time.Time) {
 	return false, nil
 }
 
-func (c *ConfUpdater) updateConfigIfNeeded(lastUpdateDate string) error {
+func (c *ConfUpdater) updateConfigIfNeeded(ctx context.Context, lastUpdateDate string) error {
 	// Check if new update is needed
 	ok, remoteTime := c.needsUpdate(lastUpdateDate)
 	if !ok {
@@ -93,7 +93,10 @@ func (c *ConfUpdater) updateConfigIfNeeded(lastUpdateDate string) error {
 		return nil
 	}
 
-	err := c.client.UpdateResourceSelect([]string{"refresh-interval", "heartbeat-interval"})
+	ctxCancel, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	err := c.client.UpdateResourceSelect(ctxCancel, []string{"refresh-interval", "heartbeat-interval"})
 	if err != nil {
 		log.Error("Failed to update resource: ", err)
 		return err
