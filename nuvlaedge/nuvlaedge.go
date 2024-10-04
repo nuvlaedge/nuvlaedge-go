@@ -59,6 +59,8 @@ func NewNuvlaEdge(ctx context.Context, conf *settings.NuvlaEdgeSettings) (*Nuvla
 	wConf := worker.NewDefaultWorkersConfig()
 	wConf.EnableJobLegacy = conf.EnableJobLegacySupport
 	wConf.LegacyJobImage = conf.JobEngineImage
+	wConf.CleanUpPeriod = conf.CleanUpPeriod
+	wConf.RemoveObjects = conf.Resources
 
 	ne := &NuvlaEdge{
 		ctx:          ctx,

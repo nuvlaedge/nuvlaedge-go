@@ -64,6 +64,16 @@ func findOldSession(conf *settings.NuvlaEdgeSettings) (*clients.NuvlaEdgeSession
 		}
 	}
 
+	if f.Irs != "" {
+		k, err := neCommon.FromIrs(f.Irs, conf.RootFs, f.NuvlaEdgeId)
+		if err != nil {
+			log.Errorf("Error decoding IRS: %s", err)
+			return f, true
+		}
+
+		f.Credentials = &k
+	}
+
 	return f, true
 }
 

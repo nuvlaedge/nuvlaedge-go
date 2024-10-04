@@ -19,6 +19,10 @@ type NuvlaEdgeSettings struct {
 	HeartbeatPeriod  int `mapstructure:"heartbeat-period" toml:"heartbeat-period" json:"heartbeat-period,omitempty"`
 	TelemetryPeriod  int `mapstructure:"telemetry-period" toml:"telemetry-period" json:"telemetry-period,omitempty"`
 	RemoteSyncPeriod int `mapstructure:"remote-sync-period" toml:"remote-sync-period" json:"remote-sync-period,omitempty"`
+	CleanUpPeriod    int `mapstructure:"cleanup-period" toml:"cleanup-period" json:"cleanup-period,omitempty"`
+
+	// Resource cleanup
+	Resources []string `mapstructure:"resources" toml:"resources" json:"resources,omitempty"`
 
 	// VPN settings
 	VpnEnabled     bool   `mapstructure:"vpn-enabled" toml:"vpn-enabled" json:"vpn-enabled,omitempty"`

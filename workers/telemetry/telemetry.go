@@ -114,16 +114,20 @@ func (t *Telemetry) Run(ctx context.Context) error {
 			t.monitorStatus(ctx)
 
 		case <-t.BaseTicker.C:
-			log.Info("Try sending telemetry...")
+			log.Debug("Try sending telemetry...")
 			patch, data, attrsToDelete := t.getTelemetryDiff()
+
 			var patchErr error
 			if patch != nil {
+				log.Debug("Sending telemetry patch...")
 				if patchErr = t.sendTelemetry(ctx, patch, attrsToDelete); patchErr != nil {
 					// Report error to status handler
 					log.Errorf("Error sending telemetry patch: %s", patchErr)
 				}
 			}
+
 			if patch == nil || patchErr != nil {
+				log.Debug("Sending telemetry plain data...")
 				if err := t.sendTelemetry(ctx, data, attrsToDelete); err != nil {
 					// Report error to status handler
 					log.Errorf("Error sending telemetry: %s", err)
