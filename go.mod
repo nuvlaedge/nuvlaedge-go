@@ -12,7 +12,7 @@ require (
 	github.com/docker/docker v27.3.1+incompatible
 	github.com/google/uuid v1.6.0
 	github.com/jackpal/gateway v1.0.15
-	github.com/nuvla/api-client-go v0.8.0
+	github.com/nuvla/api-client-go v0.9.0
 	github.com/shirou/gopsutil/v3 v3.24.5
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/cobra v1.8.1
@@ -222,5 +222,3 @@ require (
 	sigs.k8s.io/yaml v1.3.0 // indirect
 	tags.cncf.io/container-device-interface v0.8.0 // indirect
 )
-
-replace github.com/nuvla/api-client-go => /Users/nacho/go/src/github.com/nuvla/api-client-go

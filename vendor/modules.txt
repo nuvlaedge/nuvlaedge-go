@@ -713,7 +713,7 @@ github.com/munnerz/goautoneg
 # github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f
 ## explicit
 github.com/mxk/go-flowrate/flowrate
-# github.com/nuvla/api-client-go v0.8.0 => /Users/nacho/go/src/github.com/nuvla/api-client-go
+# github.com/nuvla/api-client-go v0.9.0
 ## explicit; go 1.22
 github.com/nuvla/api-client-go
 github.com/nuvla/api-client-go/clients
@@ -1497,4 +1497,3 @@ sigs.k8s.io/yaml
 # tags.cncf.io/container-device-interface v0.8.0
 ## explicit; go 1.20
 tags.cncf.io/container-device-interface/pkg/parser
-# github.com/nuvla/api-client-go => /Users/nacho/go/src/github.com/nuvla/api-client-go
