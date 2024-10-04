@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.5.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/2.4.0...2.5.0) (2024-10-04)
+
+
+### Features
+
+* **client:** Add context to Nuvla and Docker clients ([#94](https://github.com/nuvlaedge/nuvlaedge-go/issues/94)) ([91dd382](https://github.com/nuvlaedge/nuvlaedge-go/commit/91dd382dbeefebad06e9e8ee11fc2a4a0f5d0533))
+
 ## [2.4.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/2.3.1...2.4.0) (2024-09-30)
 
 
