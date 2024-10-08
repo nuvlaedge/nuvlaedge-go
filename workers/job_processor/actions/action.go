@@ -44,6 +44,7 @@ const (
 	StateDeploymentActionName  ActionName = "deployment_state"
 	UpdateDeploymentActionName ActionName = "update_deployment"
 	UpdateNuvlaEdge            ActionName = "nuvlabox_update"
+	CoeResourceActions         ActionName = "coe_resource_actions"
 	UnknownActionName          ActionName = "unknown"
 )
 

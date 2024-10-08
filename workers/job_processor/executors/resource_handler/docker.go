@@ -51,19 +51,22 @@ func NewResourceActionResponse(success bool, returnCode int, message string) *Re
 type ResourceActionFunc func(ctx context.Context, id string) (ResourceActionResponse, error)
 
 type DockerResourceHandler struct {
-	client client.APIClient
+	client ResourceHandlerDockerClient
 
 	gathererFuncs map[string]map[string]ResourceActionFunc
 }
 
-func NewDockerResourceHandler() (*DockerResourceHandler, error) {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-	if err != nil {
-		return nil, err
+func NewDockerResourceHandler(dCli ResourceHandlerDockerClient) (*DockerResourceHandler, error) {
+	var err error
+	if dCli == nil {
+		dCli, err = client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	d := &DockerResourceHandler{
-		client: cli,
+		client: dCli,
 	}
 
 	d.gathererFuncs = map[string]map[string]ResourceActionFunc{
@@ -81,15 +84,7 @@ func NewDockerResourceHandler() (*DockerResourceHandler, error) {
 	return d, nil
 }
 
-func (drh *DockerResourceHandler) HandlerActions(ctx context.Context, actions []ResourceAction) ([]ResourceActionResponse, error) {
-	if drh.client == nil {
-		cli, err := client.NewClientWithOpts(client.FromEnv, client.WithAPIVersionNegotiation())
-		if err != nil {
-			return nil, fmt.Errorf("error creating docker client for resource handling actions: %s", err)
-		}
-		drh.client = cli
-	}
-
+func (drh *DockerResourceHandler) HandleActions(ctx context.Context, actions []ResourceAction) []ResourceActionResponse {
 	responses := make([]ResourceActionResponse, len(actions))
 
 	for i, action := range actions {
@@ -97,7 +92,7 @@ func (drh *DockerResourceHandler) HandlerActions(ctx context.Context, actions []
 		responses[i] = drh.handleAction(ctx, action)
 	}
 
-	return responses, nil
+	return responses
 }
 
 func (drh *DockerResourceHandler) handleAction(ctx context.Context, action ResourceAction) ResourceActionResponse {
@@ -142,12 +137,12 @@ func (drh *DockerResourceHandler) pullImage(ctx context.Context, id string) (Res
 		lastLine = scanner.Text()
 	}
 
-	if strings.Contains("Downloaded newer image", lastLine) {
+	if strings.Contains(lastLine, "Downloaded newer image") {
 		msg := fmt.Sprintf("Image %s downloaded successfully", id)
 		return *NewResourceActionResponse(true, 200, msg), nil
 	}
 
-	if strings.Contains("Image is up to date", lastLine) {
+	if strings.Contains(lastLine, "Image is up to date") {
 		msg := fmt.Sprintf("Image %s is up to date", id)
 		return *NewResourceActionResponse(true, 200, msg), nil
 	}
@@ -162,10 +157,11 @@ func (drh *DockerResourceHandler) removeImage(ctx context.Context, id string) (R
 	}
 	var deleted, untagged bool
 	for _, r := range res {
-		if strings.Contains(id, r.Deleted) {
+		if strings.Contains(r.Deleted, id) {
+			fmt.Printf("Deleted: %s\n", r.Deleted)
 			deleted = true
 		}
-		if strings.Contains(id, r.Untagged) {
+		if strings.Contains(r.Untagged, id) {
 			untagged = true
 		}
 	}
