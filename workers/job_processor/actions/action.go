@@ -49,13 +49,14 @@ const (
 )
 
 var ActionNameMap = map[ActionName]ActionName{
-	"reboot_nuvlabox":     RebootActionName,
-	"stop_deployment":     StopDeploymentActionName,
-	"start_deployment":    StartDeploymentActionName,
-	"deployment_state_10": StateDeploymentActionName,
-	"deployment_state_60": StateDeploymentActionName,
-	"update_deployment":   UpdateDeploymentActionName,
-	"nuvlabox_update":     UpdateNuvlaEdge,
+	"reboot_nuvlabox":      RebootActionName,
+	"stop_deployment":      StopDeploymentActionName,
+	"start_deployment":     StartDeploymentActionName,
+	"deployment_state_10":  StateDeploymentActionName,
+	"deployment_state_60":  StateDeploymentActionName,
+	"update_deployment":    UpdateDeploymentActionName,
+	"nuvlabox_update":      UpdateNuvlaEdge,
+	"coe_resource_actions": CoeResourceActions,
 }
 
 func getActionNameFromString(action string) ActionName {
