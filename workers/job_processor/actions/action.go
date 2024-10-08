@@ -78,6 +78,8 @@ func GetAction(actionName string) (Action, error) {
 		return &DeploymentState{}, nil
 	case UpdateDeploymentActionName:
 		return &DeploymentUpdate{}, nil
+	case CoeResourceActions:
+		return &COEResourceActions{}, nil
 	//case UpdateNuvlaEdge:
 	//	return &Update{}, nil
 	default:
