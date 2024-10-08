@@ -24,7 +24,7 @@ func (c *COEResourceActions) Init(ctx context.Context, optsFn ...ActionOptsFn) e
 	}
 
 	// Convert payload into bytes
-	b, err := json.Marshal(opts.JobResource)
+	b, err := json.Marshal(opts.JobResource.Payload)
 	if err != nil {
 		return err
 	}
