@@ -135,10 +135,12 @@ func (c *Commissioner) needsCommissioning() (map[string]interface{}, bool) {
 	if len(del) > 0 {
 		data["removed"] = del
 	}
+
 	if len(data) == 0 {
 		log.Infof("No new data to commission")
 		return nil, false
 	}
+
 	return data, true
 }
 

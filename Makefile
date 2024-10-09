@@ -53,7 +53,7 @@ test/cover:
 # docker/build: build docker image
 .PHONY: docker/build
 docker/build:
-	docker build -t local/nuvlaedge:refactor .
+	docker build -t local/nuvlaedge-go:refactor .
 
 # docker/run: builds and runs the docker image using docker compose
 .PHONY: docker/run

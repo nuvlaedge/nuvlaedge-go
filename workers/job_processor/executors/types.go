@@ -8,6 +8,7 @@ import (
 	"github.com/docker/docker/api/types/swarm"
 	"github.com/nuvla/api-client-go/clients/resources"
 	"nuvlaedge-go/types/errors"
+	"nuvlaedge-go/workers/job_processor/executors/resource_handler"
 	"strconv"
 	"strings"
 )
@@ -212,4 +213,8 @@ func GetUpdater() Updater {
 		return &Docker{}
 	}
 	return nil
+}
+
+type CoeResourceManager interface {
+	HandleActions(ctx context.Context, actions []resource_handler.ResourceAction) ([]resource_handler.ResourceActionResponse, error)
 }
