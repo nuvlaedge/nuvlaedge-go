@@ -191,7 +191,7 @@ func (drh *DockerResourceHandler) removeContainer(ctx context.Context, id string
 }
 
 func (drh *DockerResourceHandler) removeVolume(ctx context.Context, id string) (ResourceActionResponse, error) {
-	err := drh.client.VolumeRemove(ctx, id, true)
+	err := drh.client.VolumeRemove(ctx, id, false)
 	if err != nil {
 		return ResourceActionResponse{}, err
 	}

@@ -3,45 +3,49 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	handler "nuvlaedge-go/workers/job_processor/executors/resource_handler"
+	"nuvlaedge-go/workers/job_processor/executors/resource_handler"
 	"time"
 )
 
 func main() {
-	fmt.Println("Resource handling test")
-
-	h, err := handler.NewDockerResourceHandler()
+	h, err := resource_handler.NewDockerResourceHandler(nil)
 	if err != nil {
 		panic(err)
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	actions := []handler.ResourceAction{
-		{
-			Action:   "pull",
-			Resource: "image",
-			Id:       "alpine:latest",
-		},
+	actions := []resource_handler.ResourceAction{
 		{
 			Action:   "remove",
 			Resource: "image",
-			Id:       "alpine:latest",
+			Id:       "image-id",
+		},
+		{
+			Action:   "remove",
+			Resource: "container",
+			Id:       "container-id",
+		},
+		{
+			Action:   "remove",
+			Resource: "volume",
+			Id:       "volume-id",
+		},
+		{
+			Action:   "remove",
+			Resource: "network",
+			Id:       "network-id",
+		},
+		{
+			Action:   "pull",
+			Resource: "image",
+			Id:       "image-id",
 		},
 	}
 
-	fmt.Println("Handling actions")
-	responses, err := h.HandlerActions(ctx, actions)
-	if err != nil {
-		panic(err)
-	}
+	responses := h.HandleActions(ctx, actions)
+	b, _ := json.MarshalIndent(responses, "", "  ")
 
-	fmt.Println("Responses:")
-	for _, r := range responses {
-		//fmt.Println("Response:", r)
-		b, _ := json.MarshalIndent(r, "", "  ")
-		fmt.Printf("%s\n", string(b))
-	}
+	println(string(b))
 }

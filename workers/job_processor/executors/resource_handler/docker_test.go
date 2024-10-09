@@ -609,7 +609,7 @@ func Test_DockerResourceHandler_RemoveVolume(t *testing.T) {
 			assert.NoError(t, err)
 			assert.NotNil(t, handler)
 
-			mockClient.On("VolumeRemove", mock.Anything, uc.volumeID, true).Return(uc.mockError)
+			mockClient.On("VolumeRemove", mock.Anything, uc.volumeID, false).Return(uc.mockError)
 
 			response, err := handler.removeVolume(context.Background(), uc.volumeID)
 			if uc.mockError != nil {

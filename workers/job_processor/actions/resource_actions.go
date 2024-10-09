@@ -4,35 +4,44 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	log "github.com/sirupsen/logrus"
 	"nuvlaedge-go/workers/job_processor/executors"
 	"nuvlaedge-go/workers/job_processor/executors/resource_handler"
+	"strings"
 )
 
 type COEResourceActions struct {
 	ActionBase
 
 	actions       ResourceActionsPayload
-	results       []resource_handler.ResourceActionResponse
+	results       ResourceActionsResult
 	dockerHandler *resource_handler.DockerResourceHandler
 }
 
-func (c *COEResourceActions) Init(ctx context.Context, optsFn ...ActionOptsFn) error {
+func (c *COEResourceActions) Init(_ context.Context, optsFn ...ActionOptsFn) error {
 	opts := GetActionOpts(optsFn...)
 
 	if opts.JobResource == nil || opts.Client == nil {
 		return errors.New("jobs resource or client not available")
 	}
 
-	// Convert payload into bytes
-	b, err := json.Marshal(opts.JobResource.Payload)
+	if opts.JobResource.Payload == "" {
+		return errors.New("job resource payload not available")
+	}
+
+	data := strings.ReplaceAll(opts.JobResource.Payload, "\\", "")
+
+	c.actions = ResourceActionsPayload{}
+	// Unmarshal bytes into map
+	err := json.Unmarshal([]byte(data), &c.actions)
 	if err != nil {
+		log.Errorf("Error unmarshaling payload: %s", opts.JobResource.Payload)
 		return err
 	}
 
-	// Unmarshal bytes into map
-	err = json.Unmarshal(b, &c.actions)
-	if err != nil {
-		return err
+	if err := c.assertExecutor(); err != nil {
+		return fmt.Errorf("error asserting executor: %w", err)
 	}
 
 	return nil
@@ -55,23 +64,29 @@ func (c *COEResourceActions) assertExecutor() error {
 
 func (c *COEResourceActions) ExecuteAction(ctx context.Context) error {
 	if len(c.actions.Docker) > 0 {
-		c.results = c.dockerHandler.HandleActions(ctx, c.actions.Docker)
+		c.results.Docker = c.dockerHandler.HandleActions(ctx, c.actions.Docker)
 	}
 
 	return nil
 }
 
 func (c *COEResourceActions) GetOutput() string {
-	resultString := ""
 
-	for _, result := range c.results {
-		resultString += result.Message + "\n"
+	b, err := json.MarshalIndent(c.results, "", "  ")
+	if err != nil {
+		log.Errorf("Error marshaling results: %s", err)
+		return "Error unmarshalling the results"
 	}
 
-	return resultString
+	return string(b)
 }
 
 type ResourceActionsPayload struct {
-	Docker     []resource_handler.ResourceAction `json:"docker"`
-	Kubernetes []resource_handler.ResourceAction `json:"kubernetes"`
+	Docker     []resource_handler.ResourceAction `json:"docker,omitempty"`
+	Kubernetes []resource_handler.ResourceAction `json:"kubernetes,omitempty"`
+}
+
+type ResourceActionsResult struct {
+	Docker     []resource_handler.ResourceActionResponse `json:"docker,omitempty"`
+	Kubernetes []resource_handler.ResourceActionResponse `json:"kubernetes,omitempty"`
 }
