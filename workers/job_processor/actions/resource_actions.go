@@ -67,6 +67,17 @@ func (c *COEResourceActions) ExecuteAction(ctx context.Context) error {
 		c.results.Docker = c.dockerHandler.HandleActions(ctx, c.actions.Docker)
 	}
 
+	// Kubernetes actions not supported
+	if len(c.actions.Kubernetes) > 0 {
+		c.results.Kubernetes = []resource_handler.ResourceActionResponse{
+			{
+				Success:    false,
+				Message:    "Kubernetes actions not supported",
+				ReturnCode: 500,
+			},
+		}
+	}
+
 	return nil
 }
 
