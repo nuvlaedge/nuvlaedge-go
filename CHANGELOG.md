@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.5.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/2.4.0...2.5.0) (2024-10-16)
+
+
+### Features
+
+* **client:** Add context to Nuvla and Docker clients ([#94](https://github.com/nuvlaedge/nuvlaedge-go/issues/94)) ([91dd382](https://github.com/nuvlaedge/nuvlaedge-go/commit/91dd382dbeefebad06e9e8ee11fc2a4a0f5d0533))
+* **job-engine:** Add COE resource handling action ([#96](https://github.com/nuvlaedge/nuvlaedge-go/issues/96)) ([1d811a3](https://github.com/nuvlaedge/nuvlaedge-go/commit/1d811a37e30d6deaf8d1548df4bec49e79e50e6f))
+
 ## [2.4.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/2.3.1...2.4.0) (2024-09-30)
 
 
