@@ -83,7 +83,7 @@ func (c *COEResourceActions) ExecuteAction(ctx context.Context) error {
 
 func (c *COEResourceActions) GetOutput() string {
 
-	b, err := json.MarshalIndent(c.results, "", "  ")
+	b, err := json.MarshalIndent(c.results, "", "    ")
 	if err != nil {
 		log.Errorf("Error marshaling results: %s", err)
 		return "Error unmarshalling the results"

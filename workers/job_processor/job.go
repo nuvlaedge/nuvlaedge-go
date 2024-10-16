@@ -128,8 +128,7 @@ func (j *NativeJob) RunJob(ctx context.Context) error {
 		return err
 	}
 
-	okMsg := j.Action.GetOutput() + "\n" + "Success running job"
-	j.Client.SetStatusMessage(ctx, okMsg)
+	j.Client.SetStatusMessage(ctx, j.Action.GetOutput())
 	j.Client.SetSuccessState(ctx)
 	return nil
 }

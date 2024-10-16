@@ -9,6 +9,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/errdefs"
 	log "github.com/sirupsen/logrus"
+	"regexp"
 	"strings"
 )
 
@@ -35,8 +36,8 @@ func NewResourceNotAvailableForAction(resource, action string) *ResourceActionRe
 	return NewResourceActionResponse(false, 404, msg)
 }
 
-func NewErrorResourceActionResponse(resource, action string, returnCode int, err error) *ResourceActionResponse {
-	msg := fmt.Sprintf("Error performing action %s on resource %s: %s", action, resource, err)
+func NewErrorResourceActionResponse(resource, action, id string, returnCode int, err error) *ResourceActionResponse {
+	msg := fmt.Sprintf("Cannot %s %s (%s): %s ", action, resource, cleanID(id), err)
 	return NewResourceActionResponse(false, returnCode, msg)
 }
 
@@ -103,7 +104,7 @@ func (drh *DockerResourceHandler) handleAction(ctx context.Context, action Resou
 
 	resp, err := actionFunc(ctx, action.Id)
 	if err != nil {
-		return *NewErrorResourceActionResponse(action.Resource, action.Action, getCodeFromError(err), err)
+		return *NewErrorResourceActionResponse(action.Resource, action.Action, action.Id, getCodeFromError(err), err)
 	}
 
 	return resp
@@ -166,13 +167,15 @@ func (drh *DockerResourceHandler) removeImage(ctx context.Context, id string) (R
 		}
 	}
 
+	cId := cleanID(id)
+
 	if deleted {
-		msg := fmt.Sprintf("Image %s deleted successfully", id)
+		msg := fmt.Sprintf("Image %s deleted successfully", cId)
 		return *NewResourceActionResponse(true, 200, msg), nil
 	}
 
 	if untagged {
-		msg := fmt.Sprintf("Image %s untagged but not removed", id)
+		msg := fmt.Sprintf("Image %s untagged but not removed", cId)
 		return *NewResourceActionResponse(true, 200, msg), nil
 	}
 
@@ -185,7 +188,7 @@ func (drh *DockerResourceHandler) removeContainer(ctx context.Context, id string
 		return ResourceActionResponse{}, err
 	}
 
-	msg := fmt.Sprintf("Container %s removed successfully", id)
+	msg := fmt.Sprintf("Container %s removed successfully", cleanID(id))
 
 	return *NewResourceActionResponse(true, 204, msg), nil
 }
@@ -196,7 +199,7 @@ func (drh *DockerResourceHandler) removeVolume(ctx context.Context, id string) (
 		return ResourceActionResponse{}, err
 	}
 
-	msg := fmt.Sprintf("Volume %s removed successfully", id)
+	msg := fmt.Sprintf("Volume %s removed successfully", cleanID(id))
 
 	return *NewResourceActionResponse(true, 204, msg), nil
 }
@@ -207,7 +210,7 @@ func (drh *DockerResourceHandler) removeNetwork(ctx context.Context, id string) 
 		return ResourceActionResponse{}, err
 	}
 
-	msg := fmt.Sprintf("Network %s removed successfully", id)
+	msg := fmt.Sprintf("Network %s removed successfully", cleanID(id))
 
 	return *NewResourceActionResponse(true, 204, msg), nil
 }
@@ -220,9 +223,23 @@ func getCodeFromError(err error) int {
 		return 404
 	case errdefs.ErrConflict:
 		return 409
+	case errdefs.ErrForbidden:
+		return 403
 
 	default:
 		log.Warnf("Unknown error type: %T", err)
 		return 500
 	}
+}
+
+func isSHA256Hash(s string) bool {
+	re := regexp.MustCompile(`^[a-fA-F0-9]{64}$`)
+	return re.MatchString(s)
+}
+
+func cleanID(resID string) string {
+	if isSHA256Hash(resID) {
+		return resID[:12]
+	}
+	return resID
 }
