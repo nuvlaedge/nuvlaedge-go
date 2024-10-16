@@ -8,10 +8,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
-	nuvla "github.com/nuvla/api-client-go"
 	log "github.com/sirupsen/logrus"
-	"io"
-	"net/http"
 	neTypes "nuvlaedge-go/types"
 	"nuvlaedge-go/types/metrics"
 	"runtime"
@@ -46,7 +43,6 @@ func NewDockerMonitor(
 		client:           c,
 		commissionerChan: commChan,
 	}
-	dockerMonitor.containerStatsSupported = checkSupportForContainerStats(endpoint)
 	dockerMonitor.setDefaultSwarmData()
 
 	return dockerMonitor
@@ -74,9 +70,7 @@ func (dm *DockerMonitor) sendMetrics() {
 	dm.reportChan <- dm.clusterData
 	dm.reportChan <- dm.coeResources
 
-	if dm.containerStatsSupported {
-		dm.reportChan <- dm.containersData
-	}
+	dm.reportChan <- dm.containersData
 
 	dm.commissionerChan <- dm.clusterData
 	dm.commissionerChan <- dm.swarmData
@@ -256,10 +250,8 @@ func (dm *DockerMonitor) updateMetrics() error {
 		errs = append(errs, err)
 	}
 
-	if dm.containerStatsSupported {
-		if err := dm.updateContainersData(); err != nil {
-			errs = append(errs, err)
-		}
+	if err := dm.updateContainersData(); err != nil {
+		errs = append(errs, err)
 	}
 
 	if err := dm.updateCoeResources(); err != nil {
@@ -352,27 +344,4 @@ func NewContainerDataFromContainer(
 	data.DiskIn = diskIn
 	data.DiskOut = diskOut
 	return data
-}
-
-func checkSupportForContainerStats(endpoint string) bool {
-	resp, err := http.Get(nuvla.SanitiseEndpoint(endpoint) + "/api/resource-metadata/nuvlabox-status-2")
-	if err != nil {
-		log.Errorf("Error getting NuvlaEdgeStatus metadata: %s", err)
-		return true
-	}
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			log.Errorf("Error closing response body: %s", err)
-		}
-	}(resp.Body)
-
-	bodyBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Errorf("Error reading response body: %s", err)
-		return true
-	}
-	bodyString := string(bodyBytes)
-
-	return strings.Contains(bodyString, "cpu-usage")
 }

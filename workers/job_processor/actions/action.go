@@ -44,17 +44,19 @@ const (
 	StateDeploymentActionName  ActionName = "deployment_state"
 	UpdateDeploymentActionName ActionName = "update_deployment"
 	UpdateNuvlaEdge            ActionName = "nuvlabox_update"
+	CoeResourceActions         ActionName = "coe_resource_actions"
 	UnknownActionName          ActionName = "unknown"
 )
 
 var ActionNameMap = map[ActionName]ActionName{
-	"reboot_nuvlabox":     RebootActionName,
-	"stop_deployment":     StopDeploymentActionName,
-	"start_deployment":    StartDeploymentActionName,
-	"deployment_state_10": StateDeploymentActionName,
-	"deployment_state_60": StateDeploymentActionName,
-	"update_deployment":   UpdateDeploymentActionName,
-	"nuvlabox_update":     UpdateNuvlaEdge,
+	"reboot_nuvlabox":      RebootActionName,
+	"stop_deployment":      StopDeploymentActionName,
+	"start_deployment":     StartDeploymentActionName,
+	"deployment_state_10":  StateDeploymentActionName,
+	"deployment_state_60":  StateDeploymentActionName,
+	"update_deployment":    UpdateDeploymentActionName,
+	"nuvlabox_update":      UpdateNuvlaEdge,
+	"coe_resource_actions": CoeResourceActions,
 }
 
 func getActionNameFromString(action string) ActionName {
@@ -77,6 +79,8 @@ func GetAction(actionName string) (Action, error) {
 		return &DeploymentState{}, nil
 	case UpdateDeploymentActionName:
 		return &DeploymentUpdate{}, nil
+	case CoeResourceActions:
+		return &COEResourceActions{}, nil
 	//case UpdateNuvlaEdge:
 	//	return &Update{}, nil
 	default:
