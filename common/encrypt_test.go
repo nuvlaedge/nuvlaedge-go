@@ -41,7 +41,7 @@ func Test_EncryptCredentials(t *testing.T) {
 	dir := createMockMachineId("")
 	defer os.RemoveAll(dir)
 
-	e, err := GetIrs(creds, dir, "nuvla-edge-id")
+	e, err := GetIrsV1(creds, dir, "nuvla-edge-id")
 	assert.Nil(t, err)
 	assert.NotEqualf(t, "", e, "encrypted credentials should not be empty")
 }
@@ -82,12 +82,12 @@ func Test_DecryptCredentials(t *testing.T) {
 		Secret: "secret",
 	}
 
-	b, err := GetIrs(creds, d, neId)
+	b, err := GetIrsV1(creds, d, neId)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	decrypted, err := FromIrs(b, d, neId)
+	decrypted, err := FromIrsV1(b, d, neId)
 	assert.Nil(t, err)
 	assert.Equal(t, creds.Key, decrypted.Key)
 	assert.Equal(t, creds.Secret, decrypted.Secret)

@@ -19,7 +19,30 @@ import (
 
 const MachineIdFile = "/etc/machine-id"
 
-func GetIrs(creds types.ApiKeyLogInParams, rootFsPath string, nuvlaEdgeId string) (string, error) {
+func ConvertIRS(irsV1 string, rootFsPath string, nuvlaEdgeId string) (string, error) {
+	// Convert IRS v1 to IRS v2
+	creds, err := FromIrsV1(irsV1, rootFsPath, nuvlaEdgeId)
+	if err != nil {
+		return "", err
+	}
+
+	return GetIrsV2(creds, nuvlaEdgeId)
+
+}
+
+func GetIrsV2(creds types.ApiKeyLogInParams, nuvlaEdgeId string) (string, error) {
+	key := hashMachineId("", getNuvlaEdgeUuid(nuvlaEdgeId))
+	plainText := addPadding(creds.Key + ":" + creds.Secret)
+	irs, err := getIrs(key, plainText)
+	if err != nil {
+		log.Errorf("Error conforming IRS: %s", err)
+		return "", err
+	}
+
+	return base64.StdEncoding.EncodeToString(irs), nil
+}
+
+func GetIrsV1(creds types.ApiKeyLogInParams, rootFsPath string, nuvlaEdgeId string) (string, error) {
 	key := buildKey(rootFsPath, nuvlaEdgeId)
 
 	plainText := addPadding(creds.Key + ":" + creds.Secret)
@@ -33,7 +56,33 @@ func GetIrs(creds types.ApiKeyLogInParams, rootFsPath string, nuvlaEdgeId string
 	return base64.StdEncoding.EncodeToString(irs), nil
 }
 
-func FromIrs(irs64 string, rootFsPath string, nuvlaEdgeId string) (types.ApiKeyLogInParams, error) {
+func FromIrsV2(irs64 string, nuvlaedgeId string) (types.ApiKeyLogInParams, error) {
+	irs, err := base64.StdEncoding.DecodeString(irs64)
+	if err != nil {
+		return types.ApiKeyLogInParams{}, fmt.Errorf("error decoding IRS 64: %s", err)
+	}
+
+	key := hashMachineId("", getNuvlaEdgeUuid(nuvlaedgeId))
+
+	dIrs, err := fromIrs(key, irs)
+	if err != nil {
+		return types.ApiKeyLogInParams{}, fmt.Errorf("error decrypting credentials: %s", err)
+	}
+
+	dIrs, err = removePadding(dIrs)
+	if err != nil {
+		return types.ApiKeyLogInParams{}, fmt.Errorf("error removing padding: %s", err)
+	}
+
+	lSlice := strings.Split(string(dIrs), ":")
+	if len(lSlice) != 2 {
+		return types.ApiKeyLogInParams{}, errors.New("invalid credentials")
+	}
+
+	return types.ApiKeyLogInParams{Key: lSlice[0], Secret: lSlice[1]}, nil
+}
+
+func FromIrsV1(irs64 string, rootFsPath string, nuvlaEdgeId string) (types.ApiKeyLogInParams, error) {
 	irs, err := base64.StdEncoding.DecodeString(irs64)
 	if err != nil {
 		return types.ApiKeyLogInParams{}, fmt.Errorf("error decoding IRS 64: %s", err)
@@ -133,13 +182,14 @@ func hashMachineId(machineId, neId string) []byte {
 }
 
 func findMachineId(rootFsPath string) string {
+
 	mIdFile := MachineIdFile
 	if rootFsPath != "" {
 		mIdFile = filepath.Join(rootFsPath, mIdFile)
 	}
 
 	if !common.FileExists(mIdFile) {
-		log.Errorf("Machine-id file %s does not exist", mIdFile)
+		log.Debugf("Machine-id file %s does not exist", mIdFile)
 		return ""
 	}
 

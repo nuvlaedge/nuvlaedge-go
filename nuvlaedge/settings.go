@@ -51,21 +51,30 @@ func findOldSession(conf *settings.NuvlaEdgeSettings) (*clients.NuvlaEdgeSession
 		return nil, false
 	}
 
-	if f.Irs == "" && f.Credentials != nil && f.Credentials.Key != "" && f.Credentials.Secret != "" {
-		i, err := neCommon.GetIrs(*f.Credentials, conf.RootFs, f.NuvlaEdgeId)
+	if f.IrsV1 != "" && f.IrsV2 == "" {
+		irs, err := neCommon.ConvertIRS(f.IrsV1, conf.RootFs, f.NuvlaEdgeId)
+		if err != nil {
+			log.Warnf("Error converting IRS from v1 to v2: %s", err)
+		} else {
+			f.IrsV2 = irs
+		}
+	}
+
+	if f.IrsV2 == "" && f.Credentials != nil && f.Credentials.Key != "" && f.Credentials.Secret != "" {
+		i, err := neCommon.GetIrsV2(*f.Credentials, f.NuvlaEdgeId)
 		if err != nil {
 			log.Errorf("Error creating IRS from stored credentials: %s", err)
 			return f, true
 		}
 
-		f.Irs = i
+		f.IrsV2 = i
 		if err := f.Save(filepath.Join(conf.DBPPath, constants.NuvlaEdgeSessionFile)); err != nil {
 			log.Errorf("Error saving session file: %s", err)
 		}
 	}
 
-	if f.Irs != "" {
-		k, err := neCommon.FromIrs(f.Irs, conf.RootFs, f.NuvlaEdgeId)
+	if f.IrsV2 != "" {
+		k, err := neCommon.FromIrsV2(f.IrsV2, f.NuvlaEdgeId)
 		if err != nil {
 			log.Errorf("Error decoding IRS: %s", err)
 			return f, true
@@ -93,8 +102,8 @@ func mergeSessionIntoSettings(settings *settings.NuvlaEdgeSettings, session *cli
 		settings.ApiSecret = session.Credentials.Secret
 	}
 
-	if session.Irs != "" {
-		settings.Irs = session.Irs
+	if session.IrsV2 != "" {
+		settings.Irs = session.IrsV2
 	}
 }
 
@@ -132,7 +141,7 @@ func minSettings(settings *settings.NuvlaEdgeSettings) error {
 	}
 
 	if settings.Irs != "" {
-		creds, err := neCommon.FromIrs(settings.Irs, settings.RootFs, settings.NuvlaEdgeUUID)
+		creds, err := neCommon.FromIrsV2(settings.Irs, settings.NuvlaEdgeUUID)
 		if err != nil {
 			return fmt.Errorf("error decoding IRS: %s", err)
 		}
