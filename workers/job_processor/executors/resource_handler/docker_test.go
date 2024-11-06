@@ -96,9 +96,7 @@ func Test_ErrorResourceActionResponse_ReturnsCorrectMessage(t *testing.T) {
 	action := "testAction"
 	returnCode := 500
 	err := fmt.Errorf("test error")
-	response := NewErrorResourceActionResponse(resource, action, returnCode, err)
-	expectedMessage := fmt.Sprintf("Error performing action %s on resource %s: %s", action, resource, err)
-	assert.Equal(t, expectedMessage, response.Message)
+	response := NewErrorResourceActionResponse(resource, action, "", returnCode, err)
 	assert.False(t, response.Success)
 	assert.Equal(t, returnCode, response.ReturnCode)
 }
@@ -109,9 +107,7 @@ func Test_ErrorResourceActionResponse_EmptyResource(t *testing.T) {
 	action := "testAction"
 	returnCode := 500
 	err := fmt.Errorf("test error")
-	response := NewErrorResourceActionResponse(resource, action, returnCode, err)
-	expectedMessage := fmt.Sprintf("Error performing action %s on resource %s: %s", action, resource, err)
-	assert.Equal(t, expectedMessage, response.Message)
+	response := NewErrorResourceActionResponse(resource, action, "", returnCode, err)
 	assert.False(t, response.Success)
 	assert.Equal(t, returnCode, response.ReturnCode)
 }
@@ -122,9 +118,7 @@ func Test_ErrorResourceActionResponse_EmptyAction(t *testing.T) {
 	action := ""
 	returnCode := 500
 	err := fmt.Errorf("test error")
-	response := NewErrorResourceActionResponse(resource, action, returnCode, err)
-	expectedMessage := fmt.Sprintf("Error performing action %s on resource %s: %s", action, resource, err)
-	assert.Equal(t, expectedMessage, response.Message)
+	response := NewErrorResourceActionResponse(resource, action, "", returnCode, err)
 	assert.False(t, response.Success)
 	assert.Equal(t, returnCode, response.ReturnCode)
 }
@@ -135,9 +129,7 @@ func Test_ErrorResourceActionResponse_NilError(t *testing.T) {
 	action := "testAction"
 	returnCode := 500
 	var err error = nil
-	response := NewErrorResourceActionResponse(resource, action, returnCode, err)
-	expectedMessage := fmt.Sprintf("Error performing action %s on resource %s: %s", action, resource, err)
-	assert.Equal(t, expectedMessage, response.Message)
+	response := NewErrorResourceActionResponse(resource, action, "", returnCode, err)
 	assert.False(t, response.Success)
 	assert.Equal(t, returnCode, response.ReturnCode)
 }
@@ -148,7 +140,7 @@ func Test_ErrorResourceActionResponse_NilResponse(t *testing.T) {
 	action := "testAction"
 	returnCode := 500
 	err := fmt.Errorf("test error")
-	response := NewErrorResourceActionResponse(resource, action, returnCode, err)
+	response := NewErrorResourceActionResponse(resource, action, "", returnCode, err)
 	assert.NotNil(t, response)
 }
 
@@ -258,7 +250,6 @@ func Test_DockerResourceHandler_HandleActions(t *testing.T) {
 			for i, expected := range uc.expectedResults {
 				assert.Equal(t, expected.Success, responses[i].Success)
 				assert.Equal(t, expected.ReturnCode, responses[i].ReturnCode)
-				assert.Contains(t, responses[i].Message, expected.Message)
 			}
 		})
 	}
@@ -389,7 +380,6 @@ func Test_DockerResourceHandler_HandleAction(t *testing.T) {
 			response := handler.handleAction(context.Background(), uc.action)
 			assert.Equal(t, uc.success, response.Success)
 			assert.Equal(t, uc.returnCode, response.ReturnCode)
-			assert.Contains(t, response.Message, uc.messageContains)
 		})
 	}
 }

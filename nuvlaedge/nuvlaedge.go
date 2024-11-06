@@ -137,7 +137,7 @@ func (ne *NuvlaEdge) startUpProcess(ctx context.Context) error {
 			return err
 		}
 
-		irs, err := common.GetIrs(creds, "/rootfs", ne.nuvla.NuvlaEdgeId.String())
+		irs, err := common.GetIrsV2(creds, ne.nuvla.NuvlaEdgeId.String())
 		if err != nil {
 			return err
 		}
@@ -156,7 +156,7 @@ func (ne *NuvlaEdge) startUpProcess(ctx context.Context) error {
 
 	if ne.conf.Irs != "" {
 		ne.nuvla.Irs = ne.conf.Irs
-		c, err = common.FromIrs(ne.conf.Irs, "/rootfs", ne.nuvla.NuvlaEdgeId.String())
+		c, err = common.FromIrsV2(ne.conf.Irs, ne.nuvla.NuvlaEdgeId.String())
 
 		if err != nil {
 			return fmt.Errorf("error decrypting credentials: %s", err)
