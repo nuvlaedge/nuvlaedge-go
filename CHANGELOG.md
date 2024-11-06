@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.5.1](https://github.com/nuvlaedge/nuvlaedge-go/compare/2.5.0...2.5.1) (2024-11-06)
+
+
+### Bug Fixes
+
+* Fixed IRS incompatibilities ([#97](https://github.com/nuvlaedge/nuvlaedge-go/issues/97)) ([5f852ff](https://github.com/nuvlaedge/nuvlaedge-go/commit/5f852ffe14092ae90e87db240de776fd8a1b02cb))
+
 ## [2.5.0](https://github.com/nuvlaedge/nuvlaedge-go/compare/2.4.0...2.5.0) (2024-10-16)
 
 
