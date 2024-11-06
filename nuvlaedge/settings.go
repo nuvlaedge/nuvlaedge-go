@@ -57,6 +57,9 @@ func findOldSession(conf *settings.NuvlaEdgeSettings) (*clients.NuvlaEdgeSession
 			log.Warnf("Error converting IRS from v1 to v2: %s", err)
 		} else {
 			f.IrsV2 = irs
+			if err := f.Save(filepath.Join(conf.DBPPath, constants.NuvlaEdgeSessionFile)); err != nil {
+				log.Errorf("Error saving session file: %s", err)
+			}
 		}
 	}
 

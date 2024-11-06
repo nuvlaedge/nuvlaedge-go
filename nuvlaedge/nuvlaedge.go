@@ -170,11 +170,6 @@ func (ne *NuvlaEdge) startUpProcess(ctx context.Context) error {
 		return err
 	}
 
-	err = ne.nuvla.Freeze(path.Join(ne.conf.DBPPath, constants.NuvlaEdgeSessionFile))
-	if err != nil {
-		log.Warnf("Error saving session file. NuvlaEdge will continue to run (for the moment): %s.", err)
-	}
-
 	ctxCancel, cancel := context.WithCancel(ctx)
 	defer cancel()
 
