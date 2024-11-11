@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"github.com/nuvla/api-client-go/clients/resources"
 	log "github.com/sirupsen/logrus"
+	"nuvlaedge-go/common/constants"
 	"nuvlaedge-go/workers/job_processor/executors"
+	"time"
 )
 
 type DeploymentStop struct {
@@ -16,7 +18,7 @@ func (d *DeploymentStop) ExecuteAction(ctx context.Context) error {
 	defer CloseDeploymentClientWithLog(d.client)
 	defer d.executor.Close()
 
-	ctxTimed, cancel := context.WithTimeout(ctx, 60)
+	ctxTimed, cancel := context.WithTimeout(ctx, constants.DefaultJobTimeout*time.Second)
 	defer cancel()
 
 	if err := d.client.SetState(ctxTimed, resources.StateStopping); err != nil {
