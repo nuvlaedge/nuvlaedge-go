@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.5.2](https://github.com/nuvlaedge/nuvlaedge-go/compare/2.5.1...2.5.2) (2024-11-11)
+
+
+### Bug Fixes
+
+* **Job-Engine:** Fixed a bug on the timeout of deployment stop ([#99](https://github.com/nuvlaedge/nuvlaedge-go/issues/99)) ([2784b5c](https://github.com/nuvlaedge/nuvlaedge-go/commit/2784b5ceba6d2b0ae7d985bc9b1bec2b05f74f87))
+* **Job-Engine:** Fixed a bug where the auxiliary container for the job-engine would not be downloaded ([#100](https://github.com/nuvlaedge/nuvlaedge-go/issues/100)) ([42127d1](https://github.com/nuvlaedge/nuvlaedge-go/commit/42127d10d8e50b8588626f286a619be0a071ed40))
+
 ## [2.5.1](https://github.com/nuvlaedge/nuvlaedge-go/compare/2.5.0...2.5.1) (2024-11-06)
 
 

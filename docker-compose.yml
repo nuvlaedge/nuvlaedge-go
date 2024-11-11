@@ -2,7 +2,7 @@
 services:
   agent:
     # x-release-please-start-version
-    image: ${NE_IMAGE_REGISTRY:-}${NE_IMAGE_ORGANIZATION:-sixsq}/${NE_IMAGE_GO_REPOSITORY:-nuvlaedge-go}:${NE_IMAGE_TAG:-2.5.1}
+    image: ${NE_IMAGE_REGISTRY:-}${NE_IMAGE_ORGANIZATION:-sixsq}/${NE_IMAGE_GO_REPOSITORY:-nuvlaedge-go}:${NE_IMAGE_TAG:-2.5.2}
     # x-release-please-end
     container_name: ${COMPOSE_PROJECT_NAME:-nuvlaedge}-agent-go
     command:
